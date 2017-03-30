@@ -6,6 +6,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.beans.factory.config.AutowireCapableBeanFactory;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.PreDestroy;
@@ -29,21 +30,28 @@ public class RabbitManager {
     private String rabbitUsername;
     @Value("${rabbit.password}")
     private String rabbitPassword;
-    @Value("${rabbit.exchange.placeholder.name}")
-    private String placeholderExchangeName;
-    @Value("${rabbit.exchange.placeholder.type}")
-    private String placeholderExchangeType;
-    @Value("${rabbit.exchange.placeholder.durable}")
-    private boolean placeholderExchangeDurable;
-    @Value("${rabbit.exchange.placeholder.autodelete}")
-    private boolean placeholderExchangeAutodelete;
-    @Value("${rabbit.exchange.placeholder.internal}")
-    private boolean placeholderExchangeInternal;
-    @Value("${rabbit.routingKey.placeholder.placeholder}")
-    private String placeholderRoutingKey;
+    
+    @Value("${rabbit.exchange.enablerLogic.name}")
+    private String enablerLogicExchangeName;
+    @Value("${rabbit.exchange.enablerLogic.type}")
+    private String enablerLogicExchangeType;
+    @Value("${rabbit.exchange.enablerLogic.durable}")
+    private boolean enablerLogicExchangeDurable;
+    @Value("${rabbit.exchange.enablerLogic.autodelete}")
+    private boolean enablerLogicExchangeAutodelete;
+    @Value("${rabbit.exchange.enablerLogic.internal}")
+    private boolean enablerLogicExchangeInternal;
+    
+    @Value("${rabbit.routingKey.enablerLogic.acquireMeasurements}")
+    private String acquireMeasurementsRoutingKey;
+    @Value("${rabbit.routingKey.enablerLogic.dataAppeared}")
+    private String dataAppearedRoutingKey;
+    
     private Connection connection;
+    
+    @Autowired 
+    private AutowireCapableBeanFactory beanFactory;
 
-    @Autowired
     public RabbitManager() {
     }
 
@@ -70,6 +78,7 @@ public class RabbitManager {
      */
     public void init() {
         Channel channel = null;
+        log.info("Rabbit is being initialized!");
 
         try {
             getConnection();
@@ -83,11 +92,11 @@ public class RabbitManager {
             try {
                 channel = this.connection.createChannel();
 
-                channel.exchangeDeclare(this.placeholderExchangeName,
-                        this.placeholderExchangeType,
-                        this.placeholderExchangeDurable,
-                        this.placeholderExchangeAutodelete,
-                        this.placeholderExchangeInternal,
+                channel.exchangeDeclare(this.enablerLogicExchangeName,
+                        this.enablerLogicExchangeType,
+                        this.enablerLogicExchangeDurable,
+                        this.enablerLogicExchangeAutodelete,
+                        this.enablerLogicExchangeInternal,
                         null);
 
                 startConsumers();
@@ -111,8 +120,10 @@ public class RabbitManager {
             Channel channel;
             if (this.connection != null && this.connection.isOpen()) {
                 channel = connection.createChannel();
-                channel.queueUnbind("placeholderQueue", this.placeholderExchangeName, this.placeholderRoutingKey);
-                channel.queueDelete("placeholderQueue");
+                channel.queueUnbind("enablerLogicAcquireMeasurements", this.enablerLogicExchangeName, this.acquireMeasurementsRoutingKey);
+                channel.queueUnbind("enablerLogicDataAppeared", this.enablerLogicExchangeName, this.acquireMeasurementsRoutingKey);
+                channel.queueDelete("enablerLogicDataAppeared");
+                channel.queueDelete("enablerLogicAcquireMeasurements");
                 closeChannel(channel);
                 this.connection.close();
             }
@@ -126,7 +137,8 @@ public class RabbitManager {
      */
     public void startConsumers() {
         try {
-            startConsumerOfPlaceholderMessages();
+            startConsumerOfAcquireMeasurements();
+            startConsumerOfDataAppeared();
         } catch (InterruptedException e) {
             e.printStackTrace();
         } catch (IOException e) {
@@ -134,12 +146,12 @@ public class RabbitManager {
         }
     }
 
-    public void sendPlaceholderMessage(String placeholder) { // arg should be object instead of String, e.g. Resource
-        Gson gson = new Gson();
-        String message = gson.toJson(placeholder);
-        sendMessage(this.placeholderExchangeName, this.placeholderRoutingKey, message);
-        log.info("- placeholder message sent");
-    }
+//    public void sendPlaceholderMessage(String placeholder) { // arg should be object instead of String, e.g. Resource
+//        Gson gson = new Gson();
+//        String message = gson.toJson(placeholder);
+//        sendMessage(this.placeholderExchangeName, this.placeholderRoutingKey, message);
+//        log.info("- placeholder message sent");
+//    }
 
     public void sendCustomMessage(String exchange, String routingKey, String objectInJson) {
         sendMessage(exchange, routingKey, objectInJson);
@@ -153,18 +165,45 @@ public class RabbitManager {
      * @throws InterruptedException
      * @throws IOException
      */
-    private void startConsumerOfPlaceholderMessages() throws InterruptedException, IOException {
-        String queueName = "placeholderQueue";
+    private void startConsumerOfAcquireMeasurements() throws InterruptedException, IOException {
+        String queueName = "enablerLogicAcquireMeasurements";
         Channel channel;
         try {
             channel = this.connection.createChannel();
             channel.queueDeclare(queueName, true, false, false, null);
-            channel.queueBind(queueName, this.placeholderExchangeName, this.placeholderRoutingKey);
+            channel.queueBind(queueName, this.enablerLogicExchangeName, this.acquireMeasurementsRoutingKey);
 //            channel.basicQos(1); // to spread the load over multiple servers we set the prefetchCount setting
 
             log.info("Receiver waiting for Placeholder messages....");
 
             Consumer consumer = new PlaceholderConsumer(channel, this);
+            beanFactory.autowireBean(consumer);
+            channel.basicConsume(queueName, false, consumer);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+    
+    /**
+     * Method creates queue and binds it globally available exchange and adequate Routing Key.
+     * It also creates a consumer for messages incoming to this queue, regarding to -placeholder- requests.
+     *
+     * @throws InterruptedException
+     * @throws IOException
+     */
+    private void startConsumerOfDataAppeared() throws InterruptedException, IOException {
+        String queueName = "enablerLogicDataAppeared";
+        Channel channel;
+        try {
+            channel = this.connection.createChannel();
+            channel.queueDeclare(queueName, true, false, false, null);
+            channel.queueBind(queueName, this.enablerLogicExchangeName, this.dataAppearedRoutingKey);
+//            channel.basicQos(1); // to spread the load over multiple servers we set the prefetchCount setting
+
+            log.info("Receiver waiting for Placeholder messages....");
+
+            Consumer consumer = new PlaceholderConsumer(channel, this);
+            beanFactory.autowireBean(consumer);
             channel.basicConsume(queueName, false, consumer);
         } catch (IOException e) {
             e.printStackTrace();
