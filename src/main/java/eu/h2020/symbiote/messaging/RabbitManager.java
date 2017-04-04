@@ -2,6 +2,9 @@ package eu.h2020.symbiote.messaging;
 
 import com.google.gson.Gson;
 import com.rabbitmq.client.*;
+
+import eu.h2020.symbiote.messaging.consumers.DataAppearedConsumer;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -44,6 +47,7 @@ public class RabbitManager {
     
     @Value("${rabbit.routingKey.enablerLogic.acquireMeasurements}")
     private String acquireMeasurementsRoutingKey;
+    
     @Value("${rabbit.routingKey.enablerLogic.dataAppeared}")
     private String dataAppearedRoutingKey;
     
@@ -200,9 +204,9 @@ public class RabbitManager {
             channel.queueBind(queueName, this.enablerLogicExchangeName, this.dataAppearedRoutingKey);
 //            channel.basicQos(1); // to spread the load over multiple servers we set the prefetchCount setting
 
-            log.info("Receiver waiting for Placeholder messages....");
+            log.info("creating DataAppearedConsumer....");
 
-            Consumer consumer = new PlaceholderConsumer(channel, this);
+            DataAppearedConsumer consumer = new DataAppearedConsumer(channel);
             beanFactory.autowireBean(consumer);
             channel.basicConsume(queueName, false, consumer);
         } catch (IOException e) {

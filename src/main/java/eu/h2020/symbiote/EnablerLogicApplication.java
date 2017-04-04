@@ -30,7 +30,7 @@ public class EnablerLogicApplication {
     public AlwaysSampler defaultSampler() {
         return new AlwaysSampler();
     }
-
+    
     @Component
     public static class CLR implements CommandLineRunner {
 
