@@ -1,19 +1,22 @@
 package eu.h2020.symbiote.messaging;
 
-import com.google.gson.Gson;
 import com.rabbitmq.client.*;
 
+import eu.h2020.symbiote.messaging.consumers.AcquireMeasurementsConsumer;
 import eu.h2020.symbiote.messaging.consumers.DataAppearedConsumer;
+import eu.h2020.symbiote.messaging.consumers.MockResourceManager;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.beans.factory.config.AutowireCapableBeanFactory;
+import org.springframework.context.annotation.PropertySource;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.PreDestroy;
 import java.io.IOException;
+import java.util.UUID;
 import java.util.concurrent.TimeoutException;
 
 /**
@@ -23,6 +26,7 @@ import java.util.concurrent.TimeoutException;
  * Created by mateuszl
  */
 @Component
+@PropertySource("classpath:bootstrap.properties")
 public class RabbitManager {
 
     private static Log log = LogFactory.getLog(RabbitManager.class);
@@ -52,6 +56,7 @@ public class RabbitManager {
     private String dataAppearedRoutingKey;
     
     private Connection connection;
+    private Channel channel;
     
     @Autowired 
     private AutowireCapableBeanFactory beanFactory;
@@ -81,7 +86,7 @@ public class RabbitManager {
      * It triggers start of all consumers used in Registry communication.
      */
     public void init() {
-        Channel channel = null;
+        
         log.info("Rabbit is being initialized!");
 
         try {
@@ -95,9 +100,16 @@ public class RabbitManager {
         if (connection != null) {
             try {
                 channel = this.connection.createChannel();
-
                 channel.exchangeDeclare(this.enablerLogicExchangeName,
                         this.enablerLogicExchangeType,
+                        this.enablerLogicExchangeDurable,
+                        this.enablerLogicExchangeAutodelete,
+                        this.enablerLogicExchangeInternal,
+                        null);
+                
+                //FOR TESTING (REMOVE BEFORU PUSH)
+                channel.exchangeDeclare("symbIoTe.resourceManager",
+                		this.enablerLogicExchangeType,
                         this.enablerLogicExchangeDurable,
                         this.enablerLogicExchangeAutodelete,
                         this.enablerLogicExchangeInternal,
@@ -143,8 +155,31 @@ public class RabbitManager {
         try {
             startConsumerOfAcquireMeasurements();
             startConsumerOfDataAppeared();
+            startConsumerMockResourceManager();	//FOR TESTING (REMOVE BEFORE PUSH)
         } catch (InterruptedException e) {
             e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+    
+    /**
+     *  ONLY FOR TESTING (REMOVE BEFORE PUSH)
+     */
+    private void startConsumerMockResourceManager() {
+        String queueName = "symbIoTe.resourceManager.startDataAcquisition";
+        Channel channel;
+        try {
+            channel = connection.createChannel();
+            channel.queueDeclare(queueName, true, false, false, null);
+            channel.queueBind(queueName, "symbIoTe.resourceManager", queueName);
+//            channel.basicQos(1); // to spread the load over multiple servers we set the prefetchCount setting
+
+            log.info("Receiver waiting for Placeholder messages....");
+
+            Consumer consumer = new MockResourceManager(channel, this);
+            beanFactory.autowireBean(consumer);
+            channel.basicConsume(queueName, false, consumer);
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -178,9 +213,9 @@ public class RabbitManager {
             channel.queueBind(queueName, this.enablerLogicExchangeName, this.acquireMeasurementsRoutingKey);
 //            channel.basicQos(1); // to spread the load over multiple servers we set the prefetchCount setting
 
-            log.info("Receiver waiting for Placeholder messages....");
+            log.info("Receiver waiting for AcquireMeasurements messages....");
 
-            Consumer consumer = new PlaceholderConsumer(channel, this);
+            Consumer consumer = new AcquireMeasurementsConsumer(channel, this);
             beanFactory.autowireBean(consumer);
             channel.basicConsume(queueName, false, consumer);
         } catch (IOException e) {
@@ -213,7 +248,7 @@ public class RabbitManager {
             e.printStackTrace();
         }
     }
-
+    
     /**
      * Method publishes given message to the given exchange and routing key.
      * Props are set for correct message handle on the receiver side.
@@ -238,6 +273,59 @@ public class RabbitManager {
         } finally {
             closeChannel(channel);
         }
+    }
+    
+    /**
+     * Method used to send message via RPC (Remote Procedure Call) pattern.
+     * In this implementation it covers asynchronous Rabbit communication with synchronous one, as it is used by conventional REST facade.
+     * Before sending a message, a temporary response queue is declared and its name is passed along with the message.
+     * When a consumer handles the message, it returns the result via the response queue.
+     * Since this is a synchronous pattern, it uses timeout of 20 seconds. If the response doesn't come in that time, the method returns with null result.
+     *
+     * @param exchangeName name of the exchange to send message to
+     * @param routingKey   routing key to send message to
+     * @param message      message to be sent
+     * @return response from the consumer or null if timeout occurs
+     */
+    public String sendRpcMessage(String exchangeName, String routingKey, String message) {
+        try {
+            log.info("Sending RPC message: " + message);
+
+            String replyQueueName = "amq.rabbitmq.reply-to";
+
+            String correlationId = UUID.randomUUID().toString();
+            AMQP.BasicProperties props = new AMQP.BasicProperties()
+                    .builder()
+                    .correlationId(correlationId)
+                    .replyTo(replyQueueName)
+                    .build();
+
+            QueueingConsumer consumer = new QueueingConsumer(channel);
+            this.channel.basicConsume(replyQueueName, true, consumer);
+
+            String responseMsg = null;
+
+            this.channel.basicPublish(exchangeName, routingKey, props, message.getBytes());
+            while (true) {
+                QueueingConsumer.Delivery delivery = consumer.nextDelivery(20000);
+                if (delivery == null) {
+                    log.info("Timeout in response retrieval");
+                    return null;
+                }
+
+                if (delivery.getProperties().getCorrelationId().equals(correlationId)) {
+                    log.info("Wrong correlationID in response message");
+                    responseMsg = new String(delivery.getBody());
+                    break;
+                }
+            }
+
+            log.info("Response received: " + responseMsg);
+            return responseMsg;
+        } catch (IOException | InterruptedException e) {
+            log.error(e.getMessage(), e);
+        }
+        return null;
     }
 
     /**

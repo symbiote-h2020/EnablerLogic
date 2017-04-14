@@ -7,11 +7,11 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import eu.h2020.symbiote.core.model.Observation;
 
 /**
- * Task abstraction model
+ * AcquisitionTask abstraction model.
  *
  * Created by Petar Krivic.
  */
-public class Task {
+public class AcquisitionTask {
 	
 	@Id
 	@JsonProperty("taskId")
@@ -26,7 +26,7 @@ public class Task {
 	@JsonProperty("data")			//as proposed in confluence, could be also observation..
 	private Observation observation;
 	
-	public Task(@JsonProperty("taskId")String taskId,
+	public AcquisitionTask(@JsonProperty("taskId")String taskId,
 				@JsonProperty("timestamp")String timestamp,
 				@JsonProperty("resourceId")String resourceId, 
 				@JsonProperty("data")Observation data){

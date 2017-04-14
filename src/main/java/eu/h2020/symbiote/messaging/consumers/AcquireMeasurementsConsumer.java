@@ -7,6 +7,9 @@ import com.rabbitmq.client.AMQP;
 import com.rabbitmq.client.Channel;
 import com.rabbitmq.client.DefaultConsumer;
 import com.rabbitmq.client.Envelope;
+
+import eu.h2020.symbiote.messaging.RabbitManager;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
@@ -19,22 +22,27 @@ import java.io.IOException;
  */
 public class AcquireMeasurementsConsumer extends DefaultConsumer {
 
-    private static Log log = LogFactory.getLog(DataAppearedConsumer.class);
-
+    private static Log log = LogFactory.getLog(AcquireMeasurementsConsumer.class);
+    RabbitManager rabbitManager;
+    
     /**
      * Constructs a new instance and records its association to the passed-in channel.
+     * Managers beans passed as parameters because of lack of possibility to inject it to consumer.
      *
-     * @param channel the channel to which this consumer is attached
-     *
+     * @param channel           the channel to which this consumer is attached
+     * @param rabbitManager     rabbit manager bean passed for access to messages manager
      */
-    public AcquireMeasurementsConsumer(Channel channel) {
-        super(channel);
+    public AcquireMeasurementsConsumer(Channel channel, RabbitManager rabbitManager) {
+   		super(channel);
+    	this.rabbitManager = rabbitManager;
     }
-
+    
     @Override
-    public void handleDelivery(String consumerTag, Envelope envelope, AMQP.BasicProperties properties, byte[] body) throws IOException {
-        String msg = new String(body);
-        log.debug( "Consume Data Appeared message: " + msg );
+    public void handleDelivery(String consumerTag, Envelope envelope, 
+    		AMQP.BasicProperties properties, byte[] body) throws IOException {
+       
+    	String msg = new String(body);
+        log.debug( "Consume AcquireMeasurements message: " + msg );
 
         //received request parsing...
         try {
