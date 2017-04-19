@@ -4,14 +4,12 @@ import com.rabbitmq.client.*;
 
 import eu.h2020.symbiote.messaging.consumers.AcquireMeasurementsConsumer;
 import eu.h2020.symbiote.messaging.consumers.DataAppearedConsumer;
-import eu.h2020.symbiote.messaging.consumers.MockResourceManager;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.beans.factory.config.AutowireCapableBeanFactory;
-import org.springframework.context.annotation.PropertySource;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.PreDestroy;
@@ -26,7 +24,6 @@ import java.util.concurrent.TimeoutException;
  * Created by mateuszl
  */
 @Component
-@PropertySource("classpath:bootstrap.properties")
 public class RabbitManager {
 
     private static Log log = LogFactory.getLog(RabbitManager.class);
@@ -106,14 +103,6 @@ public class RabbitManager {
                         this.enablerLogicExchangeAutodelete,
                         this.enablerLogicExchangeInternal,
                         null);
-                
-                //FOR TESTING (REMOVE BEFORU PUSH)
-                channel.exchangeDeclare("symbIoTe.resourceManager",
-                		this.enablerLogicExchangeType,
-                        this.enablerLogicExchangeDurable,
-                        this.enablerLogicExchangeAutodelete,
-                        this.enablerLogicExchangeInternal,
-                        null);
 
                 startConsumers();
 
@@ -140,6 +129,7 @@ public class RabbitManager {
                 channel.queueUnbind("enablerLogicDataAppeared", this.enablerLogicExchangeName, this.acquireMeasurementsRoutingKey);
                 channel.queueDelete("enablerLogicDataAppeared");
                 channel.queueDelete("enablerLogicAcquireMeasurements");
+                channel.exchangeDelete(this.enablerLogicExchangeName);
                 closeChannel(channel);
                 this.connection.close();
             }
@@ -155,31 +145,8 @@ public class RabbitManager {
         try {
             startConsumerOfAcquireMeasurements();
             startConsumerOfDataAppeared();
-            startConsumerMockResourceManager();	//FOR TESTING (REMOVE BEFORE PUSH)
         } catch (InterruptedException e) {
             e.printStackTrace();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
-    
-    /**
-     *  ONLY FOR TESTING (REMOVE BEFORE PUSH)
-     */
-    private void startConsumerMockResourceManager() {
-        String queueName = "symbIoTe.resourceManager.startDataAcquisition";
-        Channel channel;
-        try {
-            channel = connection.createChannel();
-            channel.queueDeclare(queueName, true, false, false, null);
-            channel.queueBind(queueName, "symbIoTe.resourceManager", queueName);
-//            channel.basicQos(1); // to spread the load over multiple servers we set the prefetchCount setting
-
-            log.info("Receiver waiting for Placeholder messages....");
-
-            Consumer consumer = new MockResourceManager(channel, this);
-            beanFactory.autowireBean(consumer);
-            channel.basicConsume(queueName, false, consumer);
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -199,7 +166,7 @@ public class RabbitManager {
 
     /**
      * Method creates queue and binds it globally available exchange and adequate Routing Key.
-     * It also creates a consumer for messages incoming to this queue, regarding to -placeholder- requests.
+     * It also creates a consumer for messages incoming to this queue, regarding to Domain Specific Interface requests.
      *
      * @throws InterruptedException
      * @throws IOException
@@ -225,7 +192,7 @@ public class RabbitManager {
     
     /**
      * Method creates queue and binds it globally available exchange and adequate Routing Key.
-     * It also creates a consumer for messages incoming to this queue, regarding to -placeholder- requests.
+     * It also creates a consumer for messages incoming to this queue, regarding to Platform Proxy messages.
      *
      * @throws InterruptedException
      * @throws IOException
@@ -314,7 +281,7 @@ public class RabbitManager {
                 }
 
                 if (delivery.getProperties().getCorrelationId().equals(correlationId)) {
-                    log.info("Wrong correlationID in response message");
+                    log.info("Correct correlationID in response message");
                     responseMsg = new String(delivery.getBody());
                     break;
                 }

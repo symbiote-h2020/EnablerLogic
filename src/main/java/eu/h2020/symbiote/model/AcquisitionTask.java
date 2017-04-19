@@ -18,12 +18,12 @@ public class AcquisitionTask {
 	private String taskId;
 	
 	@JsonProperty("timestamp")
-	private String timestamp;		//not sure if String or something else..
+	private String timestamp;		
 	
 	@JsonProperty("resourceId")
 	private String resourceId;
 	
-	@JsonProperty("data")			//as proposed in confluence, could be also observation..
+	@JsonProperty("data")
 	private Observation observation;
 	
 	public AcquisitionTask(@JsonProperty("taskId")String taskId,

@@ -45,7 +45,7 @@ public class EnablerLogicApplication {
 
         @Override
         public void run(String... args) throws Exception {
-//
+
             //message retrieval - start rabbit exchange and consumers
             this.rabbitManager.init();
             log.info("CLR run() and Rabbit Manager init()");

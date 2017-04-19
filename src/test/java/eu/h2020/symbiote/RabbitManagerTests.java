@@ -1,69 +1,145 @@
 package eu.h2020.symbiote;
 
+import org.junit.After;
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.springframework.amqp.core.Binding;
-import org.springframework.amqp.core.BindingBuilder;
-import org.springframework.amqp.core.Queue;
-import org.springframework.amqp.core.TopicExchange;
-//import org.mockito.runners.MockitoJUnitRunner;
-import org.springframework.amqp.rabbit.AsyncRabbitTemplate;
-import org.springframework.amqp.rabbit.AsyncRabbitTemplate.RabbitConverterFuture;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.PropertySource;
-import org.springframework.test.context.ContextConfiguration;
-import org.springframework.util.concurrent.ListenableFuture;
-import org.springframework.util.concurrent.ListenableFutureCallback;
-import org.springframework.web.context.request.async.DeferredResult;
+
 
 import com.rabbitmq.client.AMQP;
 import com.rabbitmq.client.Channel;
 import com.rabbitmq.client.Connection;
 import com.rabbitmq.client.ConnectionFactory;
 import com.rabbitmq.client.Consumer;
+import com.rabbitmq.client.DefaultConsumer;
+import com.rabbitmq.client.Envelope;
 import com.rabbitmq.client.QueueingConsumer;
 
-import eu.h2020.symbiote.messaging.RabbitManager;
-import eu.h2020.symbiote.messaging.consumers.MockResourceManager;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.fail;
 
 import java.io.IOException;
 import java.util.UUID;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 
+/**
+ * Test for RPC communication with Resource Manager.
+ * @author PetarKrivic
+ *
+ */
 @RunWith(SpringJUnit4ClassRunner.class)
 public class RabbitManagerTests {
 	
 	private static Log log = LogFactory.getLog(RabbitManagerTests.class);
 	Connection connection;
-	Channel channel;
+    Channel channel;
+    
+    String resourceManagerQueueName = "symbIoTe.resourceManager.startDataAcquisition";
+    String resourceManagerExchangeName = "symbIoTe.resourceManager";
+    
+    String resourceManagerResponse = "ResourceManagerResponse";
+	
+    /**
+     * Creation of new connection and channel to RabbitMQ.
+     * Resource Manager Exchange and Queue setup.
+     * Resource Manager consumer setup.
+     * @throws TimeoutException
+     */
+	@Before
+	public void initialize() throws TimeoutException {
+		
+        try {
+        	ConnectionFactory factory = new ConnectionFactory();
+        	connection = factory.newConnection();
+            channel = connection.createChannel();
+            
+            //ResourceManager exchange
+            channel.exchangeDeclare(resourceManagerExchangeName,
+            		"topic",
+                    true,
+                    false,
+                    false,
+                    null);
+            
+            channel.queueDeclare(resourceManagerQueueName, true, false, false, null);
+            channel.queueBind(resourceManagerQueueName, resourceManagerExchangeName, resourceManagerQueueName);
+
+            log.info("ResourceManager waiting for EnablerLogic messages....");
+
+            Consumer consumer = new ResourceManagerMock(channel);
+            channel.basicConsume(resourceManagerQueueName, false, consumer);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+	}
 	
     @Test
     public void testSync() throws Exception{
     	
-    	ConnectionFactory factory = new ConnectionFactory();
-        this.connection = factory.newConnection();
-        channel = this.connection.createChannel();
-        sendRpcMessage("symbIoTe.resourceManager", "symbIoTe.resourceManager.startDataAcquisition", "hey hey yeah yeah");
-    	assertEquals("ok", "ok");
-    	    	
+        String response = sendRpcMessage(resourceManagerExchangeName, resourceManagerQueueName, "EnablerLogicRequest");
+    	assertEquals(resourceManagerResponse, response);   	    	
     }
     
+    /**
+     * Removal of declared queue and exchange.
+     * @throws IOException
+     * @throws TimeoutException
+     */
+    @After
+    public void cleanup() throws IOException, TimeoutException{
+    	channel.queueDelete(resourceManagerQueueName);
+    	channel.exchangeDelete(resourceManagerExchangeName);
+    	this.channel.close();
+    	this.connection.close();
+    }
+    
+    /**
+     * Resource Manager consumer mock.
+     */
+    class ResourceManagerMock extends DefaultConsumer{
+
+		public ResourceManagerMock(Channel channel) {
+			super(channel);
+		}
+		
+		@Override
+	    public void handleDelivery(String consumerTag, Envelope envelope,
+	                               AMQP.BasicProperties properties, byte[] body)
+	            throws IOException {
+			
+	        String message = new String(body, "UTF-8");
+	        log.info("ResourceManager received EnablerLogic's message: '" + message + "'");
+
+	        AMQP.BasicProperties replyProps = new AMQP.BasicProperties
+	                .Builder()
+	                .correlationId(properties.getCorrelationId())
+	                .build();
+
+	        this.getChannel().basicPublish("", properties.getReplyTo(), replyProps, resourceManagerResponse.getBytes());
+	        log.info("ResourceManager sent response: '" + resourceManagerResponse + "'");
+
+	        this.getChannel().basicAck(envelope.getDeliveryTag(), false);
+	    }
+    }
+    
+    /**
+     * Method for sending RPC message.
+     * @param exchangeName
+     * @param routingKey
+     * @param message
+     * @return
+     */
     public String sendRpcMessage(String exchangeName, String routingKey, String message) {
         try {
             log.info("Sending RPC message: " + message);
 
             String replyQueueName = "amq.rabbitmq.reply-to";
-
             String correlationId = UUID.randomUUID().toString();
+            
             AMQP.BasicProperties props = new AMQP.BasicProperties()
                     .builder()
                     .correlationId(correlationId)
@@ -84,7 +160,6 @@ public class RabbitManagerTests {
                 }
 
                 if (delivery.getProperties().getCorrelationId().equals(correlationId)) {
-                    log.info("Wrong correlationID in response message");
                     responseMsg = new String(delivery.getBody());
                     break;
                 }
