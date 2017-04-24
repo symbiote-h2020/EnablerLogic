@@ -178,9 +178,9 @@ public class RabbitManager {
             channel = this.connection.createChannel();
             channel.queueDeclare(queueName, true, false, false, null);
             channel.queueBind(queueName, this.enablerLogicExchangeName, this.acquireMeasurementsRoutingKey);
-            channel.basicQos(1); // to spread the load over multiple servers we set the prefetchCount setting
+//            channel.basicQos(1); // to spread the load over multiple servers we set the prefetchCount setting
 
-            log.info("Receiver waiting for AcquireMeasurements messages....");
+            log.info("Creating AcquireMeasurementsConsumer...");
 
             Consumer consumer = new AcquireMeasurementsConsumer(channel, this);
             beanFactory.autowireBean(consumer);
@@ -206,9 +206,9 @@ public class RabbitManager {
             channel.queueBind(queueName, this.enablerLogicExchangeName, this.dataAppearedRoutingKey);
 //            channel.basicQos(1); // to spread the load over multiple servers we set the prefetchCount setting
 
-            log.info("creating DataAppearedConsumer....");
+            log.info("Creating DataAppearedConsumer....");
 
-            DataAppearedConsumer consumer = new DataAppearedConsumer(channel);
+            DataAppearedConsumer consumer = new DataAppearedConsumer(channel,this);
             beanFactory.autowireBean(consumer);
             channel.basicConsume(queueName, false, consumer);
         } catch (IOException e) {
