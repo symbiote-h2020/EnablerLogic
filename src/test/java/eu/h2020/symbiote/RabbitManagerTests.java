@@ -77,6 +77,10 @@ public class RabbitManagerTests {
         }
 	}
 	
+	/**
+	 * Testing the synchronous RPC communication with ResourceManager.
+	 * @throws Exception
+	 */
     @Test
     public void testSync() throws Exception{
     	

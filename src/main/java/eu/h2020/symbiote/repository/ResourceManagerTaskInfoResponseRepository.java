@@ -7,4 +7,6 @@ import eu.h2020.symbiote.enabler.messaging.model.ResourceManagerTaskInfoResponse
 
 @Repository
 public interface ResourceManagerTaskInfoResponseRepository extends MongoRepository<ResourceManagerTaskInfoResponse,String>{
+	
+	public ResourceManagerTaskInfoResponse findByTaskId(String TaskId);
 }
