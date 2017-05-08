@@ -1,6 +1,6 @@
 package eu.h2020.symbiote.messaging.consumers;
 
-import com.google.gson.Gson;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.rabbitmq.client.AMQP;
 import com.rabbitmq.client.Channel;
 import com.rabbitmq.client.DefaultConsumer;
@@ -46,12 +46,13 @@ public class DataAppearedConsumer extends DefaultConsumer {
         String msg = new String(body, "UTF-8");
         log.info( "Consume DataAppeared message: " + msg );
 
-        //storing the received data...
-        Gson gson = new Gson();
-        EnablerLogicDataAppearedMessage dataAppearedMessage = gson.fromJson(msg, EnablerLogicDataAppearedMessage.class);
-        
+        //store the received data to MongoDB...
+        ObjectMapper om = new ObjectMapper();
+        EnablerLogicDataAppearedMessage dataAppearedMessage = om.readValue(msg, EnablerLogicDataAppearedMessage.class);
+        		
         repository.save(dataAppearedMessage);
         
+        //In case answer is needed
         /**
         try {
             ObjectMapper mapper = new ObjectMapper();
