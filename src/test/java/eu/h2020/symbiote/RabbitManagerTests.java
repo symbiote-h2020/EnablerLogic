@@ -15,10 +15,14 @@ import com.rabbitmq.client.DefaultConsumer;
 import com.rabbitmq.client.Envelope;
 import com.rabbitmq.client.QueueingConsumer;
 
+import eu.h2020.symbiote.enabler.messaging.model.ResourceManagerAcquisitionStartRequest;
+import eu.h2020.symbiote.enabler.messaging.model.ResourceManagerTaskInfoRequest;
 
 import static org.junit.Assert.assertEquals;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.TimeoutException;
 
@@ -95,10 +99,10 @@ public class RabbitManagerTests {
      */
     @After
     public void cleanup() throws IOException, TimeoutException{
-    	channel.queueDelete(resourceManagerQueueName);
-    	channel.exchangeDelete(resourceManagerExchangeName);
-    	this.channel.close();
-    	this.connection.close();
+    	//channel.queueDelete(resourceManagerQueueName);
+    	//channel.exchangeDelete(resourceManagerExchangeName);
+    	//this.channel.close();
+    	//this.connection.close();
     }
     
     /**

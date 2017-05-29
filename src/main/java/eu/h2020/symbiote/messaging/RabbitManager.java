@@ -109,7 +109,7 @@ public class RabbitManager {
             } catch (IOException e) {
                 e.printStackTrace();
             } finally {
-                closeChannel(channel);
+                //closeChannel(channel);
             }
         }
     }

@@ -1,7 +1,6 @@
 package eu.h2020.symbiote.messaging.consumers;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.gson.Gson;
 import com.rabbitmq.client.AMQP;
 import com.rabbitmq.client.Channel;
 import com.rabbitmq.client.DefaultConsumer;
@@ -120,14 +119,14 @@ public class AcquireMeasurementsConsumer extends DefaultConsumer {
         ObjectMapper objectMapper = new ObjectMapper();
         log.info("sending message to ResourceManager: " + objectMapper.writeValueAsString(dummyRequest));
         
-        String responseString = rabbitManager.sendRpcMessage(resourceManagerExchangeName, resourceManagerQueueName, dummyRequest.toString());
+        
+        String responseString = rabbitManager.sendRpcMessage(resourceManagerExchangeName, resourceManagerQueueName, objectMapper.writeValueAsString(dummyRequest));
         
         //Hardcoded response for testing purposes below...
         //String responseString = "{\r\n  \"resources\": [\r\n    {\r\n      \"taskId\": \"generated id by enabler logic\",\r\n      \"count\": \"2\",\r\n      \"location\": \"symbolicLocation\",\r\n      \"observesProperty\": [\r\n        \"temperature\",\r\n        \"humidity\"\r\n      ],\r\n      \"interval\": \"5\",\r\n      \"resourceIds\": [\r\n        \"id1\",\r\n        \"id2\"\r\n      ]\r\n    },\r\n    {\r\n      \"taskId\": \"generated id by enabler logic\",\r\n      \"count\": \"1\",\r\n      \"location\": \"symbolicLocation\",\r\n      \"observesProperty\": [\r\n        \"air quality\"\r\n      ],\r\n      \"interval\": \"3\",\r\n      \"resourceIds\": [\r\n        \"id1\"\r\n      ]\r\n    }\r\n  ]\r\n}";
         
-        Gson gson = new Gson();
-        ResourceManagerAcquisitionStartResponse response = gson.fromJson(responseString.trim(), ResourceManagerAcquisitionStartResponse.class);
-        
+        ResourceManagerAcquisitionStartResponse response = objectMapper.readValue(responseString.trim(), ResourceManagerAcquisitionStartResponse.class);
+
         log.info("Storing tasks with received resourceIds to MongoDB...");
         for (Iterator<ResourceManagerTaskInfoResponse> iter = response.getResources().iterator(); iter.hasNext();) {
             ResourceManagerTaskInfoResponse taskInfoResponse = (ResourceManagerTaskInfoResponse) iter.next();
