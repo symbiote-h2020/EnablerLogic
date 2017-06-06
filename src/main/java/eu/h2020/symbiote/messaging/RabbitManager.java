@@ -21,7 +21,7 @@ import java.util.concurrent.TimeoutException;
  * Bean used to manage internal communication using RabbitMQ.
  * It is responsible for declaring exchanges and using routing keys from centralized config server.
  * <p>
- * Created by mateuszl
+ * Created by Petar Krivic
  */
 @Component
 public class RabbitManager {
@@ -238,7 +238,7 @@ public class RabbitManager {
         } catch (IOException e) {
             e.printStackTrace();
         } finally {
-            closeChannel(channel);
+            //closeChannel(channel);
         }
     }
     
