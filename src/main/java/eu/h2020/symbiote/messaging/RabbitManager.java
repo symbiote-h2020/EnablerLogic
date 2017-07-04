@@ -152,13 +152,6 @@ public class RabbitManager {
         }
     }
 
-//    public void sendPlaceholderMessage(String placeholder) { // arg should be object instead of String, e.g. Resource
-//        Gson gson = new Gson();
-//        String message = gson.toJson(placeholder);
-//        sendMessage(this.placeholderExchangeName, this.placeholderRoutingKey, message);
-//        log.info("- placeholder message sent");
-//    }
-
     public void sendCustomMessage(String exchange, String routingKey, String objectInJson) {
         sendMessage(exchange, routingKey, objectInJson);
         log.info("- Custom message sent");
