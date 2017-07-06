@@ -1,26 +1,41 @@
 package eu.h2020.symbiote.messaging.consumers;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.rabbitmq.client.AMQP;
 import com.rabbitmq.client.Channel;
 import com.rabbitmq.client.DefaultConsumer;
 import com.rabbitmq.client.Envelope;
 
-import eu.h2020.symbiote.enabler.messaging.model.EnablerLogicDataAppearedMessage;
 import eu.h2020.symbiote.messaging.RabbitManager;
-import eu.h2020.symbiote.repository.EnablerLogicDataAppearedMessageRepository;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.json.JSONObject;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.client.ClientHttpRequest;
+import org.springframework.http.client.ClientHttpResponse;
+import org.springframework.http.client.SimpleClientHttpRequestFactory;
+import org.w3c.dom.Document;
+import org.w3c.dom.Node;
+import org.w3c.dom.NodeList;
+import org.xml.sax.InputSource;
 
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.StringReader;
+import java.net.URI;
+
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
 
 /**
  * Consumer of the Poi Search Message.
  * Created by Petar Krivic on 04/07/2017.
  */
 public class PoiSearchConsumer extends DefaultConsumer {
+	
+	private static String overpassURL = "www.overpass-api.de/api/xapi?node";
+	private static String nominatimURL = "nominatim.openstreetmap.org/?format=json&";
 
     private static Log log = LogFactory.getLog(PoiSearchConsumer.class);
     RabbitManager rabbitManager;
@@ -44,6 +59,30 @@ public class PoiSearchConsumer extends DefaultConsumer {
         log.info( "Consume PoiSearch message: " + msg );
 
         //Consume message
+        //from received message symbolicLocation is sent to nominatim-api to get coordinates
+        //dummy data for testing
+		try {
+			String location = sendGetHttpRequest("http://"+nominatimURL+"city=split");
+			String jsonLocation = (String) location.subSequence(1, location.length()-1);
+			log.info( jsonLocation );
+			
+			//from http-response bounding-box coordinates are parsed and sent to overpass-api
+			//overpass-api returns requested PoIs
+			JSONObject jsonResponse = new JSONObject( jsonLocation );
+			final String geodata = (String) jsonResponse.get("boundingbox").toString();
+			log.info(geodata);
+			
+			String [] geo = geodata.replaceAll("\"", "").split(",");
+			
+			String poiResponse = sendGetHttpRequest("http://"+overpassURL+"[amenity=hospital][bbox="+geo[2]+","+geo[0]+","+geo[3]+","+geo[1] +"]");
+			log.info(poiResponse);
+			
+			//parse received XML with PoIs
+			
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
         
         //In case answer is needed
         /**
@@ -71,5 +110,27 @@ public class PoiSearchConsumer extends DefaultConsumer {
             log.error("I/O Exception occurred when parsing Resource object" , e);
         }
         **/
+    }
+    
+    private static String sendGetHttpRequest(String address) throws Exception{
+    	SimpleClientHttpRequestFactory factory = new SimpleClientHttpRequestFactory();
+        factory.setConnectTimeout(5000);
+        
+        URI uri = new URI(address);
+        HttpMethod method = HttpMethod.GET;
+        ClientHttpRequest request = factory.createRequest(uri, method);
+        ClientHttpResponse response = request.execute();
+        
+        BufferedReader rdr = new BufferedReader(new InputStreamReader(response.getBody()));
+        
+        StringBuilder builder = new StringBuilder();
+        String responseString = "";
+
+        while ((responseString = rdr.readLine()) != null) {
+            builder.append(responseString);
+        }
+
+        String result = builder.toString();
+        return result;
     }
 }
