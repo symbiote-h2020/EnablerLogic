@@ -64,21 +64,40 @@ public class PoiSearchConsumer extends DefaultConsumer {
 		try {
 			String location = sendGetHttpRequest("http://"+nominatimURL+"city=split");
 			String jsonLocation = (String) location.subSequence(1, location.length()-1);
-			log.info( jsonLocation );
+			log.info("Response from nominatim-api received: " + jsonLocation );
 			
 			//from http-response bounding-box coordinates are parsed and sent to overpass-api
 			//overpass-api returns requested PoIs
 			JSONObject jsonResponse = new JSONObject( jsonLocation );
 			final String geodata = (String) jsonResponse.get("boundingbox").toString();
-			log.info(geodata);
 			
-			String [] geo = geodata.replaceAll("\"", "").split(",");
+			String [] geo = geodata.substring(1,geodata.length()-2).replaceAll("\"", "").split(",");
 			
+			log.info("Sending request: "+"http://"+overpassURL+"[amenity=hospital][bbox="+geo[2]+","+geo[0]+","+geo[3]+","+geo[1] +"]");
 			String poiResponse = sendGetHttpRequest("http://"+overpassURL+"[amenity=hospital][bbox="+geo[2]+","+geo[0]+","+geo[3]+","+geo[1] +"]");
-			log.info(poiResponse);
+			log.info("Response from overpass-api received: " + poiResponse);
 			
 			//parse received XML with PoIs
+			DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+			DocumentBuilder builder = factory.newDocumentBuilder();
+			Document document = builder.parse( new InputSource( new StringReader( poiResponse ) ) );
 			
+			NodeList nl = document.getElementsByTagName("node");
+			
+			for (int i = 0; i < nl.getLength(); i++) {
+		        Node currentNode = nl.item(i);
+		        
+		        log.info("lat: "+currentNode.getAttributes().getNamedItem("lat"));
+		        log.info("lat: "+currentNode.getAttributes().getNamedItem("lon"));
+		        NodeList children = currentNode.getChildNodes();
+
+		        for (int j = 0; j < children.getLength(); j++) {
+		        	Node currentChild = children.item(j);
+		        	if(currentChild.getNodeName().equals("tag") && currentChild.getAttributes().getNamedItem("k").toString().contains("name")){
+		        		log.info(currentChild.getAttributes().getNamedItem("v"));
+		        	}
+		        }
+			}		
 		} catch (Exception e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
