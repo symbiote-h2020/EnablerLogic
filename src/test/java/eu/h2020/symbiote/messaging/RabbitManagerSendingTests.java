@@ -1,11 +1,9 @@
-package eu.h2020.symbiote;
+package eu.h2020.symbiote.messaging;
 
 import static org.junit.Assert.assertEquals;
-import static org.mockito.Matchers.endsWith;
 
 import java.io.IOException;
 import java.util.UUID;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 import org.apache.commons.logging.Log;
@@ -16,7 +14,12 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
+import org.springframework.amqp.rabbit.annotation.RabbitBootstrapConfiguration;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.context.properties.EnableConfigurationProperties;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Import;
+import org.springframework.test.context.junit4.SpringRunner;
 
 import com.rabbitmq.client.AMQP;
 import com.rabbitmq.client.Channel;
@@ -27,6 +30,10 @@ import com.rabbitmq.client.DefaultConsumer;
 import com.rabbitmq.client.Envelope;
 import com.rabbitmq.client.QueueingConsumer;
 
+import eu.h2020.symbiote.messaging.RabbitManager;
+import eu.h2020.symbiote.messaging.properties.EnablerLogicExchangeProperties;
+import eu.h2020.symbiote.messaging.properties.RabbitConnectionProperties;
+import eu.h2020.symbiote.messaging.properties.RoutingKeysProperties;
 import io.arivera.oss.embedded.rabbitmq.EmbeddedRabbitMq;
 import io.arivera.oss.embedded.rabbitmq.EmbeddedRabbitMqConfig;
 
@@ -35,16 +42,18 @@ import io.arivera.oss.embedded.rabbitmq.EmbeddedRabbitMqConfig;
  * @author PetarKrivic
  *
  */
-@RunWith(SpringJUnit4ClassRunner.class)
-public class RabbitManagerTests {
-	private static Log log = LogFactory.getLog(RabbitManagerTests.class);
+@RunWith(SpringRunner.class)
+@Import(RabbitManager.class)
+@EnableConfigurationProperties({EnablerLogicExchangeProperties.class, RoutingKeysProperties.class, RabbitConnectionProperties.class})
+public class RabbitManagerSendingTests {
+	private static Log log = LogFactory.getLog(RabbitManagerSendingTests.class);
 	private static final int RABBIT_STARTING_TIMEOUT = 10_000;
 
 	private Connection connection;
     private Channel channel;
     
-    private String resourceManagerQueueName = "symbIoTe.resourceManager.startDataAcquisition";
-    private String resourceManagerExchangeName = "symbIoTe.resourceManager";
+    private String resourceManagerQueueName = "queueName";
+    private String resourceManagerExchangeName = "exchangeName";
     
     private String resourceManagerResponse = "ResourceManagerResponse";
 	
