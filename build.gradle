@@ -51,6 +51,7 @@ dependencies {
 	//compile('com.github.symbiote-h2020:SymbIoTeLibraries:develop-SNAPSHOT') { changing = true }
 	
     testCompile('org.springframework.boot:spring-boot-starter-test')
+    testCompile('io.arivera.oss:embedded-rabbitmq:1.1.2')
 }
 
 dependencyManagement {
@@ -73,4 +74,8 @@ publishing {
 configurations.all {
 	resolutionStrategy.cacheChangingModulesFor 0, 'seconds'
 }
+
+// publishing starter to mavenLocal
+// > gradle clean build publishToMavenLocal
+
 

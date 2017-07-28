@@ -1,10 +1,22 @@
 package eu.h2020.symbiote;
 
+import static org.junit.Assert.assertEquals;
+import static org.mockito.Matchers.endsWith;
+
+import java.io.IOException;
+import java.util.UUID;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
+
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.junit.After;
+import org.junit.AfterClass;
 import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-
+import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 
 import com.rabbitmq.client.AMQP;
 import com.rabbitmq.client.Channel;
@@ -15,20 +27,8 @@ import com.rabbitmq.client.DefaultConsumer;
 import com.rabbitmq.client.Envelope;
 import com.rabbitmq.client.QueueingConsumer;
 
-import eu.h2020.symbiote.enabler.messaging.model.ResourceManagerAcquisitionStartRequest;
-import eu.h2020.symbiote.enabler.messaging.model.ResourceManagerTaskInfoRequest;
-
-import static org.junit.Assert.assertEquals;
-
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.UUID;
-import java.util.concurrent.TimeoutException;
-
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
+import io.arivera.oss.embedded.rabbitmq.EmbeddedRabbitMq;
+import io.arivera.oss.embedded.rabbitmq.EmbeddedRabbitMqConfig;
 
 /**
  * Test for RPC communication with Resource Manager.
@@ -37,16 +37,33 @@ import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
  */
 @RunWith(SpringJUnit4ClassRunner.class)
 public class RabbitManagerTests {
-	
 	private static Log log = LogFactory.getLog(RabbitManagerTests.class);
-	Connection connection;
-    Channel channel;
+	private static final int RABBIT_STARTING_TIMEOUT = 10_000;
+
+	private Connection connection;
+    private Channel channel;
     
-    String resourceManagerQueueName = "symbIoTe.resourceManager.startDataAcquisition";
-    String resourceManagerExchangeName = "symbIoTe.resourceManager";
+    private String resourceManagerQueueName = "symbIoTe.resourceManager.startDataAcquisition";
+    private String resourceManagerExchangeName = "symbIoTe.resourceManager";
     
-    String resourceManagerResponse = "ResourceManagerResponse";
+    private String resourceManagerResponse = "ResourceManagerResponse";
 	
+    private static EmbeddedRabbitMq rabbitMq;
+	
+    @BeforeClass
+    public static void startRabbit() {
+	    	EmbeddedRabbitMqConfig config = new EmbeddedRabbitMqConfig.Builder()
+	    			.rabbitMqServerInitializationTimeoutInMillis(RABBIT_STARTING_TIMEOUT)
+	    			.build();
+	    	rabbitMq = new EmbeddedRabbitMq(config);
+	    	rabbitMq.start();
+    }
+    
+    @AfterClass
+    public static void stopRabbit() {
+    		rabbitMq.stop();
+    }
+    
     /**
      * Creation of new connection and channel to RabbitMQ.
      * Resource Manager Exchange and Queue setup.
