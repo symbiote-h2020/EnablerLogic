@@ -1,21 +1,12 @@
 package eu.h2020.symbiote.messaging;
 
-import static org.awaitility.Awaitility.*;
 import static org.assertj.core.api.Assertions.assertThat;
 import static com.revinate.assertj.json.JsonPathAssert.assertThat;
-import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 
 import java.io.IOException;
-import java.io.UnsupportedEncodingException;
-import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
-import java.util.UUID;
-import java.util.concurrent.Callable;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 
-import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
@@ -24,18 +15,14 @@ import org.junit.runner.RunWith;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.amqp.core.Message;
-import org.springframework.amqp.core.MessageProperties;
 import org.springframework.amqp.core.MessagePropertiesBuilder;
 import org.springframework.amqp.core.ReceiveAndReplyCallback;
 import org.springframework.amqp.core.ReceiveAndReplyMessageCallback;
 import org.springframework.amqp.rabbit.connection.CachingConnectionFactory;
 import org.springframework.amqp.rabbit.connection.Connection;
 import org.springframework.amqp.rabbit.connection.ConnectionFactory;
-import org.springframework.amqp.rabbit.connection.SimpleRoutingConnectionFactory;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
-import org.springframework.amqp.rabbit.support.CorrelationData;
 import org.springframework.amqp.support.converter.Jackson2JsonMessageConverter;
-import org.springframework.amqp.support.converter.JsonMessageConverter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
@@ -47,7 +34,6 @@ import com.jayway.jsonpath.DocumentContext;
 import com.jayway.jsonpath.JsonPath;
 import com.rabbitmq.client.Channel;
 
-import ch.qos.logback.classic.joran.action.ReceiverAction;
 import eu.h2020.symbiote.messaging.properties.EnablerLogicExchangeProperties;
 import eu.h2020.symbiote.messaging.properties.RabbitConnectionProperties;
 import eu.h2020.symbiote.messaging.properties.RoutingKeysProperties;
@@ -57,6 +43,7 @@ import io.arivera.oss.embedded.rabbitmq.bin.RabbitMqPlugins;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+
 /**
  * Test for RPC communication with Resource Manager.
  * @author PetarKrivic
@@ -92,8 +79,6 @@ public class RabbitManagerSendingTests {
 	private Connection connection;
     private Channel channel;
     
-    private String resourceManagerResponse = "ResourceManagerResponse";
-	
     private static EmbeddedRabbitMq rabbitMq;
     
     @Autowired
@@ -106,7 +91,7 @@ public class RabbitManagerSendingTests {
     private ConnectionFactory factory;
     
     @BeforeClass
-    public static void startRabbit() {
+    public static void startEmbeddedRabbit() {
 	    	EmbeddedRabbitMqConfig config = new EmbeddedRabbitMqConfig.Builder()
 	    			.rabbitMqServerInitializationTimeoutInMillis(RABBIT_STARTING_TIMEOUT)
 	    			.build();
@@ -120,15 +105,13 @@ public class RabbitManagerSendingTests {
     }
     
     @AfterClass
-    public static void stopRabbit() {
+    public static void stopEmbeddedRabbit() {
     		rabbitMq.stop();
     }
     
     
     /**
-     * Creation of new connection and channel to RabbitMQ.
-     * Resource Manager Exchange and Queue setup.
-     * Resource Manager consumer setup.
+     * Cleaning up after previous test and creation of new connection and channel to RabbitMQ.
      * @throws Exception
      */
 	@Before
@@ -264,18 +247,5 @@ public class RabbitManagerSendingTests {
 	    	
 	    	assertThat(respObject.getName()).isEqualTo("sponge bob");
 	    	assertThat(respObject.getAge()).isEqualTo(18);
-    }
-    
-    /**
-     * Removal of declared queue and exchange.
-     * @throws IOException
-     * @throws TimeoutException
-     */
-    @After
-    public void cleanup() throws IOException, TimeoutException{
-//    		channel.queueDelete(RECEIVING_QUEUE_NAME);
-//    		channel.exchangeDelete(EXCHANGE_NAME);
-//    		this.channel.close();
-//    		this.connection.close();
     }
 }

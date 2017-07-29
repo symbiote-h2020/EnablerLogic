@@ -1,35 +1,15 @@
 package eu.h2020.symbiote.messaging;
 
-import com.rabbitmq.client.*;
-
-import eu.h2020.symbiote.messaging.RabbitManagerSendingTests.ModelObject;
-import eu.h2020.symbiote.messaging.consumers.AcquireMeasurementsConsumer;
-import eu.h2020.symbiote.messaging.consumers.DataAppearedConsumer;
-import eu.h2020.symbiote.messaging.properties.EnablerLogicExchangeProperties;
-import eu.h2020.symbiote.messaging.properties.RabbitConnectionProperties;
-import eu.h2020.symbiote.messaging.properties.RoutingKeysProperties;
+import java.nio.charset.StandardCharsets;
+import java.util.UUID;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.slf4j.spi.LocationAwareLogger;
-import org.springframework.amqp.AmqpException;
 import org.springframework.amqp.core.Message;
-import org.springframework.amqp.core.MessageProperties;
 import org.springframework.amqp.core.MessagePropertiesBuilder;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.amqp.rabbit.support.CorrelationData;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.beans.factory.config.AutowireCapableBeanFactory;
 import org.springframework.stereotype.Component;
-
-import javax.annotation.PreDestroy;
-import java.io.IOException;
-import java.io.UnsupportedEncodingException;
-import java.nio.charset.Charset;
-import java.nio.charset.StandardCharsets;
-import java.util.UUID;
-import java.util.concurrent.TimeoutException;
 
 /**
  * Bean used to manage internal communication using RabbitMQ. It is responsible
