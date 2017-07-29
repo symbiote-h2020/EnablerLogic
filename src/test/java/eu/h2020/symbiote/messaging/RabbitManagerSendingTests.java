@@ -47,6 +47,7 @@ import com.jayway.jsonpath.DocumentContext;
 import com.jayway.jsonpath.JsonPath;
 import com.rabbitmq.client.Channel;
 
+import ch.qos.logback.classic.joran.action.ReceiverAction;
 import eu.h2020.symbiote.messaging.properties.EnablerLogicExchangeProperties;
 import eu.h2020.symbiote.messaging.properties.RabbitConnectionProperties;
 import eu.h2020.symbiote.messaging.properties.RoutingKeysProperties;
@@ -234,6 +235,35 @@ public class RabbitManagerSendingTests {
 		String response = rabbitManager.sendRpcMessage(EXCHANGE_NAME, RECEIVING_ROUTING_KEY, sendMessage);
     	
 	    	assertThat(response).isEqualTo(sendMessage + "!!!");
+    }
+    
+    public static interface ReceiveAndReplyModelObjectCallback extends ReceiveAndReplyCallback<ModelObject, ModelObject> {}
+    
+    @Test
+    public void sendingRPC_shouldWaitForResponseInJSONObject() throws Exception{
+	    	// given
+	    	ModelObject sendObject = new ModelObject("bob", 17);
+	    	Thread t = new Thread(() -> {
+	    		log.info("receiving thread started");
+	    		rabbitTemplate.setReceiveTimeout(20_000);
+	    		rabbitTemplate.receiveAndReply(RECEIVING_QUEUE_NAME, new ReceiveAndReplyModelObjectCallback() {
+	    			@Override
+				public ModelObject handle(ModelObject payload) {
+	    				log.info("receive thread received {}", payload);
+	    				ModelObject rmsg = new ModelObject("sponge " + payload.getName(), 18);
+	    				log.info("returning {}", rmsg);
+	    				return rmsg;
+	    			}
+	    		});
+	    		log.info("************** receiving thread finished");
+	    	});
+	    	t.start();
+	    	
+	    	// when
+	    	ModelObject respObject = (ModelObject) rabbitManager.sendRpcMessage(EXCHANGE_NAME, RECEIVING_ROUTING_KEY, sendObject);
+	    	
+	    	assertThat(respObject.getName()).isEqualTo("sponge bob");
+	    	assertThat(respObject.getAge()).isEqualTo(18);
     }
     
     /**

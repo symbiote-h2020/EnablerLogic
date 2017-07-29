@@ -300,6 +300,22 @@ public class RabbitManager {
 		return new String(body, StandardCharsets.UTF_8);
 	}
 
+	public Object sendRpcMessage(String exchange, String routingKey, Object obj) {
+		log.info("Sending RPC obj: {}", obj);
+		
+		String correlationId = UUID.randomUUID().toString();
+		rabbitTemplate.setReplyTimeout(20_000);
+    		Object receivedObj = rabbitTemplate.convertSendAndReceive(exchange, routingKey, obj, new CorrelationData(correlationId));
+    		if(receivedObj == null) { 
+    			log.info("Timeout in RPC receiving obj. Send: {}", obj);
+    			return null;
+    		}
+
+    		log.info("RPC Response received obj: " + receivedObj);
+
+		return receivedObj;
+	}
+
 	/**
 	 * Closes given channel if it exists and is open.
 	 *
