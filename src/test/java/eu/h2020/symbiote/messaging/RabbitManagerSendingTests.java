@@ -8,7 +8,9 @@ import java.util.UUID;
 import java.util.concurrent.TimeoutException;
 
 import org.junit.After;
+import org.junit.AfterClass;
 import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.slf4j.Logger;
@@ -32,6 +34,7 @@ import eu.h2020.symbiote.messaging.properties.EnablerLogicExchangeProperties;
 import eu.h2020.symbiote.messaging.properties.RabbitConnectionProperties;
 import eu.h2020.symbiote.messaging.properties.RoutingKeysProperties;
 import io.arivera.oss.embedded.rabbitmq.EmbeddedRabbitMq;
+import io.arivera.oss.embedded.rabbitmq.EmbeddedRabbitMqConfig;
 /**
  * Test for RPC communication with Resource Manager.
  * @author PetarKrivic
@@ -78,20 +81,20 @@ public class RabbitManagerSendingTests {
     @Autowired
     private ConnectionFactory factory;
     
-//    @BeforeClass
-//    public static void startRabbit() {
-//	    	EmbeddedRabbitMqConfig config = new EmbeddedRabbitMqConfig.Builder()
-//	    			.rabbitMqServerInitializationTimeoutInMillis(RABBIT_STARTING_TIMEOUT)
-//	    			.build();
-//	    	rabbitMq = new EmbeddedRabbitMq(config);
-//	    	rabbitMq.start();
-//    }
-//    
-//    @AfterClass
-//    public static void stopRabbit() {
-//    		rabbitMq.stop();
-//    }
-//    
+    @BeforeClass
+    public static void startRabbit() {
+	    	EmbeddedRabbitMqConfig config = new EmbeddedRabbitMqConfig.Builder()
+	    			.rabbitMqServerInitializationTimeoutInMillis(RABBIT_STARTING_TIMEOUT)
+	    			.build();
+	    	rabbitMq = new EmbeddedRabbitMq(config);
+	    	rabbitMq.start();
+    }
+    
+    @AfterClass
+    public static void stopRabbit() {
+    		rabbitMq.stop();
+    }
+    
     
     /**
      * Creation of new connection and channel to RabbitMQ.
@@ -100,18 +103,17 @@ public class RabbitManagerSendingTests {
      * @throws TimeoutException
      */
 	@Before
-	public void initialize() throws TimeoutException {
-		try {
-			connection = factory.createConnection();
-			channel = connection.createChannel(false);
+	public void initialize() throws Exception {
+		connection = factory.createConnection();
+		channel = connection.createChannel(false);
+		
+		channel.queueDelete(RECEIVING_QUEUE_NAME);
+		channel.exchangeDelete(EXCHANGE_NAME);
 
-			// ResourceManager exchange
-			channel.exchangeDeclare(EXCHANGE_NAME, "topic", true, true, false, null);
-			channel.queueDeclare(RECEIVING_QUEUE_NAME, true, false, false, null);
-			channel.queueBind(RECEIVING_QUEUE_NAME, EXCHANGE_NAME, RECEIVING_ROUTING_KEY);
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
+		// ResourceManager exchange
+		channel.exchangeDeclare(EXCHANGE_NAME, "topic", true, true, false, null);
+		channel.queueDeclare(RECEIVING_QUEUE_NAME, true, false, false, null);
+		channel.queueBind(RECEIVING_QUEUE_NAME, EXCHANGE_NAME, RECEIVING_ROUTING_KEY);
 	}
     
     @Test
