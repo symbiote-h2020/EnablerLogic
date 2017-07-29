@@ -11,11 +11,13 @@ import eu.h2020.symbiote.messaging.properties.RoutingKeysProperties;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.slf4j.spi.LocationAwareLogger;
 import org.springframework.amqp.AmqpException;
 import org.springframework.amqp.core.Message;
 import org.springframework.amqp.core.MessageProperties;
 import org.springframework.amqp.core.MessagePropertiesBuilder;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
+import org.springframework.amqp.rabbit.support.CorrelationData;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.beans.factory.config.AutowireCapableBeanFactory;
@@ -25,6 +27,7 @@ import javax.annotation.PreDestroy;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.util.UUID;
 import java.util.concurrent.TimeoutException;
 
@@ -232,16 +235,25 @@ public class RabbitManager {
 	 *            message content in JSON String format
 	 */
 	public void sendMessage(String exchange, String routingKey, String message) {
-		try {
-			rabbitTemplate.send(exchange, routingKey, new Message(message.getBytes("UTF-8"), 
-					MessagePropertiesBuilder.newInstance()
-						.setContentType("application/json")
-						.build()));
-		} catch (UnsupportedEncodingException e) {
-			log.info("UTF-8 should be always supported.", e);
-		}
+		rabbitTemplate.send(exchange, routingKey, new Message(message.getBytes(StandardCharsets.UTF_8), 
+				MessagePropertiesBuilder.newInstance()
+					.setContentType("plain/text")
+					.build()));
 	}
 
+	/**
+	 * Method publishes given message to the given exchange and routing key. Props
+	 * are set for correct message handle on the receiver side.
+	 *
+	 * @param exchange
+	 *            name of the proper Rabbit exchange, adequate to topic of the
+	 *            communication
+	 * @param routingKey
+	 *            name of the proper Rabbit routing key, adequate to topic of the
+	 *            communication
+	 * @param object
+	 *            object content is mapped to JSON String by using Jackson2
+	 */
 	public void sendMessage(String exchange, String routingKey, Object obj) {
 		rabbitTemplate.convertAndSend(exchange, routingKey, obj);
 	}
@@ -264,43 +276,29 @@ public class RabbitManager {
 	 *            message to be sent
 	 * @return response from the consumer or null if timeout occurs
 	 */
-//	public String sendRpcMessage(String exchangeName, String routingKey, String message) {
-//		try {
-//			log.info("Sending RPC message: " + message);
-//
-//			String replyQueueName = "amq.rabbitmq.reply-to";
-//
-//			String correlationId = UUID.randomUUID().toString();
-//			AMQP.BasicProperties props = new AMQP.BasicProperties().builder().correlationId(correlationId)
-//					.replyTo(replyQueueName).build();
-//
-//			QueueingConsumer consumer = new QueueingConsumer(channel);
-//			this.channel.basicConsume(replyQueueName, true, consumer);
-//
-//			String responseMsg = null;
-//
-//			this.channel.basicPublish(exchangeName, routingKey, props, message.getBytes());
-//			while (true) {
-//				QueueingConsumer.Delivery delivery = consumer.nextDelivery(20000);
-//				if (delivery == null) {
-//					log.info("Timeout in response retrieval");
-//					return null;
-//				}
-//
-//				if (delivery.getProperties().getCorrelationId().equals(correlationId)) {
-//					log.info("Correct correlationID in response message");
-//					responseMsg = new String(delivery.getBody());
-//					break;
-//				}
-//			}
-//
-//			log.info("Response received: " + responseMsg);
-//			return responseMsg;
-//		} catch (IOException | InterruptedException e) {
-//			log.error(e.getMessage(), e);
-//		}
-//		return null;
-//	}
+	public String sendRpcMessage(String exchange, String routingKey, String stringMessage) {
+		log.info("Sending RPC message: {}", stringMessage);
+		
+		String correlationId = UUID.randomUUID().toString();
+		Message sendMessage = new Message(stringMessage.getBytes(StandardCharsets.UTF_8), 
+				MessagePropertiesBuilder.newInstance()
+					.setContentType("plain/text")
+					.setCorrelationIdString(correlationId)
+					.build()
+				);
+		rabbitTemplate.setReplyTimeout(20_000);
+    		Message receivedMessage = rabbitTemplate.sendAndReceive(exchange, routingKey, sendMessage);
+    		if(receivedMessage == null) { 
+    			log.info("Timeout in RPC receiving. Send: {}", sendMessage);
+    			return null;
+    		}
+
+    		log.info("RPC Response received: " + receivedMessage);
+
+		byte[] body = receivedMessage.getBody();
+		log.info("client received: {}", body);
+		return new String(body, StandardCharsets.UTF_8);
+	}
 
 	/**
 	 * Closes given channel if it exists and is open.

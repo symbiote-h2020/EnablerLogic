@@ -1,12 +1,18 @@
 package eu.h2020.symbiote.messaging;
 
+import static org.awaitility.Awaitility.*;
 import static org.assertj.core.api.Assertions.assertThat;
 import static com.revinate.assertj.json.JsonPathAssert.assertThat;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
+import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.util.UUID;
+import java.util.concurrent.Callable;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 import org.junit.After;
@@ -18,11 +24,16 @@ import org.junit.runner.RunWith;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.amqp.core.Message;
+import org.springframework.amqp.core.MessageProperties;
+import org.springframework.amqp.core.MessagePropertiesBuilder;
+import org.springframework.amqp.core.ReceiveAndReplyCallback;
+import org.springframework.amqp.core.ReceiveAndReplyMessageCallback;
 import org.springframework.amqp.rabbit.connection.CachingConnectionFactory;
 import org.springframework.amqp.rabbit.connection.Connection;
 import org.springframework.amqp.rabbit.connection.ConnectionFactory;
 import org.springframework.amqp.rabbit.connection.SimpleRoutingConnectionFactory;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
+import org.springframework.amqp.rabbit.support.CorrelationData;
 import org.springframework.amqp.support.converter.Jackson2JsonMessageConverter;
 import org.springframework.amqp.support.converter.JsonMessageConverter;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -41,6 +52,7 @@ import eu.h2020.symbiote.messaging.properties.RabbitConnectionProperties;
 import eu.h2020.symbiote.messaging.properties.RoutingKeysProperties;
 import io.arivera.oss.embedded.rabbitmq.EmbeddedRabbitMq;
 import io.arivera.oss.embedded.rabbitmq.EmbeddedRabbitMqConfig;
+import io.arivera.oss.embedded.rabbitmq.bin.RabbitMqPlugins;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -87,7 +99,7 @@ public class RabbitManagerSendingTests {
     private RabbitTemplate rabbitTemplate;
     
     @Autowired
-    private RabbitManager rabbitManeger;
+    private RabbitManager rabbitManager;
     
     @Autowired
     private ConnectionFactory factory;
@@ -97,7 +109,12 @@ public class RabbitManagerSendingTests {
 	    	EmbeddedRabbitMqConfig config = new EmbeddedRabbitMqConfig.Builder()
 	    			.rabbitMqServerInitializationTimeoutInMillis(RABBIT_STARTING_TIMEOUT)
 	    			.build();
-	    	rabbitMq = new EmbeddedRabbitMq(config);
+	    	
+	    	RabbitMqPlugins rabbitMqPlugins = new RabbitMqPlugins(config);
+	    rabbitMqPlugins.enable("rabbitmq_management");
+	    rabbitMqPlugins.enable("rabbitmq_tracing");
+	    	
+	    rabbitMq = new EmbeddedRabbitMq(config);
 	    	rabbitMq.start();
     }
     
@@ -138,12 +155,12 @@ public class RabbitManagerSendingTests {
 		// given
 
     		// when
-    		rabbitManeger.sendMessage(EXCHANGE_NAME, RECEIVING_ROUTING_KEY, "Some text");
+    		rabbitManager.sendMessage(EXCHANGE_NAME, RECEIVING_ROUTING_KEY, "Some text");
     	
     		// then
     		Message message = rabbitTemplate.receive(RECEIVING_QUEUE_NAME, 10_000);
     		assertNotNull(message);
-    		assertThat(new String(message.getBody(), "UTF-8")).isEqualTo("Some text");
+    		assertThat(new String(message.getBody(), StandardCharsets.UTF_8)).isEqualTo("Some text");
 	}
     
     @Test
@@ -152,7 +169,7 @@ public class RabbitManagerSendingTests {
     		ModelObject sendObject = new ModelObject("joe", 25);
     	
     		// when
-    		rabbitManeger.sendMessage(EXCHANGE_NAME, RECEIVING_ROUTING_KEY, sendObject);
+    		rabbitManager.sendMessage(EXCHANGE_NAME, RECEIVING_ROUTING_KEY, sendObject);
     	
     		// then
     		Object o = rabbitTemplate.receiveAndConvert(RECEIVING_QUEUE_NAME, 10_000);
@@ -168,7 +185,7 @@ public class RabbitManagerSendingTests {
     		ModelObject sendObject = new ModelObject("joe", 25);
     	
     		// when
-    		rabbitManeger.sendMessage(EXCHANGE_NAME, RECEIVING_ROUTING_KEY, sendObject);
+    		rabbitManager.sendMessage(EXCHANGE_NAME, RECEIVING_ROUTING_KEY, sendObject);
     	
     		// then
     		Message message = rabbitTemplate.receive(RECEIVING_QUEUE_NAME, 10_000);
@@ -176,7 +193,7 @@ public class RabbitManagerSendingTests {
     		assertThat(message.getMessageProperties().getHeaders().get("__TypeId__"))
     			.isEqualTo("eu.h2020.symbiote.messaging.RabbitManagerSendingTests$ModelObject");
     		
-    		String json = new String(message.getBody(), "UTF-8");
+    		String json = new String(message.getBody(), StandardCharsets.UTF_8);
 		assertThat(json).isEqualTo("{\"name\":\"joe\",\"age\":25}");
 		DocumentContext ctx = JsonPath.parse(json);
 		assertThat(ctx).jsonPathAsString("name").isEqualTo("joe");
@@ -191,16 +208,32 @@ public class RabbitManagerSendingTests {
     		private int age;
     }
 	
-	/**
-	 * Testing the synchronous RPC communication with ResourceManager.
-	 * @throws Exception
-	 */
     @Test
-    public void testSync() throws Exception{
+    public void sendingRPC_shouldWaitForResponseInText() throws Exception{
+    		// given
+	    	String sendMessage = "Some RPC message";
+	    	Thread t = new Thread(() -> {
+	    		log.info("receiving thread started");
+	    		rabbitTemplate.setReceiveTimeout(20_000);
+	    		rabbitTemplate.receiveAndReply(RECEIVING_QUEUE_NAME, new ReceiveAndReplyMessageCallback() {
+					@Override
+					public Message handle(Message msg) {
+							log.info("receive thread received {}", msg);
+							String r = new String(msg.getBody(), StandardCharsets.UTF_8) + "!!!";
+							Message rmsg = new Message(r.getBytes(StandardCharsets.UTF_8),
+									MessagePropertiesBuilder.newInstance().setContentType("plain/text").build());
+							log.info("returning {}", rmsg);
+							return rmsg;
+					}
+				});
+	    		log.info("************** receiving thread finished");
+	    	});
+	    	t.start();
     	
-        String response = sendRpcMessage(EXCHANGE_NAME, RECEIVING_QUEUE_NAME, "EnablerLogicRequest");
-    		//assertEquals(resourceManagerResponse, response);
-    		
+    		// when
+		String response = rabbitManager.sendRpcMessage(EXCHANGE_NAME, RECEIVING_ROUTING_KEY, sendMessage);
+    	
+	    	assertThat(response).isEqualTo(sendMessage + "!!!");
     }
     
     /**
@@ -214,52 +247,5 @@ public class RabbitManagerSendingTests {
 //    		channel.exchangeDelete(EXCHANGE_NAME);
 //    		this.channel.close();
 //    		this.connection.close();
-    }
-    
-    /**
-     * Method for sending RPC message.
-     * @param exchangeName
-     * @param routingKey
-     * @param message
-     * @return
-     */
-    public String sendRpcMessage(String exchangeName, String routingKey, String message) {
-//        try {
-//            log.info("Sending RPC message: " + message);
-//
-//            String replyQueueName = "amq.rabbitmq.reply-to";
-//            String correlationId = UUID.randomUUID().toString();
-//            
-//            AMQP.BasicProperties props = new AMQP.BasicProperties()
-//                    .builder()
-//                    .correlationId(correlationId)
-//                    .replyTo(replyQueueName)
-//                    .build();
-//
-//            QueueingConsumer consumer = new QueueingConsumer(channel);
-//            this.channel.basicConsume(replyQueueName, true, consumer);
-//
-//            String responseMsg = null;
-//
-//            this.channel.basicPublish(exchangeName, routingKey, props, message.getBytes());
-//            while (true) {
-//                QueueingConsumer.Delivery delivery = consumer.nextDelivery(20000);
-//                if (delivery == null) {
-//                    log.info("Timeout in response retrieval");
-//                    return null;
-//                }
-//
-//                if (delivery.getProperties().getCorrelationId().equals(correlationId)) {
-//                    responseMsg = new String(delivery.getBody());
-//                    break;
-//                }
-//            }
-//
-//            log.info("Response received: " + responseMsg);
-//            return responseMsg;
-//        } catch (IOException | InterruptedException e) {
-//            log.error(e.getMessage(), e);
-//        }
-        return null;
     }
 }
