@@ -2,6 +2,7 @@ package eu.h2020.symbiote.messaging;
 
 import com.rabbitmq.client.*;
 
+import eu.h2020.symbiote.messaging.RabbitManagerSendingTests.ModelObject;
 import eu.h2020.symbiote.messaging.consumers.AcquireMeasurementsConsumer;
 import eu.h2020.symbiote.messaging.consumers.DataAppearedConsumer;
 import eu.h2020.symbiote.messaging.properties.EnablerLogicExchangeProperties;
@@ -239,6 +240,10 @@ public class RabbitManager {
 		} catch (UnsupportedEncodingException e) {
 			log.info("UTF-8 should be always supported.", e);
 		}
+	}
+
+	public void sendMessage(String exchange, String routingKey, Object obj) {
+		rabbitTemplate.convertAndSend(exchange, routingKey, obj);
 	}
 
 	/**

@@ -1,6 +1,8 @@
 package eu.h2020.symbiote.messaging;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static com.revinate.assertj.json.JsonPathAssert.assertThat;
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 
 import java.io.IOException;
@@ -21,6 +23,8 @@ import org.springframework.amqp.rabbit.connection.Connection;
 import org.springframework.amqp.rabbit.connection.ConnectionFactory;
 import org.springframework.amqp.rabbit.connection.SimpleRoutingConnectionFactory;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
+import org.springframework.amqp.support.converter.Jackson2JsonMessageConverter;
+import org.springframework.amqp.support.converter.JsonMessageConverter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
@@ -28,6 +32,8 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
 import org.springframework.test.context.junit4.SpringRunner;
 
+import com.jayway.jsonpath.DocumentContext;
+import com.jayway.jsonpath.JsonPath;
 import com.rabbitmq.client.Channel;
 
 import eu.h2020.symbiote.messaging.properties.EnablerLogicExchangeProperties;
@@ -35,6 +41,9 @@ import eu.h2020.symbiote.messaging.properties.RabbitConnectionProperties;
 import eu.h2020.symbiote.messaging.properties.RoutingKeysProperties;
 import io.arivera.oss.embedded.rabbitmq.EmbeddedRabbitMq;
 import io.arivera.oss.embedded.rabbitmq.EmbeddedRabbitMqConfig;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 /**
  * Test for RPC communication with Resource Manager.
  * @author PetarKrivic
@@ -61,7 +70,9 @@ public class RabbitManagerSendingTests {
 		
 		@Bean
 		public RabbitTemplate rabbitTemaplate(ConnectionFactory connectionFactory) {
-			return new RabbitTemplate(connectionFactory);
+			RabbitTemplate rabbitTemplate = new RabbitTemplate(connectionFactory);
+			rabbitTemplate.setMessageConverter(new Jackson2JsonMessageConverter());
+			return rabbitTemplate;
 		}
 	}
 
@@ -100,7 +111,7 @@ public class RabbitManagerSendingTests {
      * Creation of new connection and channel to RabbitMQ.
      * Resource Manager Exchange and Queue setup.
      * Resource Manager consumer setup.
-     * @throws TimeoutException
+     * @throws Exception
      */
 	@Before
 	public void initialize() throws Exception {
@@ -125,7 +136,7 @@ public class RabbitManagerSendingTests {
     @Test
 	public void sendingAcyncMessage_shouldReceiveAsyncMessage() throws Exception {
 		// given
-    	
+
     		// when
     		rabbitManeger.sendMessage(EXCHANGE_NAME, RECEIVING_ROUTING_KEY, "Some text");
     	
@@ -134,6 +145,51 @@ public class RabbitManagerSendingTests {
     		assertNotNull(message);
     		assertThat(new String(message.getBody(), "UTF-8")).isEqualTo("Some text");
 	}
+    
+    @Test
+	public void sendingAcyncObject_shouldReceiveAsyncObject() throws Exception {
+		// given
+    		ModelObject sendObject = new ModelObject("joe", 25);
+    	
+    		// when
+    		rabbitManeger.sendMessage(EXCHANGE_NAME, RECEIVING_ROUTING_KEY, sendObject);
+    	
+    		// then
+    		Object o = rabbitTemplate.receiveAndConvert(RECEIVING_QUEUE_NAME, 10_000);
+    		assertNotNull(o);
+    		assertThat(o).isInstanceOf(ModelObject.class);
+    		ModelObject receivedObject = (ModelObject) o;
+    		assertThat(receivedObject).isEqualToComparingFieldByField(sendObject);
+	}
+    
+    @Test
+	public void sendingAcyncObject_shouldReceiveAsyncJSON() throws Exception {
+		// given
+    		ModelObject sendObject = new ModelObject("joe", 25);
+    	
+    		// when
+    		rabbitManeger.sendMessage(EXCHANGE_NAME, RECEIVING_ROUTING_KEY, sendObject);
+    	
+    		// then
+    		Message message = rabbitTemplate.receive(RECEIVING_QUEUE_NAME, 10_000);
+    		assertThat(message.getMessageProperties().getContentType()).isEqualTo("application/json");
+    		assertThat(message.getMessageProperties().getHeaders().get("__TypeId__"))
+    			.isEqualTo("eu.h2020.symbiote.messaging.RabbitManagerSendingTests$ModelObject");
+    		
+    		String json = new String(message.getBody(), "UTF-8");
+		assertThat(json).isEqualTo("{\"name\":\"joe\",\"age\":25}");
+		DocumentContext ctx = JsonPath.parse(json);
+		assertThat(ctx).jsonPathAsString("name").isEqualTo("joe");
+		assertThat(ctx).jsonPathAsInteger("age").isEqualTo(25);
+	}
+
+    @Data 
+    @NoArgsConstructor 
+    @AllArgsConstructor
+    public static class ModelObject {
+    		private String name;
+    		private int age;
+    }
 	
 	/**
 	 * Testing the synchronous RPC communication with ResourceManager.
