@@ -107,13 +107,19 @@ public class RabbitManagerSendingTests {
 		connection = factory.createConnection();
 		channel = connection.createChannel(false);
 		
-		channel.queueDelete(RECEIVING_QUEUE_NAME);
-		channel.exchangeDelete(EXCHANGE_NAME);
+		cleanRabbitResources();
+		createRabbitResources();
+	}
 
-		// ResourceManager exchange
+	private void createRabbitResources() throws IOException {
 		channel.exchangeDeclare(EXCHANGE_NAME, "topic", true, true, false, null);
 		channel.queueDeclare(RECEIVING_QUEUE_NAME, true, false, false, null);
 		channel.queueBind(RECEIVING_QUEUE_NAME, EXCHANGE_NAME, RECEIVING_ROUTING_KEY);
+	}
+
+	private void cleanRabbitResources() throws IOException {
+		channel.queueDelete(RECEIVING_QUEUE_NAME);
+		channel.exchangeDelete(EXCHANGE_NAME);
 	}
     
     @Test
