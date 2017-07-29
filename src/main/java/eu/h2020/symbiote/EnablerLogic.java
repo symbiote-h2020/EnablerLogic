@@ -53,9 +53,10 @@ public class EnablerLogic {
 			request.setResources(Arrays.asList(requests));
 
 			
-			String responseString = rabbitManager.sendRpcMessage(resourceManagerExchangeName, 
-					resourceManager_startDataAcquisition_key, 
-					objectMapper.writeValueAsString(request));
+			// TODO String responseString = rabbitManager.sendRpcMessage(resourceManagerExchangeName, 
+					//resourceManager_startDataAcquisition_key, 
+					//objectMapper.writeValueAsString(request));
+			String responseString = "";
 			
 			ResourceManagerAcquisitionStartResponse response = objectMapper.readValue(responseString.trim(), 
 					ResourceManagerAcquisitionStartResponse.class);
