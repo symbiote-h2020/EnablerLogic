@@ -16,6 +16,7 @@ import eu.h2020.symbiote.repository.ResourceManagerTaskInfoResponseRepository;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -28,7 +29,8 @@ import java.util.UUID;
  *
  * Created by Petar Krivic on 04/04/2017.
  */
-public class AcquireMeasurementsConsumer extends DefaultConsumer {
+@Service
+public class AcquireMeasurementsConsumer {
 	
 	@Autowired
 	private ResourceManagerTaskInfoResponseRepository repository;
@@ -43,15 +45,12 @@ public class AcquireMeasurementsConsumer extends DefaultConsumer {
      * Constructs a new instance and records its association to the passed-in channel.
      * Managers beans passed as parameters because of lack of possibility to inject it to consumer.
      *
-     * @param channel           the channel to which this consumer is attached
      * @param rabbitManager     rabbit manager bean passed for access to messages manager
      */
-    public AcquireMeasurementsConsumer(Channel channel, RabbitManager rabbitManager) {
-   		super(channel);
+    public AcquireMeasurementsConsumer(RabbitManager rabbitManager) {
     	this.rabbitManager = rabbitManager;
     }
     
-    @Override
     public void handleDelivery(String consumerTag, Envelope envelope, 
     		AMQP.BasicProperties properties, byte[] body) throws IOException {
        

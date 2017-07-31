@@ -15,7 +15,7 @@ import org.springframework.stereotype.Component;
  * Bean used to manage internal communication using RabbitMQ. It is responsible
  * for declaring exchanges and using routing keys from centralized config
  * server.
- * <p>
+ * 
  * Created by mateuszl
  */
 @Component

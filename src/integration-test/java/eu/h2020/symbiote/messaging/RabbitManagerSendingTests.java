@@ -36,7 +36,8 @@ import com.jayway.jsonpath.DocumentContext;
 import com.jayway.jsonpath.JsonPath;
 import com.rabbitmq.client.Channel;
 
-import eu.h2020.symbiote.messaging.properties.EnablerLogicExchangeProperties;
+import eu.h2020.symbiote.messaging.properties.ExchangeProperties;
+import eu.h2020.symbiote.messaging.properties.FullExchangeProperties;
 import eu.h2020.symbiote.messaging.properties.RabbitConnectionProperties;
 import eu.h2020.symbiote.messaging.properties.RoutingKeysProperties;
 import io.arivera.oss.embedded.rabbitmq.EmbeddedRabbitMq;
@@ -53,7 +54,7 @@ import lombok.NoArgsConstructor;
  */
 @RunWith(SpringRunner.class)
 @Import({RabbitManager.class})
-@EnableConfigurationProperties({EnablerLogicExchangeProperties.class, RoutingKeysProperties.class, RabbitConnectionProperties.class})
+@EnableConfigurationProperties({RabbitConnectionProperties.class})
 public class RabbitManagerSendingTests {
 	private static Logger log = LoggerFactory.getLogger(RabbitManagerSendingTests.class);
 
@@ -248,7 +249,7 @@ public class RabbitManagerSendingTests {
 	    				return rmsg;
 	    			}
 	    		});
-	    		log.info("************** receiving thread finished");
+	    		log.info("receiving thread finished");
 	    	});
 	    	t.start();
 	    	

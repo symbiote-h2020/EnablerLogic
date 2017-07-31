@@ -21,6 +21,7 @@ import org.springframework.stereotype.Component;
 
 @Configuration
 @ComponentScan
+// TODO configurationProperties
 public class EnablerLogicConfiguration {
 	private static Log log = LogFactory.getLog(EnablerLogicConfiguration.class);
 	
@@ -39,7 +40,7 @@ public class EnablerLogicConfiguration {
 
     @PostConstruct
     public void init() {
-    	processingLogic.init(enablerLogic);
+    		processingLogic.init(enablerLogic);
     }
 
 //    @Component
