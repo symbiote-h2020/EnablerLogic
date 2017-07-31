@@ -96,13 +96,12 @@ public class RabbitManagerSendingTests {
 	    			.rabbitMqServerInitializationTimeoutInMillis(RABBIT_STARTING_TIMEOUT)
 	    			.build();
 
-	    	// this need to be uncomment only for debugging
-//	    	RabbitMqPlugins rabbitMqPlugins = new RabbitMqPlugins(config);
-//	    rabbitMqPlugins.enable("rabbitmq_management");
-//	    rabbitMqPlugins.enable("rabbitmq_tracing");
-	    	
 	    rabbitMq = new EmbeddedRabbitMq(config);
 	    	rabbitMq.start();
+
+	    	RabbitMqPlugins rabbitMqPlugins = new RabbitMqPlugins(config);
+	    rabbitMqPlugins.enable("rabbitmq_management");
+	    rabbitMqPlugins.enable("rabbitmq_tracing");
     }
     
     @AfterClass
