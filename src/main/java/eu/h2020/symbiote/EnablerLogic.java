@@ -42,5 +42,4 @@ public class EnablerLogic {
 		log.info("Received resourceIds from ResourceManager");
 		return response;
 	}
-
 }
