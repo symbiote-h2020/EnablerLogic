@@ -4,9 +4,11 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static com.revinate.assertj.json.JsonPathAssert.assertThat;
 import static org.junit.Assert.assertNotNull;
 
+import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 
+import org.apache.commons.io.FileUtils;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
@@ -91,11 +93,13 @@ public class RabbitManagerSendingTests {
     private ConnectionFactory factory;
     
     @BeforeClass
-    public static void startEmbeddedRabbit() {
+    public static void startEmbeddedRabbit() throws Exception {
 	    	EmbeddedRabbitMqConfig config = new EmbeddedRabbitMqConfig.Builder()
 	    			.rabbitMqServerInitializationTimeoutInMillis(RABBIT_STARTING_TIMEOUT)
 	    			.build();
 
+	    	cleanupVarDir(config);
+	    	
 	    rabbitMq = new EmbeddedRabbitMq(config);
 	    	rabbitMq.start();
 
@@ -103,6 +107,12 @@ public class RabbitManagerSendingTests {
 	    rabbitMqPlugins.enable("rabbitmq_management");
 	    rabbitMqPlugins.enable("rabbitmq_tracing");
     }
+
+	private static void cleanupVarDir(EmbeddedRabbitMqConfig config) throws IOException {
+		File varDir = new File(config.getAppFolder(), "var");
+		if(varDir.exists())
+			FileUtils.cleanDirectory(varDir);
+	}
     
     @AfterClass
     public static void stopEmbeddedRabbit() {
