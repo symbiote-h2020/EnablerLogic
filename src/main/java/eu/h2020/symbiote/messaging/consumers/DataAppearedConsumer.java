@@ -32,13 +32,17 @@ public class DataAppearedConsumer extends DefaultConsumer {
      * Constructs a new instance and records its association to the passed-in channel.
      * Managers beans passed as parameters because of lack of possibility to inject it to consumer.
      * @param channel the channel to which this consumer is attached
-     *
+     * @param rabbitManager object used for sending messages and registering consumer
      */
     public DataAppearedConsumer(Channel channel, RabbitManager rabbitManager) {
         super(channel);
         this.rabbitManager = rabbitManager;
     }
 
+    // com.rabbitmq.client.DataAppearedConsumer
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public void handleDelivery(String consumerTag, Envelope envelope,
     		AMQP.BasicProperties properties, byte[] body) throws IOException {

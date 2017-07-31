@@ -231,8 +231,9 @@ public class RabbitManager {
 	 * @param routingKey
 	 *            name of the proper Rabbit routing key, adequate to topic of the
 	 *            communication
-	 * @param object
-	 *            object content is mapped to JSON String by using Jackson2
+	 * @param obj
+	 *            object content is mapped to JSON String by using Jackson2 and send 
+	 *            as payload
 	 */
 	public void sendMessage(String exchange, String routingKey, Object obj) {
 		rabbitTemplate.convertAndSend(exchange, routingKey, obj);
@@ -248,11 +249,11 @@ public class RabbitManager {
 	 * seconds. If the response doesn't come in that time, the method returns with
 	 * null result.
 	 *
-	 * @param exchangeName
+	 * @param exchange
 	 *            name of the exchange to send message to
 	 * @param routingKey
 	 *            routing key to send message to
-	 * @param message
+	 * @param stringMessage
 	 *            message to be sent
 	 * @return response from the consumer or null if timeout occurs
 	 */
@@ -280,6 +281,25 @@ public class RabbitManager {
 		return new String(body, StandardCharsets.UTF_8);
 	}
 
+	/**
+	 * Method used to send message via RPC (Remote Procedure Call) pattern. In this
+	 * implementation it covers asynchronous Rabbit communication with synchronous
+	 * one, as it is used by conventional REST facade. Before sending a message, a
+	 * temporary response queue is declared and its name is passed along with the
+	 * message. When a consumer handles the message, it returns the result via the
+	 * response queue. Since this is a synchronous pattern, it uses timeout of 20
+	 * seconds. If the response doesn't come in that time, the method returns with
+	 * null result.
+	 * 
+	 * @param exchange
+	 *            name of the exchange to send message to
+	 * @param routingKey
+	 *            routing key to send message to
+	 * @param obj
+	 *            object content is mapped to JSON String by using Jackson2 and send 
+	 *            as payload
+	 * @return response from the consumer or null if timeout occurs
+	 */
 	public Object sendRpcMessage(String exchange, String routingKey, Object obj) {
 		log.info("Sending RPC obj: {}", obj);
 		

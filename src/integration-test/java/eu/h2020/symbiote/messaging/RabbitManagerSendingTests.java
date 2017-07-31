@@ -95,10 +95,11 @@ public class RabbitManagerSendingTests {
 	    	EmbeddedRabbitMqConfig config = new EmbeddedRabbitMqConfig.Builder()
 	    			.rabbitMqServerInitializationTimeoutInMillis(RABBIT_STARTING_TIMEOUT)
 	    			.build();
-	    	
-	    	RabbitMqPlugins rabbitMqPlugins = new RabbitMqPlugins(config);
-	    rabbitMqPlugins.enable("rabbitmq_management");
-	    rabbitMqPlugins.enable("rabbitmq_tracing");
+
+	    	// this need to be uncomment only for debugging
+//	    	RabbitMqPlugins rabbitMqPlugins = new RabbitMqPlugins(config);
+//	    rabbitMqPlugins.enable("rabbitmq_management");
+//	    rabbitMqPlugins.enable("rabbitmq_tracing");
 	    	
 	    rabbitMq = new EmbeddedRabbitMq(config);
 	    	rabbitMq.start();
