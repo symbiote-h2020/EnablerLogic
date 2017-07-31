@@ -54,7 +54,5 @@ public class EnablerLogicTest {
 		ResourceManagerAcquisitionStartRequest requests = captor.getValue();
 		assertThat(requests.getResources()).hasSize(1);
 		assertThat(requests.getResources()).contains(request);
-		
-		
 	}
 }
