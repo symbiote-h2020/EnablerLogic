@@ -1,13 +1,17 @@
 package eu.h2020.symbiote.messaging;
 
 import static org.assertj.core.api.Assertions.*;
+import static org.hamcrest.CoreMatchers.instanceOf;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 import java.nio.charset.StandardCharsets;
 
+import org.hamcrest.Matcher;
+import org.hamcrest.Matchers;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -18,6 +22,7 @@ import org.mockito.Spy;
 import org.mockito.runners.MockitoJUnitRunner;
 import org.springframework.amqp.core.Message;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
+import org.springframework.amqp.rabbit.support.CorrelationData;
 
 @RunWith(MockitoJUnitRunner.class)
 public class RabbitManagerTests {
@@ -26,7 +31,6 @@ public class RabbitManagerTests {
 	RabbitTemplate rabbitTemplate;
 	
 	RabbitManager rabbitManager;
-	
 	
 	@Before
 	public void setup() {
@@ -64,5 +68,73 @@ public class RabbitManagerTests {
 		verify(rabbitTemplate).convertAndSend(exchange, key, obj);
 	}
 	
+	@Test
+	public void sendRpcMessageWithMessage_shouldCallRabbitTemplate() throws Exception {
+		// given
+		ArgumentCaptor<Message> messageCaptor = ArgumentCaptor.forClass(Message.class);
+		String exchange = "e";
+		String key = "k";
+		String expectedResult = "result";
+		Message resultMessage = new Message(expectedResult.getBytes(StandardCharsets.UTF_8), null);
+		
+		when(rabbitTemplate.sendAndReceive(eq(exchange), eq(key), any())).thenReturn(resultMessage);
+		
+		// when
+		String result = rabbitManager.sendRpcMessage(exchange, key, "m");
+		
+		// then
+		verify(rabbitTemplate).sendAndReceive(eq(exchange), eq(key), messageCaptor.capture());
+		Message sendMessage = messageCaptor.getValue();
+		assertThat(sendMessage.getBody()).isEqualTo("m".getBytes(StandardCharsets.UTF_8));
+		assertThat(sendMessage.getMessageProperties().getContentType()).isEqualTo("plain/text");
+		
+		assertThat(result).isEqualTo(expectedResult);
+	}
+
+	@Test
+	public void sendRpcMessageWithMessage_shouldReturnNullWhenTimeout() throws Exception {
+		// given
+		ArgumentCaptor<Message> messageCaptor = ArgumentCaptor.forClass(Message.class);
+		String exchange = "e";
+		String key = "k";
+		when(rabbitTemplate.sendAndReceive(eq(exchange), eq(key), any())).thenReturn(null);
+		
+		// when
+		String result = rabbitManager.sendRpcMessage(exchange, key, "m");
+		
+		// then
+		verify(rabbitTemplate).sendAndReceive(eq(exchange), eq(key), messageCaptor.capture());
+		Message sendMessage = messageCaptor.getValue();
+		assertThat(sendMessage.getBody()).isEqualTo("m".getBytes(StandardCharsets.UTF_8));
+		assertThat(sendMessage.getMessageProperties().getContentType()).isEqualTo("plain/text");
+		
+		assertThat(result).isEqualTo(null);
+	}
 	
+	public static class TestObject { }
+	
+	@Test
+	public void sendRpcMessageWithObject_shouldCallRabbitTemplate() throws Exception {
+		// given
+		ArgumentCaptor<TestObject> messageCaptor = ArgumentCaptor.forClass(TestObject.class);
+		String exchange = "e";
+		String key = "k";
+		TestObject sendObject = new TestObject();
+		TestObject resultObject = new TestObject();
+		
+		when(rabbitTemplate.convertSendAndReceive(eq(exchange), eq(key), 
+				any(TestObject.class), 
+				any(CorrelationData.class))
+		).thenReturn(resultObject);
+		
+		// when
+		Object result = rabbitManager.sendRpcMessage(exchange, key, sendObject);
+		
+		// then
+		verify(rabbitTemplate).convertSendAndReceive(eq(exchange), eq(key), messageCaptor.capture(), any(CorrelationData.class));
+		TestObject sendMessage = messageCaptor.getValue();
+		assertThat(sendMessage).isEqualTo(sendObject);
+		
+		assertThat(result).isEqualTo(resultObject);
+	}
 }
