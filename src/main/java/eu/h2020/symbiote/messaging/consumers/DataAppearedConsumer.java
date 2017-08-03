@@ -3,7 +3,6 @@ package eu.h2020.symbiote.messaging.consumers;
 import eu.h2020.symbiote.ProcessingLogic;
 import eu.h2020.symbiote.enabler.messaging.model.EnablerLogicDataAppearedMessage;
 import eu.h2020.symbiote.messaging.RabbitManager;
-import eu.h2020.symbiote.repository.EnablerLogicDataAppearedMessageRepository;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -12,7 +11,6 @@ import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.amqp.rabbit.annotation.Queue;
 import org.springframework.amqp.rabbit.annotation.QueueBinding;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 
