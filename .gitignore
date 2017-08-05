@@ -140,3 +140,7 @@ target
 # Logs
 logs
 *.log
+
+# MD html
+*.md.html
+
