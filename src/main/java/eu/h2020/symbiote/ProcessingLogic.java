@@ -3,7 +3,7 @@ package eu.h2020.symbiote;
 import eu.h2020.symbiote.enabler.messaging.model.EnablerLogicDataAppearedMessage;
 
 /**
- * Processing logic is interface the specific Enabler Logic needs to implement.
+ * Processing Logic is interface that specific Enabler Logic needs to implement.
  * 
  * @author Mario Kusek
  *
@@ -16,5 +16,9 @@ public interface ProcessingLogic {
 	 */
 	void init(EnablerLogic enablerLogic);
 	
+	/**
+	 * This method is called when data from PlatfromProxy is received
+	 * @param dataAppearedMessage
+	 */
 	void measurementReceived(EnablerLogicDataAppearedMessage dataAppearedMessage);
 }
