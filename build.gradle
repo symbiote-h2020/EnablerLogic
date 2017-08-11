@@ -56,12 +56,12 @@ configurations {
 }
 
 
-//allprojects {
-//	repositories {
-//		jcenter()
-//		maven { url "https://jitpack.io" }
-//	}
-//}
+allprojects {
+	repositories {
+		jcenter()
+		maven { url "https://jitpack.io" }
+	}
+}
 
 repositories {
 	mavenLocal()
@@ -71,16 +71,23 @@ repositories {
 sourceCompatibility = 1.8
 targetCompatibility = 1.8
 
+configurations.all {
+    // check for updates every build
+    resolutionStrategy.cacheChangingModulesFor 0, 'seconds'
+}
+
+
 dependencies {
 	compile('org.springframework.boot:spring-boot-starter')
     compile('org.springframework.cloud:spring-cloud-starter-zipkin') // Causes the java.net.ConnectException if Zipkin offline
 	compile('org.springframework.boot:spring-boot-starter-amqp')
     compile('org.springframework.boot:spring-boot-starter-data-rest')
-	compile('eu.h2020.symbiote:SymbIoTeLibraries:1.0.1-SNAPSHOT')
-	//compile('com.github.symbiote-h2020:SymbIoTeLibraries:develop-SNAPSHOT') { changing = true }
+
+	//compile('eu.h2020.symbiote:SymbIoTeLibraries:1.0.1-SNAPSHOT')
+	compile('com.github.symbiote-h2020:SymbIoTeLibraries:develop-SNAPSHOT') { changing = true }
 	
 	compileOnly('org.projectlombok:lombok')
-	
+
     testCompile('org.springframework.boot:spring-boot-starter-test')
     testCompile('org.awaitility:awaitility:3.0.0')
     testCompile('com.revinate:assertj-json:1.0.1')
