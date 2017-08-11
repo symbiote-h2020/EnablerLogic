@@ -11,8 +11,7 @@ sudo: required
 branches:
   only:
   - staging
-install: 
-  - sdk install gradle 3.4.1
+install: true
 before_cache:
 - rm -f  $HOME/.gradle/caches/modules-2/modules-2.lock
 - rm -fr $HOME/.gradle/caches/*/plugin-resolution/
@@ -23,6 +22,8 @@ cache:
 before_script:
 - chmod a+x merge_script.sh
 - "./merge_script.sh"
+script:
+  - ./gradlew clean build -x integrationTest
 after_success:
 - chmod a+x pushing_script.sh
 - "./pushing_script.sh"
