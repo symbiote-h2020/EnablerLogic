@@ -100,10 +100,22 @@ dependencyManagement {
     }
 }
 
+// creating source jar
+task sourceJar(type: Jar) {
+    from sourceSets.main.allJava
+    baseName = 'enabler-logic-starter'
+    version =  project.version
+    
+}
+
 publishing {
 	publications {
 		mavenJava(MavenPublication) {
 			from components.java
+			
+			artifact sourceJar {
+                classifier "sources"
+            }
 		}
 	}
 	repositories {
