@@ -155,7 +155,7 @@ task integrationTest(type: Test) {
     outputs.upToDateWhen { false }
 }
 
-//check.dependsOn integrationTest
+check.dependsOn integrationTest
 integrationTest.mustRunAfter test
 
 task allTestReport(type: TestReport) {
@@ -187,7 +187,7 @@ task jacocoIntegrationTestReport(type: JacocoReport) {
 }
 
 jacocoIntegrationTestReport.dependsOn integrationTest
-//check.dependsOn jacocoIntegrationTestReport
+check.dependsOn jacocoIntegrationTestReport
 
 // all tests reporting
 task jacocoAllTestReport(type: JacocoReport) {
@@ -208,7 +208,7 @@ task jacocoAllTestReport(type: JacocoReport) {
     sourceDirectories = sourceSets.main.allJava
 }
 jacocoAllTestReport.dependsOn test, integrationTest
-//check.dependsOn jacocoAllTestReport
+check.dependsOn jacocoAllTestReport
 
 // reports for integration tests in different directory
 tasks.withType(Test) {
