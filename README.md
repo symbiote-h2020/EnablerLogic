@@ -6,16 +6,10 @@
 
 ## Using Generic EnablerLogic
 
-In order to create specific EnablerLogic you need first to download source of this generic EnablerLogic, compile it
-and install in local maven repository.
-
-1. Downloading generic Enabler Logic
-
-	``git clone https://github.com/symbiote-h2020/EnablerLogic.git``
-
-2. Compile and install in local maven repository
-
-	``./gradlew build publishToMavenLocal``
+The idea of Generic EnablerLogic is to use it as dependency in specific EnablerLogic. 
+Generic parts like RabbitMQ communication with other components in enabler (e.g. ResourceManager, 
+PlatformProxy, ...) are implemented in Generic EnablerLogic. That way a developer of specific enabler 
+doesn't have to implement complex communication between those components. 
 
 ## Creating specific EnablerLogic
 
@@ -27,10 +21,12 @@ and install in local maven repository.
 
 	- Add following dependencies:
 
-		``compile('com.github.symbiote-h2020:SymbIoTeLibraries:develop-SNAPSHOT') { changing = true }``
-		``compile('eu.h2020.symbiote:EnablerLogic:0.0.1-SNAPSHOT')``
+		``compile('com.github.symbiote-h2020:EnablerLogic:develop-SNAPSHOT') { changing = true }``
 
-		- The first is dependency to SymbIoTeLibraries from jitpack. It will use current verision of SymbIoTeLibraries published in jitpack. This is only for development. In the future this will be published in some official repository. In order to use jitpack you need to put in `build.gradle` following lines as well:
+		- This is dependency to development version of EnablerLogic from jitpack. It will use the newest version of 
+		EnablerLogic published in jitpack. This is only for development. In the future this will be 
+		published in some official repository. In order to use jitpack you need to put in `build.gradle` 
+		following lines as well:
 
 			```
 			allprojects {
@@ -41,12 +37,6 @@ and install in local maven repository.
 			}
 			```
 
-		- The second dependency is for generic part of EnablerLogic that was just installed in local maven repository. Be careful that the version is the same as the version in cloned repository.
-
-			- You can check version in cloned repository by looking in `build.gradle` for the following line:
-
-				``version = '0.0.1-SNAPSHOT'``
-
 3. Setting configuration
 
 	- Configuration needs to be put in `bootstrap.properties` or YMl file. An example is here:
@@ -56,17 +46,23 @@ and install in local maven repository.
 	spring.cloud.config.uri=http://localhost:8888
 	```
 
-	- The first line is defining the name of this specific EnablerLogic. Under this name properties are loaded from config server.
+	- The first line is defining the name of this specific EnablerLogic. Under this name properties 
+	are loaded from config server.
 
-	- The second line is location of config server. This is the case when config server is run in local machine which is suitable for development.
+	- The second line is location of config server. This is the case when config server is run in 
+	local machine which is suitable for development.
 
 4. Creating ProcessingLogic component
 
-	- Each enabler must have one ProcessingLogic component. This component implements `eu.h2020.symbiote.ProcessingLogic` interface.
+	- Each enabler must have one ProcessingLogic component. This component implements 
+	`eu.h2020.symbiote.ProcessingLogic` interface.
 
-	- There are methods that are called upon receiving messages (over RabbitMQ) from other enabler components.
+	- There are methods that are called upon receiving messages (over RabbitMQ) from 
+	other enabler components.
 
-	- The most important method is `init` that is called when the enabler is started. It has as parameter `EnablerLogic` object that has methods for sending messages to other components.
+	- The most important method is `init` that is called when the enabler is started. It 
+	has as parameter `EnablerLogic` object that has methods for sending messages to other 
+	components.
 
 	- Here is an example of one component:
 
@@ -123,4 +119,5 @@ or
 
 ``java -jar build/libs/EnablerLogicExample-0.0.1-SNAPSHOT.jar``
 
-Note: In order to function correctly you need to start following components before: RabbitMQ server, Config Server, Eureka and Zipkin.
+Note: In order to function correctly you need to start following components before: RabbitMQ server, 
+Config Server, Eureka and Zipkin.
