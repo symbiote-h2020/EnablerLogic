@@ -29,6 +29,9 @@ public class RoutingKeysProperties {
 	public static class EnablerLogicKeys {
 		private String acquireMeasurements = "symbIoTe.enablerLogic.acquireMeasurements";
 		private String dataAppeared = "symbIoTe.enablerLogic.dataAppeared";
+		private String asyncMessageToEnablerLogic = "symbIoTe.enablerLogic.asyncMessageToEnablerLogic";
+		private String syncMessageToEnablerLogic = "symbIoTe.enablerLogic.syncMessageToEnablerLogic";
+
 	}
 
 	@Getter

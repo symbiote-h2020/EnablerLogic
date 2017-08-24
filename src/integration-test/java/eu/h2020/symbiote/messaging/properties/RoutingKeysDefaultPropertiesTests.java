@@ -22,5 +22,7 @@ public class RoutingKeysDefaultPropertiesTests {
 	public void shouldLoadFirstLevelProperties() {
 		assertThat(props.getEnablerLogic().getAcquireMeasurements()).isEqualTo("symbIoTe.enablerLogic.acquireMeasurements");
 		assertThat(props.getEnablerLogic().getDataAppeared()).isEqualTo("symbIoTe.enablerLogic.dataAppeared");
+		assertThat(props.getEnablerLogic().getAsyncMessageToEnablerLogic()).isEqualTo("symbIoTe.enablerLogic.asyncMessageToEnablerLogic");
+		assertThat(props.getEnablerLogic().getSyncMessageToEnablerLogic()).isEqualTo("symbIoTe.enablerLogic.syncMessageToEnablerLogic");
 	}
 }

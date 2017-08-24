@@ -45,4 +45,9 @@ public class EnablerLogicPropertiesTests {
 		assertThat(props.getKey().getEnablerPlatformProxy().getAcquisitionStartRequested()).isEqualTo("c_asr");
 		assertThat(props.getKey().getResourceManager().getStartDataAcquisition()).isEqualTo("c_sda");
 	}
+	
+	@Test
+    public void shouldHaveEnablerName() throws Exception {
+	    assertThat(props.getEnablerName()).isEqualTo("EnablerLogicExample");
+    }
 }
