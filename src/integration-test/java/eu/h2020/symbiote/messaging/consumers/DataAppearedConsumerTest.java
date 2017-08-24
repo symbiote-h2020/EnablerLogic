@@ -152,7 +152,7 @@ public class DataAppearedConsumerTest {
     }
     
     @Test
-    public void dataAppeared_should() {
+    public void dataAppeared_shouldReceiveMessage() {
         // given
         EnablerLogicDataAppearedMessage message = new EnablerLogicDataAppearedMessage();
         message.setTaskId("taskId");
