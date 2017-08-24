@@ -47,55 +47,55 @@ import io.arivera.oss.embedded.rabbitmq.bin.RabbitMqPlugins;
 @EnableConfigurationProperties({RabbitConnectionProperties.class, ExchangeProperties.class, RoutingKeysProperties.class})
 @TestPropertySource(locations="classpath:empty.properties")
 public class DataAppearedConsumerTest {
-	private static final int RABBIT_STARTING_TIMEOUT = 10_000;
+    private static final int RABBIT_STARTING_TIMEOUT = 10_000;
 
-	@Configuration
-	@EnableRabbit
-	public static class RabbitConfig {
-		@Bean
-		public ConnectionFactory connectionFactory() {
-			return new CachingConnectionFactory("localhost");
-		}
-		
-		@Bean
-		public RabbitTemplate rabbitTemaplate(ConnectionFactory connectionFactory) {
-			RabbitTemplate rabbitTemplate = new RabbitTemplate(connectionFactory);
-			rabbitTemplate.setMessageConverter(new Jackson2JsonMessageConverter());
-			return rabbitTemplate;
-		}
-		
-		@Bean
-	    public SimpleRabbitListenerContainerFactory rabbitListenerContainerFactory(ConnectionFactory connectionFactory) {
-	        SimpleRabbitListenerContainerFactory factory = new SimpleRabbitListenerContainerFactory();
-	        factory.setConnectionFactory(connectionFactory);
-	        factory.setMessageConverter(new Jackson2JsonMessageConverter());
-	        return factory;
-	    }
-		
-		@Bean
-		public RabbitAdmin amqpAdmin(ConnectionFactory connectionFactory) {
-			return new RabbitAdmin(connectionFactory);
-		}
-		
-		@Bean
-		public Exchange exchange(EnablerLogicProperties props) {
-		  return ExchangeBuilder
-				  .topicExchange(props.getEnablerLogicExchange().getName()) //EXCHANGE_NAME
-				  .build();
-		}
-		
-		@Bean
-		public Channel tempChannel(ConnectionFactory factory) {
-			Connection connection = factory.createConnection();
-			return connection.createChannel(false);
-		}
-		
-		@Bean
-		public ProcessingLogicTestImpl processingLogic() {
-			return new ProcessingLogicTestImpl();
-		}
-	}
-	
+    @Configuration
+    @EnableRabbit
+    public static class RabbitConfig {
+        @Bean
+        public ConnectionFactory connectionFactory() {
+            return new CachingConnectionFactory("localhost");
+        }
+        
+        @Bean
+        public RabbitTemplate rabbitTemaplate(ConnectionFactory connectionFactory) {
+            RabbitTemplate rabbitTemplate = new RabbitTemplate(connectionFactory);
+            rabbitTemplate.setMessageConverter(new Jackson2JsonMessageConverter());
+            return rabbitTemplate;
+        }
+        
+        @Bean
+        public SimpleRabbitListenerContainerFactory rabbitListenerContainerFactory(ConnectionFactory connectionFactory) {
+            SimpleRabbitListenerContainerFactory factory = new SimpleRabbitListenerContainerFactory();
+            factory.setConnectionFactory(connectionFactory);
+            factory.setMessageConverter(new Jackson2JsonMessageConverter());
+            return factory;
+        }
+        
+        @Bean
+        public RabbitAdmin amqpAdmin(ConnectionFactory connectionFactory) {
+            return new RabbitAdmin(connectionFactory);
+        }
+        
+        @Bean
+        public Exchange exchange(EnablerLogicProperties props) {
+          return ExchangeBuilder
+                  .topicExchange(props.getEnablerLogicExchange().getName()) //EXCHANGE_NAME
+                  .build();
+        }
+        
+        @Bean
+        public Channel tempChannel(ConnectionFactory factory) {
+            Connection connection = factory.createConnection();
+            return connection.createChannel(false);
+        }
+        
+        @Bean
+        public ProcessingLogicTestImpl processingLogic() {
+            return new ProcessingLogicTestImpl();
+        }
+    }
+    
     private static EmbeddedRabbitMq rabbitMq;
 
     @Autowired
@@ -111,62 +111,61 @@ public class DataAppearedConsumerTest {
     ProcessingLogicTestImpl processingLogic;
 
     public static class ProcessingLogicTestImpl implements ProcessingLogic {
-    		public EnablerLogicDataAppearedMessage dataAppearedMessage;
+            public EnablerLogicDataAppearedMessage dataAppearedMessage;
 
-		@Override
-		public void init(EnablerLogic enablerLogic) {
-		}
+        @Override
+        public void init(EnablerLogic enablerLogic) {
+        }
 
-		@Override
-		public void measurementReceived(EnablerLogicDataAppearedMessage dataAppearedMessage) {
-			this.dataAppearedMessage = dataAppearedMessage;
-		}
-    		
+        @Override
+        public void measurementReceived(EnablerLogicDataAppearedMessage dataAppearedMessage) {
+            this.dataAppearedMessage = dataAppearedMessage;
+        }
+            
     }
     
     @BeforeClass
     public static void startEmbeddedRabbit() throws Exception {
-	    	EmbeddedRabbitMqConfig config = new EmbeddedRabbitMqConfig.Builder()
-	    			.rabbitMqServerInitializationTimeoutInMillis(RABBIT_STARTING_TIMEOUT)
-	    			.build();
+            EmbeddedRabbitMqConfig config = new EmbeddedRabbitMqConfig.Builder()
+                    .rabbitMqServerInitializationTimeoutInMillis(RABBIT_STARTING_TIMEOUT)
+                    .build();
 
-	    	cleanupVarDir(config);
-	    	
-	    rabbitMq = new EmbeddedRabbitMq(config);
-	    	rabbitMq.start();
+            cleanupVarDir(config);
+            
+        rabbitMq = new EmbeddedRabbitMq(config);
+            rabbitMq.start();
 
-	    	RabbitMqPlugins rabbitMqPlugins = new RabbitMqPlugins(config);
-	    rabbitMqPlugins.enable("rabbitmq_management");
-	    rabbitMqPlugins.enable("rabbitmq_tracing");
+            RabbitMqPlugins rabbitMqPlugins = new RabbitMqPlugins(config);
+        rabbitMqPlugins.enable("rabbitmq_management");
+        rabbitMqPlugins.enable("rabbitmq_tracing");
     }
 
-	private static void cleanupVarDir(EmbeddedRabbitMqConfig config) throws IOException {
-		File varDir = new File(config.getAppFolder(), "var");
-		if(varDir.exists())
-			FileUtils.cleanDirectory(varDir);
-	}
+    private static void cleanupVarDir(EmbeddedRabbitMqConfig config) throws IOException {
+        File varDir = new File(config.getAppFolder(), "var");
+        if(varDir.exists())
+            FileUtils.cleanDirectory(varDir);
+    }
     
     @AfterClass
     public static void stopEmbeddedRabbit() {
-    		rabbitMq.stop();
+            rabbitMq.stop();
     }
     
-	@Test
-	public void dataAppeared_should() {
-		// given
-		EnablerLogicDataAppearedMessage message = new EnablerLogicDataAppearedMessage();
-		message.setTaskId("taskId");
-		
-		// when
-		rabbitTemplate.convertAndSend(
-				props.getEnablerLogicExchange().getName(), 
-				props.getKey().getEnablerLogic().getDataAppeared(), 
-				message);
-		
-		// then
-		
-		await().until(() -> processingLogic.dataAppearedMessage != null);
-		EnablerLogicDataAppearedMessage receivedMessage = processingLogic.dataAppearedMessage;
-		assertThat(receivedMessage.getTaskId()).isEqualTo("taskId");
-	}
+    @Test
+    public void dataAppeared_should() {
+        // given
+        EnablerLogicDataAppearedMessage message = new EnablerLogicDataAppearedMessage();
+        message.setTaskId("taskId");
+        
+        // when
+        rabbitTemplate.convertAndSend(
+                props.getEnablerLogicExchange().getName(), 
+                props.getKey().getEnablerLogic().getDataAppeared(), 
+                message);
+        
+        // then
+        await().until(() -> processingLogic.dataAppearedMessage != null);
+        EnablerLogicDataAppearedMessage receivedMessage = processingLogic.dataAppearedMessage;
+        assertThat(receivedMessage.getTaskId()).isEqualTo("taskId");
+    }
 }
