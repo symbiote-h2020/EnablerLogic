@@ -34,13 +34,7 @@ import lombok.Getter;
         AsyncMessageFromEnablerLogicConsumer.class})
 @EnableConfigurationProperties({RabbitConnectionProperties.class, ExchangeProperties.class, RoutingKeysProperties.class})
 @TestPropertySource(locations="classpath:empty.properties")
-public class AsyncMessageFromEnablerLogicConsumerTest {
-    private static final int RABBIT_STARTING_TIMEOUT = 10_000;
-
-    private static EmbeddedRabbitMq rabbitMq;
-
-    @Autowired
-    private RabbitTemplate rabbitTemplate;
+public class AsyncMessageFromEnablerLogicConsumerTest extends EmbeddedRabbitFixture {
 
     @Autowired
     EnablerLogicProperties props;
@@ -55,33 +49,6 @@ public class AsyncMessageFromEnablerLogicConsumerTest {
     }
     
     CustomMessage receivedMessage = null;
-    
-    @BeforeClass
-    public static void startEmbeddedRabbit() throws Exception {
-            EmbeddedRabbitMqConfig config = new EmbeddedRabbitMqConfig.Builder()
-                    .rabbitMqServerInitializationTimeoutInMillis(RABBIT_STARTING_TIMEOUT)
-                    .build();
-
-            cleanupVarDir(config);
-            
-        rabbitMq = new EmbeddedRabbitMq(config);
-            rabbitMq.start();
-
-            RabbitMqPlugins rabbitMqPlugins = new RabbitMqPlugins(config);
-        rabbitMqPlugins.enable("rabbitmq_management");
-        rabbitMqPlugins.enable("rabbitmq_tracing");
-    }
-
-    private static void cleanupVarDir(EmbeddedRabbitMqConfig config) throws IOException {
-        File varDir = new File(config.getAppFolder(), "var");
-        if(varDir.exists())
-            FileUtils.cleanDirectory(varDir);
-    }
-    
-    @AfterClass
-    public static void stopEmbeddedRabbit() {
-            rabbitMq.stop();
-    }
     
     @Test
     public void asyncMessage_shouldCallLambda() {
