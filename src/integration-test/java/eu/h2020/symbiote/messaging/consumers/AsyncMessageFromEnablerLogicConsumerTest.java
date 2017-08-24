@@ -3,15 +3,8 @@ package eu.h2020.symbiote.messaging.consumers;
 import static org.assertj.core.api.Assertions.*;
 import static org.awaitility.Awaitility.await;
 
-import java.io.File;
-import java.io.IOException;
-
-import org.apache.commons.io.FileUtils;
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Import;
@@ -22,9 +15,6 @@ import eu.h2020.symbiote.messaging.properties.EnablerLogicProperties;
 import eu.h2020.symbiote.messaging.properties.ExchangeProperties;
 import eu.h2020.symbiote.messaging.properties.RabbitConnectionProperties;
 import eu.h2020.symbiote.messaging.properties.RoutingKeysProperties;
-import io.arivera.oss.embedded.rabbitmq.EmbeddedRabbitMq;
-import io.arivera.oss.embedded.rabbitmq.EmbeddedRabbitMqConfig;
-import io.arivera.oss.embedded.rabbitmq.bin.RabbitMqPlugins;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
