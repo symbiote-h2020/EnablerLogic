@@ -2,21 +2,20 @@ package eu.h2020.symbiote;
 
 import java.util.Arrays;
 import java.util.function.Consumer;
+import java.util.function.Function;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import eu.h2020.symbiote.EnablerLogicInjectionTest.CustomMessage;
-import eu.h2020.symbiote.EnablerLogicInjectionTest.CustomMessageConsumer;
-import eu.h2020.symbiote.EnablerLogicTest.ReceivedMessage;
 import eu.h2020.symbiote.enabler.messaging.model.ResourceManagerAcquisitionStartRequest;
 import eu.h2020.symbiote.enabler.messaging.model.ResourceManagerAcquisitionStartResponse;
 import eu.h2020.symbiote.enabler.messaging.model.ResourceManagerTaskInfoRequest;
 import eu.h2020.symbiote.messaging.RabbitManager;
 import eu.h2020.symbiote.messaging.WrongResponseException;
 import eu.h2020.symbiote.messaging.consumers.AsyncMessageFromEnablerLogicConsumer;
+import eu.h2020.symbiote.messaging.consumers.SyncMessageFromEnablerLogicConsumer;
 import eu.h2020.symbiote.messaging.properties.EnablerLogicProperties;
 import lombok.Setter;
 
@@ -37,6 +36,10 @@ public class EnablerLogic {
     @Setter
     @Autowired
     private AsyncMessageFromEnablerLogicConsumer asyncConsumer;
+    
+    @Setter
+    @Autowired
+    private SyncMessageFromEnablerLogicConsumer syncConsumer;
    
     /**
      * Initialization of EnablerLogic.
@@ -71,6 +74,29 @@ public class EnablerLogic {
     public void unregisterAsyncMessageFromEnablerLogicConsumer(Class<?> clazz) {
         asyncConsumer.unregisterReceiver(clazz);
     }
+    
+    /**
+     * Registering consumer (Function) of synchronous messages from another Enabler Logic component.
+     * 
+     * Messages are delivered to specific Function depending on the class of the message that is received.
+     * There should be only one Function for one type of message (class).
+     * 
+     * @param clazz message class
+     * @param function consumes message when it arrives and returns response
+     */
+    public <O> void registerSyncMessageFromEnablerLogicConsumer(Class<O> clazz, Function<O, ?> function) {
+        syncConsumer.registerReceiver(clazz, function);
+    }
+
+    /**
+     * Unregistering consumer (Function) of synchronous messages from another Enabler Logic component.
+     * 
+     * @param clazz receiving message class
+     */
+    public void unregisterSyncMessageFromEnablerLogicConsumer(Class<?> clazz) {
+        syncConsumer.unregisterReceiver(clazz);
+    }
+
     
     /**
      * Queries Resource Manager component. It is blocking until response received or timeout.

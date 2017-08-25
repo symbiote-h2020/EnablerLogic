@@ -18,6 +18,7 @@ import org.springframework.test.context.junit4.SpringRunner;
 
 import eu.h2020.symbiote.messaging.RabbitManager;
 import eu.h2020.symbiote.messaging.consumers.AsyncMessageFromEnablerLogicConsumer;
+import eu.h2020.symbiote.messaging.consumers.SyncMessageFromEnablerLogicConsumer;
 import eu.h2020.symbiote.messaging.properties.EnablerLogicProperties;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -30,6 +31,11 @@ public class EnablerLogicInjectionTest {
         @Bean
         public AsyncMessageFromEnablerLogicConsumer asyncMessageFromEnablerLogicConsumer() {
             return Mockito.mock(AsyncMessageFromEnablerLogicConsumer.class);
+        }
+        
+        @Bean
+        public SyncMessageFromEnablerLogicConsumer syncMessageFromEnablerLogicConsumer() {
+            return Mockito.mock(SyncMessageFromEnablerLogicConsumer.class);
         }
         
         @Bean

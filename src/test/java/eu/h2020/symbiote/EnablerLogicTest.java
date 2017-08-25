@@ -7,6 +7,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.util.function.Consumer;
+import java.util.function.Function;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -22,11 +23,10 @@ import eu.h2020.symbiote.enabler.messaging.model.ResourceManagerTaskInfoRequest;
 import eu.h2020.symbiote.messaging.RabbitManager;
 import eu.h2020.symbiote.messaging.WrongResponseException;
 import eu.h2020.symbiote.messaging.consumers.AsyncMessageFromEnablerLogicConsumer;
+import eu.h2020.symbiote.messaging.consumers.SyncMessageFromEnablerLogicConsumer;
 import eu.h2020.symbiote.messaging.properties.EnablerLogicProperties;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
 
 @RunWith(MockitoJUnitRunner.class)
 public class EnablerLogicTest {
@@ -166,4 +166,34 @@ public class EnablerLogicTest {
         .hasFieldOrPropertyWithValue("response", new Long(1))
         .hasNoCause();
     }
+    
+    @Test
+    public void registerSyncMessageFromEnablerLogicConsumer_shouldDelegateItToConsumer() throws Exception {
+        //given
+        Function<String,String> lambda = (m) -> m;
+        
+        SyncMessageFromEnablerLogicConsumer syncConsumer = Mockito.mock(SyncMessageFromEnablerLogicConsumer.class);
+        enablerLogic.setSyncConsumer(syncConsumer);
+        
+        // when
+        enablerLogic.registerSyncMessageFromEnablerLogicConsumer(String.class, lambda);
+        
+        //then
+        verify(syncConsumer).registerReceiver(String.class, lambda);
+    }
+    
+    @Test
+    public void unregisterSyncMessageFromEnablerLogicConsumer_shouldDelegateItToConsumer() throws Exception {
+        //given
+        SyncMessageFromEnablerLogicConsumer syncConsumer = Mockito.mock(SyncMessageFromEnablerLogicConsumer.class);
+        enablerLogic.setSyncConsumer(syncConsumer);
+        
+        // when
+        enablerLogic.unregisterSyncMessageFromEnablerLogicConsumer(String.class);
+        
+        //then
+        verify(syncConsumer).unregisterReceiver(String.class);
+    }
+    
+
 }

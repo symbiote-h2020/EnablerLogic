@@ -3,7 +3,7 @@ package eu.h2020.symbiote.messaging.consumers;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.function.Consumer;
+import java.util.function.Function;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -18,38 +18,39 @@ import org.springframework.messaging.handler.annotation.Header;
 import org.springframework.stereotype.Component;
 
 @Component
-public class AsyncMessageFromEnablerLogicConsumer {
-    private static final Logger log = LoggerFactory.getLogger(AsyncMessageFromEnablerLogicConsumer.class);
-    
-    @SuppressWarnings("rawtypes")
-    private Map<String, Consumer> consumers;
+public class SyncMessageFromEnablerLogicConsumer {
+    private static final Logger log = LoggerFactory.getLogger(SyncMessageFromEnablerLogicConsumer.class);
+
+    private Map<String, Function<?, ?>> functions;
     
     private MessageConverter messageConverter;
 
-    public AsyncMessageFromEnablerLogicConsumer() {
-        consumers = new HashMap<>();
+    public SyncMessageFromEnablerLogicConsumer() {
+        functions = new HashMap<>();
         messageConverter = new Jackson2JsonMessageConverter();
     }
     
-    public <O> void registerReceiver(Class<O> clazz, Consumer<O> consumer) {
-        consumers.put(clazz.getName(), consumer);
+    public <O> void registerReceiver(Class<O> clazz, Function<O, ?> function) {
+        functions.put(clazz.getName(), function);
     }
 
-    public <O> void unregisterReceiver(Class<O> clazz) {
+    public void unregisterReceiver(Class<?> clazz) {
         // TODO test 
-        //consumers.remove(clazz);
+        //functions.remove(clazz.getName());
     }
     
     @RabbitListener(bindings = @QueueBinding(
         value = @Queue,
         exchange = @Exchange(value = "#{enablerLogicProperties.enablerLogicExchange.name}", type="topic"),
-        key = "#{enablerLogicProperties.key.enablerLogic.asyncMessageToEnablerLogic}.#{enablerLogicProperties.enablerName}"
+        key = "#{enablerLogicProperties.key.enablerLogic.syncMessageToEnablerLogic}.#{enablerLogicProperties.enablerName}"
     ))
-    @SuppressWarnings({ "rawtypes", "unchecked" })
-    public void receivedAsyncMessage(Message msg, @Header("__TypeId__") String className) throws IOException {
-        log.info("Consumer receivedAsyncMessage: " + msg);
+    public Object receivedSyncMessage(Message msg, @Header("__TypeId__") String className) throws IOException {
+        log.info("Consumer receivedSyncMessage: " + msg);
         
-        Consumer consumer = consumers.get(className);
-        consumer.accept(messageConverter.fromMessage(msg));
+        @SuppressWarnings({ "unchecked" })
+        Function<Object, Object> function = (Function<Object, Object>)functions.get(className);
+        
+        Object response = function.apply(messageConverter.fromMessage(msg));
+        return response;
     }
 }
