@@ -50,7 +50,7 @@ public class EnablerLogic {
     }
     
     /**
-     * Registring consumer of async messages from another Enabler Logic component.
+     * Registering consumer of asynchronous messages from another Enabler Logic component.
      * 
      * Messages are delivered to specific Consumer depending on the class of the message that is received.
      * There should be only one Consumer for one type of message (class)
@@ -64,7 +64,7 @@ public class EnablerLogic {
     }
     
     /**
-     * Unegistring consumer of async messages from another Enabler Logic component.
+     * Unregistering consumer of asynchronous messages from another Enabler Logic component.
      * 
      * @param clazz message class
      */
@@ -98,7 +98,7 @@ public class EnablerLogic {
     }
     
     /**
-     * Sends async message to another Enabler Logic component
+     * Sends asynchronous message to another Enabler Logic component
      * @param enablerName the name of another Enabler Logic component
      * @param msg message send to Enabler Logic component
      */
@@ -113,6 +113,15 @@ public class EnablerLogic {
                 props.getEnablerName();
     }
 
+    /**
+     * Sends synchronous message to another Enabler Logic component
+     * @param enablerName the name of another Enabler Logic component
+     * @param msg message send to Enabler Logic component
+     * @param clazz class of response message
+     * @return response message or null when timeout
+     * 
+     * @throws WrongResponseException when the response message can not be casted to clazz.
+     */
     @SuppressWarnings("unchecked")
     public <O> O sendSyncMessageToEnablerLogic(String enablerName, Object msg, Class<O> clazz) {
         Object response = rabbitManager.sendRpcMessage(props.getEnablerLogicExchange().getName(), 
