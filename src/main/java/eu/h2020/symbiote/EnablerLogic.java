@@ -10,10 +10,12 @@ import org.springframework.stereotype.Service;
 
 import eu.h2020.symbiote.EnablerLogicInjectionTest.CustomMessage;
 import eu.h2020.symbiote.EnablerLogicInjectionTest.CustomMessageConsumer;
+import eu.h2020.symbiote.EnablerLogicTest.ReceivedMessage;
 import eu.h2020.symbiote.enabler.messaging.model.ResourceManagerAcquisitionStartRequest;
 import eu.h2020.symbiote.enabler.messaging.model.ResourceManagerAcquisitionStartResponse;
 import eu.h2020.symbiote.enabler.messaging.model.ResourceManagerTaskInfoRequest;
 import eu.h2020.symbiote.messaging.RabbitManager;
+import eu.h2020.symbiote.messaging.WrongResponseException;
 import eu.h2020.symbiote.messaging.consumers.AsyncMessageFromEnablerLogicConsumer;
 import eu.h2020.symbiote.messaging.properties.EnablerLogicProperties;
 import lombok.Setter;
@@ -108,6 +110,26 @@ public class EnablerLogic {
 
     private String generateAsyncEnablerLogicRoutingKey() {
         return props.getKey().getEnablerLogic().getAsyncMessageToEnablerLogic()+"." + 
+                props.getEnablerName();
+    }
+
+    @SuppressWarnings("unchecked")
+    public <O> O sendSyncMessageToEnablerLogic(String enablerName, Object msg, Class<O> clazz) {
+        Object response = rabbitManager.sendRpcMessage(props.getEnablerLogicExchange().getName(), 
+                generateSyncEnablerLogicRoutingKey(), 
+                msg);
+        
+        if(response == null)
+            return null;
+        
+        if(clazz.isInstance(response))
+            return (O) response;
+
+        throw new WrongResponseException(response);
+    }
+    
+    private String generateSyncEnablerLogicRoutingKey() {
+        return props.getKey().getEnablerLogic().getSyncMessageToEnablerLogic()+"." + 
                 props.getEnablerName();
     }
 }

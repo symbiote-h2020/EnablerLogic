@@ -20,8 +20,13 @@ import eu.h2020.symbiote.enabler.messaging.model.ResourceManagerAcquisitionStart
 import eu.h2020.symbiote.enabler.messaging.model.ResourceManagerAcquisitionStartResponse;
 import eu.h2020.symbiote.enabler.messaging.model.ResourceManagerTaskInfoRequest;
 import eu.h2020.symbiote.messaging.RabbitManager;
+import eu.h2020.symbiote.messaging.WrongResponseException;
 import eu.h2020.symbiote.messaging.consumers.AsyncMessageFromEnablerLogicConsumer;
 import eu.h2020.symbiote.messaging.properties.EnablerLogicProperties;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 @RunWith(MockitoJUnitRunner.class)
 public class EnablerLogicTest {
@@ -89,7 +94,6 @@ public class EnablerLogicTest {
     @Test
     public void sendingAsyncMessageToEnablerLogic_shouldCallRabbitManager() throws Exception {
         // given
-        //ArgumentCaptor<Object> captor = ArgumentCaptor.forClass(Object.class);
         String message = "test message";
         String enablerName = "enabler name";
         
@@ -102,4 +106,64 @@ public class EnablerLogicTest {
                 eq((Object)message));
     }
     
+    @AllArgsConstructor
+    public static class ReceivedMessage {
+        @Getter
+        private String receivedText;
+    }
+    
+    @Test
+    public void sendingSyncMessageToEnablerLogic_shouldCallRabbitManagerAndReturnResponse() throws Exception {
+        // given
+        String sendMessage = "test message";
+        String enablerName = "enabler name";
+        ReceivedMessage mockReceiveMessage = new ReceivedMessage("received message");
+        
+        when(rabbitManager.sendRpcMessage("symbIoTe.enablerLogic", 
+                "symbIoTe.enablerLogic.syncMessageToEnablerLogic.DefaultEnablerName", 
+                (Object)sendMessage)).thenReturn(mockReceiveMessage);
+        
+        // when
+        ReceivedMessage receivedMessage = enablerLogic.sendSyncMessageToEnablerLogic(enablerName, sendMessage, ReceivedMessage.class);
+        
+        // then
+        assertThat(receivedMessage).isSameAs(mockReceiveMessage);
+    }
+
+    @Test
+    public void sendingSyncMessageToEnablerLogic_whenTimeout_shouldCallRabbitManagerAndReturnNull() throws Exception {
+        // given
+        String sendMessage = "test message";
+        String enablerName = "enabler name";
+        
+        when(rabbitManager.sendRpcMessage("symbIoTe.enablerLogic", 
+                "symbIoTe.enablerLogic.syncMessageToEnablerLogic.DefaultEnablerName", 
+                (Object)sendMessage)).thenReturn(null);
+        
+        // when
+        ReceivedMessage receivedMessage = enablerLogic.sendSyncMessageToEnablerLogic(enablerName, sendMessage, ReceivedMessage.class);
+        
+        // then
+        assertThat(receivedMessage).isNull();
+    }
+
+    @Test
+    public void sendingSyncMessageToEnablerLogic_whenReturnedWrongObjectType_shouldCallRabbitManagerAndThrowException() throws Exception {
+        // given
+        String sendMessage = "test message";
+        String enablerName = "enabler name";
+        
+        when(rabbitManager.sendRpcMessage("symbIoTe.enablerLogic", 
+                "symbIoTe.enablerLogic.syncMessageToEnablerLogic.DefaultEnablerName", 
+                (Object)sendMessage)).thenReturn(new Long(1));
+        
+        assertThatThrownBy(() -> {
+            // when
+            enablerLogic.sendSyncMessageToEnablerLogic(enablerName, sendMessage, ReceivedMessage.class);
+        })
+        // then
+        .isInstanceOf(WrongResponseException.class)
+        .hasFieldOrPropertyWithValue("response", new Long(1))
+        .hasNoCause();
+    }
 }
