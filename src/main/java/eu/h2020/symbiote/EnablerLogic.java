@@ -18,6 +18,12 @@ import eu.h2020.symbiote.messaging.consumers.AsyncMessageFromEnablerLogicConsume
 import eu.h2020.symbiote.messaging.properties.EnablerLogicProperties;
 import lombok.Setter;
 
+/**
+ * EnblerLogic is used by ProcessingLogic to send messages to other components in enabler.
+ * 
+ *  * @author Mario Kusek
+ *
+ */
 @Service
 public class EnablerLogic {
     private static final Logger log = LoggerFactory.getLogger(EnablerLogic.class);
@@ -29,22 +35,49 @@ public class EnablerLogic {
     @Setter
     @Autowired
     private AsyncMessageFromEnablerLogicConsumer asyncConsumer;
-    
+   
+    /**
+     * Initialization of EnablerLogic.
+     *  
+     * @param rabbitManager it is used to send messages to RabbitMQ
+     * @param props all properties are loaded in this class
+     */
     public EnablerLogic(RabbitManager rabbitManager, EnablerLogicProperties props) {
         this.rabbitManager = rabbitManager;
         this.props = props;
     }
     
+    /**
+     * Registring consumer of async messages from another Enabler Logic component.
+     * 
+     * Messages are delivered to specific Consumer depending on the class of the message that is received.
+     * There should be only one Consumer for one type of message (class)
+     * 
+     * @param clazz message class
+     * @param consumer consumes message when it arrives
+     */
     public <O> void registerAsyncMessageFromEnablerLogicConsumer(Class<O> clazz,
             Consumer<O> consumer) {
         asyncConsumer.registerReceiver(clazz, consumer);
     }
     
-    
+    /**
+     * Unegistring consumer of async messages from another Enabler Logic component.
+     * 
+     * @param clazz message class
+     */
     public void unregisterAsyncMessageFromEnablerLogicConsumer(Class<?> clazz) {
         asyncConsumer.unregisterReceiver(clazz);
     }
     
+    /**
+     * Queries Resource Manager component. It is blocking until response received or timeout.
+     * 
+     * In the case of timeout the null is returned.
+     * 
+     * @param requests send to Resource Manager component
+     * @return response form Resource Manager component or null in case of timeout
+     */
     public ResourceManagerAcquisitionStartResponse queryResourceManager(ResourceManagerTaskInfoRequest...requests) {
         for(ResourceManagerTaskInfoRequest request: requests) {
             log.info("sending message to ResourceManager: {}", request);
@@ -62,6 +95,11 @@ public class EnablerLogic {
         return response;
     }
     
+    /**
+     * Sends async message to another Enabler Logic component
+     * @param enablerName the name of another Enabler Logic component
+     * @param msg message send to Enabler Logic component
+     */
     public void sendAsyncMessageToEnablerLogic(String enablerName, Object msg) {
     		rabbitManager.sendMessage(props.getEnablerLogicExchange().getName(), 
     		        generateAsyncEnablerLogicRoutingKey(), 
