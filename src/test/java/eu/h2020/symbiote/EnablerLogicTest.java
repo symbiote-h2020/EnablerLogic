@@ -57,6 +57,34 @@ public class EnablerLogicTest {
         assertThat(requests.getResources()).hasSize(1);
         assertThat(requests.getResources()).contains(request);
     }
+
+    @Test
+    public void registerAsyncMessageFromEnablerLogicConsumer_shouldDelegateItToConsumer() throws Exception {
+        //given
+        Consumer<String> lambda = (m) -> {};
+        
+        AsyncMessageFromEnablerLogicConsumer asyncConsumer = Mockito.mock(AsyncMessageFromEnablerLogicConsumer.class);
+        enablerLogic.setAsyncConsumer(asyncConsumer);
+        
+        // when
+        enablerLogic.registerAsyncMessageFromEnablerLogicConsumer(String.class, lambda);
+        
+        //then
+        verify(asyncConsumer).registerReceiver(String.class, lambda);
+    }
+    
+    @Test
+    public void unregisterAsyncMessageFromEnablerLogicConsumer_shouldDelegateItToConsumer() throws Exception {
+        //given
+        AsyncMessageFromEnablerLogicConsumer asyncConsumer = Mockito.mock(AsyncMessageFromEnablerLogicConsumer.class);
+        enablerLogic.setAsyncConsumer(asyncConsumer);
+        
+        // when
+        enablerLogic.unregisterAsyncMessageFromEnablerLogicConsumer(String.class);
+        
+        //then
+        verify(asyncConsumer).unregisterReceiver(String.class);
+    }
     
     @Test
     public void sendingAsyncMessageToEnablerLogic_shouldCallRabbitManager() throws Exception {
@@ -74,31 +102,4 @@ public class EnablerLogicTest {
                 eq((Object)message));
     }
     
-    @Test
-    public void registerAsyncMessageFromEnablerLogicConsumer_shouldDelegateItToConsumer() throws Exception {
-        //given
-        Consumer<String> lambda = (m) -> {};
-
-        AsyncMessageFromEnablerLogicConsumer asyncConsumer = Mockito.mock(AsyncMessageFromEnablerLogicConsumer.class);
-        enablerLogic.setAsyncConsumer(asyncConsumer);
-
-        // when
-        enablerLogic.registerAsyncMessageFromEnablerLogicConsumer(String.class, lambda);
-
-        //then
-        verify(asyncConsumer).registerReceiver(String.class, lambda);
-    }
-
-    @Test
-    public void unregisterAsyncMessageFromEnablerLogicConsumer_shouldDelegateItToConsumer() throws Exception {
-        //given
-        AsyncMessageFromEnablerLogicConsumer asyncConsumer = Mockito.mock(AsyncMessageFromEnablerLogicConsumer.class);
-        enablerLogic.setAsyncConsumer(asyncConsumer);
-        
-        // when
-        enablerLogic.unregisterAsyncMessageFromEnablerLogicConsumer(String.class);
-        
-        //then
-        verify(asyncConsumer).unregisterReceiver(String.class);
-    }
 }
