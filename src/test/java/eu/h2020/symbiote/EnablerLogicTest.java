@@ -59,7 +59,7 @@ public class EnablerLogicTest {
     }
     
     @Test
-    public void sendingSyncMessageToEnablerLogic_shouldCallRabbitManager() throws Exception {
+    public void sendingAsyncMessageToEnablerLogic_shouldCallRabbitManager() throws Exception {
         // given
         //ArgumentCaptor<Object> captor = ArgumentCaptor.forClass(Object.class);
         String message = "test message";
