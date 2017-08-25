@@ -6,17 +6,21 @@ import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.util.function.Consumer;
+
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
+import org.mockito.Mockito;
 import org.mockito.runners.MockitoJUnitRunner;
 
 import eu.h2020.symbiote.enabler.messaging.model.ResourceManagerAcquisitionStartRequest;
 import eu.h2020.symbiote.enabler.messaging.model.ResourceManagerAcquisitionStartResponse;
 import eu.h2020.symbiote.enabler.messaging.model.ResourceManagerTaskInfoRequest;
 import eu.h2020.symbiote.messaging.RabbitManager;
+import eu.h2020.symbiote.messaging.consumers.AsyncMessageFromEnablerLogicConsumer;
 import eu.h2020.symbiote.messaging.properties.EnablerLogicProperties;
 
 @RunWith(MockitoJUnitRunner.class)
@@ -68,5 +72,33 @@ public class EnablerLogicTest {
         verify(rabbitManager).sendMessage(eq("symbIoTe.enablerLogic"), 
                 eq("symbIoTe.enablerLogic.asyncMessageToEnablerLogic.DefaultEnablerName"), 
                 eq((Object)message));
+    }
+    
+    @Test
+    public void registerAsyncMessageFromEnablerLogicConsumer_shouldDelegateItToConsumer() throws Exception {
+        //given
+        Consumer<String> lambda = (m) -> {};
+
+        AsyncMessageFromEnablerLogicConsumer asyncConsumer = Mockito.mock(AsyncMessageFromEnablerLogicConsumer.class);
+        enablerLogic.setAsyncConsumer(asyncConsumer);
+
+        // when
+        enablerLogic.registerAsyncMessageFromEnablerLogicConsumer(String.class, lambda);
+
+        //then
+        verify(asyncConsumer).registerReceiver(String.class, lambda);
+    }
+
+    @Test
+    public void unregisterAsyncMessageFromEnablerLogicConsumer_shouldDelegateItToConsumer() throws Exception {
+        //given
+        AsyncMessageFromEnablerLogicConsumer asyncConsumer = Mockito.mock(AsyncMessageFromEnablerLogicConsumer.class);
+        enablerLogic.setAsyncConsumer(asyncConsumer);
+        
+        // when
+        enablerLogic.unregisterAsyncMessageFromEnablerLogicConsumer(String.class);
+        
+        //then
+        verify(asyncConsumer).unregisterReceiver(String.class);
     }
 }

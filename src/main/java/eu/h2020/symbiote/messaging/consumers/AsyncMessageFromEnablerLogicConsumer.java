@@ -17,6 +17,9 @@ import org.springframework.amqp.support.converter.MessageConverter;
 import org.springframework.messaging.handler.annotation.Header;
 import org.springframework.stereotype.Component;
 
+import eu.h2020.symbiote.EnablerLogicInjectionTest.CustomMessage;
+import eu.h2020.symbiote.EnablerLogicInjectionTest.CustomMessageConsumer;
+
 @Component
 public class AsyncMessageFromEnablerLogicConsumer {
     private static final Logger log = LoggerFactory.getLogger(AsyncMessageFromEnablerLogicConsumer.class);
@@ -35,6 +38,9 @@ public class AsyncMessageFromEnablerLogicConsumer {
         consumers.put(clazz.getName(), consumer);
     }
 
+    public <O> void unregisterReceiver(Class<O> clazz) {
+    }
+    
     @RabbitListener(bindings = @QueueBinding(
         value = @Queue,
         exchange = @Exchange(value = "#{enablerLogicProperties.enablerLogicExchange.name}", type="topic"),
