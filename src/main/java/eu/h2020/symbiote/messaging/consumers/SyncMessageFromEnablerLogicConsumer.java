@@ -17,6 +17,8 @@ import org.springframework.amqp.support.converter.MessageConverter;
 import org.springframework.messaging.handler.annotation.Header;
 import org.springframework.stereotype.Component;
 
+import eu.h2020.symbiote.messaging.WrongRequestException;
+
 @Component
 public class SyncMessageFromEnablerLogicConsumer {
     private static final Logger log = LoggerFactory.getLogger(SyncMessageFromEnablerLogicConsumer.class);
@@ -35,8 +37,7 @@ public class SyncMessageFromEnablerLogicConsumer {
     }
 
     public void unregisterReceiver(Class<?> clazz) {
-        // TODO test 
-        //functions.remove(clazz.getName());
+        functions.remove(clazz.getName());
     }
     
     @RabbitListener(bindings = @QueueBinding(
@@ -46,11 +47,19 @@ public class SyncMessageFromEnablerLogicConsumer {
     ))
     public Object receivedSyncMessage(Message msg, @Header("__TypeId__") String className) throws IOException {
         log.info("Consumer receivedSyncMessage: " + msg);
+
+        Object request = messageConverter.fromMessage(msg);
         
         @SuppressWarnings({ "unchecked" })
         Function<Object, Object> function = (Function<Object, Object>)functions.get(className);
         
-        Object response = function.apply(messageConverter.fromMessage(msg));
+        if(function == null) {
+            WrongRequestException exception = new WrongRequestException("Synchronous consumer can not find function for handling this request type.", request, className);
+            log.info("responding with exception", exception);
+            return exception;
+        }
+            
+        Object response = function.apply(request);
         return response;
     }
 }

@@ -17,6 +17,8 @@ import org.springframework.amqp.support.converter.MessageConverter;
 import org.springframework.messaging.handler.annotation.Header;
 import org.springframework.stereotype.Component;
 
+import eu.h2020.symbiote.messaging.WrongRequestException;
+
 @Component
 public class AsyncMessageFromEnablerLogicConsumer {
     private static final Logger log = LoggerFactory.getLogger(AsyncMessageFromEnablerLogicConsumer.class);
@@ -36,8 +38,7 @@ public class AsyncMessageFromEnablerLogicConsumer {
     }
 
     public <O> void unregisterReceiver(Class<O> clazz) {
-        // TODO test 
-        //consumers.remove(clazz);
+        consumers.remove(clazz.getName());
     }
     
     @RabbitListener(bindings = @QueueBinding(
@@ -48,8 +49,16 @@ public class AsyncMessageFromEnablerLogicConsumer {
     @SuppressWarnings({ "rawtypes", "unchecked" })
     public void receivedAsyncMessage(Message msg, @Header("__TypeId__") String className) throws IOException {
         log.info("Consumer receivedAsyncMessage: " + msg);
+
+        Object request = messageConverter.fromMessage(msg);
         
         Consumer consumer = consumers.get(className);
-        consumer.accept(messageConverter.fromMessage(msg));
+        if(consumer == null) {
+            WrongRequestException exception = new WrongRequestException("Asynchronous consumer can not find consumer for handling this request type.", request, className);
+            log.error("Can not handle request.", exception);
+            return;
+        }
+            
+        consumer.accept(request);
     }
 }
