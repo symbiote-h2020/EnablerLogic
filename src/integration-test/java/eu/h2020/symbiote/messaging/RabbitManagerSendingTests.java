@@ -36,10 +36,7 @@ import com.jayway.jsonpath.DocumentContext;
 import com.jayway.jsonpath.JsonPath;
 import com.rabbitmq.client.Channel;
 
-import eu.h2020.symbiote.messaging.properties.ExchangeProperties;
-import eu.h2020.symbiote.messaging.properties.FullExchangeProperties;
 import eu.h2020.symbiote.messaging.properties.RabbitConnectionProperties;
-import eu.h2020.symbiote.messaging.properties.RoutingKeysProperties;
 import io.arivera.oss.embedded.rabbitmq.EmbeddedRabbitMq;
 import io.arivera.oss.embedded.rabbitmq.EmbeddedRabbitMqConfig;
 import io.arivera.oss.embedded.rabbitmq.bin.RabbitMqPlugins;

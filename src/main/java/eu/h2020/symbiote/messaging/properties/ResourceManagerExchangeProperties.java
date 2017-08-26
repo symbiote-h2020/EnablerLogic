@@ -2,7 +2,6 @@ package eu.h2020.symbiote.messaging.properties;
 
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
-import eu.h2020.symbiote.messaging.properties.RoutingKeysProperties.EnablerLogicKeys;
 import lombok.Data;
 
 @Data

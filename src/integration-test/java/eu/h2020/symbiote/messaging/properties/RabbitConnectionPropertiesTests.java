@@ -10,7 +10,6 @@ import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit4.SpringRunner;
 
-import eu.h2020.symbiote.messaging.properties.FullExchangeProperties;
 import eu.h2020.symbiote.messaging.properties.RabbitConnectionProperties;
 
 @RunWith(SpringRunner.class)

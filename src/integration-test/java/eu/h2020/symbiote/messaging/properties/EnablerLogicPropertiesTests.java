@@ -1,7 +1,6 @@
 package eu.h2020.symbiote.messaging.properties;
 
 import static org.assertj.core.api.Assertions.*;
-import static org.junit.Assert.*;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;

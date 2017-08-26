@@ -1,7 +1,6 @@
 package eu.h2020.symbiote.messaging.consumers;
 
 import static org.assertj.core.api.Assertions.*;
-import static org.mockito.Matchers.argThat;
 import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -9,7 +8,6 @@ import static org.mockito.Mockito.when;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
-import org.mockito.ArgumentMatcher;
 import org.mockito.Mockito;
 import org.slf4j.LoggerFactory;
 import org.springframework.amqp.core.Message;
@@ -18,7 +16,6 @@ import org.springframework.amqp.support.converter.MessageConverter;
 
 import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.Logger;
-import ch.qos.logback.classic.spi.LoggingEvent;
 import ch.qos.logback.core.Appender;
 import eu.h2020.symbiote.messaging.WrongRequestException;
 
