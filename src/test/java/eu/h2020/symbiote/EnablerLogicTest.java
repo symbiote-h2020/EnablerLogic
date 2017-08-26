@@ -156,7 +156,7 @@ public class EnablerLogicTest {
 
         when(rabbitManager.sendRpcMessage("symbIoTe.enablerLogic",
                 "symbIoTe.enablerLogic.syncMessageToEnablerLogic.DefaultEnablerName",
-                (Object) sendMessage)).thenReturn(new Long(1));
+                (Object) sendMessage)).thenReturn(Long.valueOf(1));
 
         assertThatThrownBy(() -> {
             // when
@@ -164,7 +164,7 @@ public class EnablerLogicTest {
         })
         // then
         .isInstanceOf(WrongResponseException.class)
-        .hasFieldOrPropertyWithValue("response", new Long(1))
+        .hasFieldOrPropertyWithValue("response", Long.valueOf(1))
         .hasNoCause();
     }
 
