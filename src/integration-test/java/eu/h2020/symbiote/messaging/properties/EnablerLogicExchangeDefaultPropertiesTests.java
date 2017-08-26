@@ -12,23 +12,23 @@ import org.springframework.test.context.junit4.SpringRunner;
 
 @RunWith(SpringRunner.class)
 @EnableConfigurationProperties(ExchangeProperties.class)
-@TestPropertySource(locations="classpath:empty.properties")
+@TestPropertySource(locations = "classpath:empty.properties")
 public class EnablerLogicExchangeDefaultPropertiesTests {
-	@Autowired
-	private ExchangeProperties props;
-	
-	@Test
-	public void shouldLoadDefaultEnablerLogicProperties() {
-		assertThat(props.getEnablerLogic().getName()).isEqualTo("symbIoTe.enablerLogic");
-		assertThat(props.getEnablerLogic().getType()).isEqualTo("topic");
-		assertTrue(props.getEnablerLogic().isDurable());
-		assertFalse(props.getEnablerLogic().isAutodelete());
-		assertFalse(props.getEnablerLogic().isInternal());
-	}
-	
-	@Test
-	public void shouldLoadDefaultExcangeNames() throws Exception {
-		assertThat(props.getEnablerPlatformProxy().getName()).isEqualTo("symbIoTe.enablerPlatformProxy");
-		assertThat(props.getResourceManager().getName()).isEqualTo("symbIoTe.resourceManager");
-	}
+    @Autowired
+    private ExchangeProperties props;
+
+    @Test
+    public void shouldLoadDefaultEnablerLogicProperties() {
+        assertThat(props.getEnablerLogic().getName()).isEqualTo("symbIoTe.enablerLogic");
+        assertThat(props.getEnablerLogic().getType()).isEqualTo("topic");
+        assertTrue(props.getEnablerLogic().isDurable());
+        assertFalse(props.getEnablerLogic().isAutodelete());
+        assertFalse(props.getEnablerLogic().isInternal());
+    }
+
+    @Test
+    public void shouldLoadDefaultExcangeNames() throws Exception {
+        assertThat(props.getEnablerPlatformProxy().getName()).isEqualTo("symbIoTe.enablerPlatformProxy");
+        assertThat(props.getResourceManager().getName()).isEqualTo("symbIoTe.resourceManager");
+    }
 }

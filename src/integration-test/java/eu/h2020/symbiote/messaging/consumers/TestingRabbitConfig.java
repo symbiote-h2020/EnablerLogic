@@ -24,14 +24,14 @@ public class TestingRabbitConfig {
     public ConnectionFactory connectionFactory() {
         return new CachingConnectionFactory("localhost");
     }
-    
+
     @Bean
     public RabbitTemplate rabbitTemaplate(ConnectionFactory connectionFactory) {
         RabbitTemplate rabbitTemplate = new RabbitTemplate(connectionFactory);
         rabbitTemplate.setMessageConverter(new Jackson2JsonMessageConverter());
         return rabbitTemplate;
     }
-    
+
     @Bean
     public SimpleRabbitListenerContainerFactory rabbitListenerContainerFactory(ConnectionFactory connectionFactory) {
         SimpleRabbitListenerContainerFactory factory = new SimpleRabbitListenerContainerFactory();
@@ -39,19 +39,19 @@ public class TestingRabbitConfig {
         factory.setMessageConverter(new Jackson2JsonMessageConverter());
         return factory;
     }
-    
+
     @Bean
     public RabbitAdmin amqpAdmin(ConnectionFactory connectionFactory) {
         return new RabbitAdmin(connectionFactory);
     }
-    
+
     @Bean
     public Exchange exchange(EnablerLogicProperties props) {
       return ExchangeBuilder
               .topicExchange(props.getEnablerLogicExchange().getName()) //EXCHANGE_NAME
               .build();
     }
-    
+
     @Bean
     public Channel tempChannel(ConnectionFactory factory) {
         Connection connection = factory.createConnection();

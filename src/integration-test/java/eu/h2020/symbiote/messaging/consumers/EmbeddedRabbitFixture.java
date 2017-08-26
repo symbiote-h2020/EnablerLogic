@@ -17,7 +17,7 @@ public class EmbeddedRabbitFixture {
     private static final int RABBIT_STARTING_TIMEOUT = 10_000;
 
     protected static EmbeddedRabbitMq rabbitMq;
-    
+
     @Autowired
     protected RabbitTemplate rabbitTemplate;
 
@@ -28,10 +28,10 @@ public class EmbeddedRabbitFixture {
             .build();
 
         cleanupVarDir(config);
-            
+
         rabbitMq = new EmbeddedRabbitMq(config);
         rabbitMq.start();
-    
+
         RabbitMqPlugins rabbitMqPlugins = new RabbitMqPlugins(config);
         rabbitMqPlugins.enable("rabbitmq_management");
         rabbitMqPlugins.enable("rabbitmq_tracing");

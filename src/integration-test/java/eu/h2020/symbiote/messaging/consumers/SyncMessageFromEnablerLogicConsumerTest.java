@@ -19,42 +19,42 @@ import lombok.Getter;
 
 @RunWith(SpringRunner.class)
 @Import({TestingRabbitConfig.class,
-        EnablerLogicProperties.class, 
+        EnablerLogicProperties.class,
         SyncMessageFromEnablerLogicConsumer.class})
 @EnableConfigurationProperties({RabbitConnectionProperties.class, ExchangeProperties.class, RoutingKeysProperties.class})
-@TestPropertySource(locations="classpath:empty.properties")
+@TestPropertySource(locations = "classpath:empty.properties")
 public class SyncMessageFromEnablerLogicConsumerTest extends EmbeddedRabbitFixture {
 
     @Autowired
-    EnablerLogicProperties props;
+    private EnablerLogicProperties props;
 
     @Autowired
-    SyncMessageFromEnablerLogicConsumer consumer;
-    
+    private SyncMessageFromEnablerLogicConsumer consumer;
+
     @AllArgsConstructor
     public static class CustomRequestMessage {
         @Getter
         private String request;
     }
-    
+
     @AllArgsConstructor
     public static class CustomResponseMessage {
         @Getter
         private String response;
     }
-    
+
     @Test
     public void syncMessage_shouldCallFunction() {
         // given
         CustomRequestMessage message = new CustomRequestMessage("some custom text");
         consumer.registerReceiver(CustomRequestMessage.class, (m) -> new CustomResponseMessage("response: " + m.getRequest()));
-        
+
         // when
         Object response = rabbitTemplate.convertSendAndReceive(
-            props.getEnablerLogicExchange().getName(), 
-            props.getKey().getEnablerLogic().getSyncMessageToEnablerLogic() + "." + props.getEnablerName(), 
+            props.getEnablerLogicExchange().getName(),
+            props.getKey().getEnablerLogic().getSyncMessageToEnablerLogic() + "." + props.getEnablerName(),
             message);
-        
+
         // then
         assertThat(response).isInstanceOf(CustomResponseMessage.class);
         CustomResponseMessage responseMessage = (CustomResponseMessage) response;

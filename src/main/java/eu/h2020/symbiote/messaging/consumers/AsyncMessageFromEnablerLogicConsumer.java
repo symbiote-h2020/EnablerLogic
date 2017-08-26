@@ -21,18 +21,18 @@ import eu.h2020.symbiote.messaging.WrongRequestException;
 
 @Component
 public class AsyncMessageFromEnablerLogicConsumer {
-    private static final Logger log = LoggerFactory.getLogger(AsyncMessageFromEnablerLogicConsumer.class);
-    
+    private static final Logger LOG = LoggerFactory.getLogger(AsyncMessageFromEnablerLogicConsumer.class);
+
     @SuppressWarnings("rawtypes")
     private Map<String, Consumer> consumers;
-    
+
     private MessageConverter messageConverter;
 
     public AsyncMessageFromEnablerLogicConsumer() {
         consumers = new HashMap<>();
         messageConverter = new Jackson2JsonMessageConverter();
     }
-    
+
     public <O> void registerReceiver(Class<O> clazz, Consumer<O> consumer) {
         consumers.put(clazz.getName(), consumer);
     }
@@ -40,25 +40,28 @@ public class AsyncMessageFromEnablerLogicConsumer {
     public <O> void unregisterReceiver(Class<O> clazz) {
         consumers.remove(clazz.getName());
     }
-    
+
     @RabbitListener(bindings = @QueueBinding(
         value = @Queue,
-        exchange = @Exchange(value = "#{enablerLogicProperties.enablerLogicExchange.name}", type="topic"),
+        exchange = @Exchange(value = "#{enablerLogicProperties.enablerLogicExchange.name}", type = "topic"),
         key = "#{enablerLogicProperties.key.enablerLogic.asyncMessageToEnablerLogic}.#{enablerLogicProperties.enablerName}"
     ))
     @SuppressWarnings({ "rawtypes", "unchecked" })
     public void receivedAsyncMessage(Message msg, @Header("__TypeId__") String className) throws IOException {
-        log.info("Consumer receivedAsyncMessage: " + msg);
+        LOG.info("Consumer receivedAsyncMessage: " + msg);
 
         Object request = messageConverter.fromMessage(msg);
-        
+
         Consumer consumer = consumers.get(className);
         if(consumer == null) {
-            WrongRequestException exception = new WrongRequestException("Asynchronous consumer can not find consumer for handling this request type.", request, className);
-            log.error("Can not handle request.", exception);
+            WrongRequestException exception = new WrongRequestException(
+                    "Asynchronous consumer can not find consumer for handling this request type.",
+                    request,
+                    className);
+            LOG.error("Can not handle request.", exception);
             return;
         }
-            
+
         consumer.accept(request);
     }
 }

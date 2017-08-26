@@ -14,18 +14,18 @@ import eu.h2020.symbiote.messaging.properties.RabbitConnectionProperties;
 
 @RunWith(SpringRunner.class)
 @EnableConfigurationProperties(RabbitConnectionProperties.class)
-@TestPropertySource(locations="classpath:custom.properties")
+@TestPropertySource(locations = "classpath:custom.properties")
 public class RabbitConnectionPropertiesTests {
-	@Autowired
-	private RabbitConnectionProperties props;
-	
-	@Value("${rabbit.host}")
-	String host;
+    @Autowired
+    private RabbitConnectionProperties props;
 
-	@Test
-	public void shouldLoadFirstLevelProperties() {
-		assertThat(props.getHost()).isEqualTo("127.0.0.1");
-		assertThat(props.getUsername()).isEqualTo("u");
-		assertThat(props.getPassword()).isEqualTo("p");
-	}
+    @Value("${rabbit.host}")
+    private String host;
+
+    @Test
+    public void shouldLoadFirstLevelProperties() {
+        assertThat(props.getHost()).isEqualTo("127.0.0.1");
+        assertThat(props.getUsername()).isEqualTo("u");
+        assertThat(props.getPassword()).isEqualTo("p");
+    }
 }

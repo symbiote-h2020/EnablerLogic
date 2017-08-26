@@ -23,23 +23,23 @@ import java.io.IOException;
 
 @Component
 public class DataAppearedConsumer {
-	private static final Logger log = LoggerFactory.getLogger(DataAppearedConsumer.class);
-	
-    RabbitManager rabbitManager;
+    private static final Logger LOG = LoggerFactory.getLogger(DataAppearedConsumer.class);
 
-	private ProcessingLogic processingLogic;
-    
+    private RabbitManager rabbitManager;
+
+    private ProcessingLogic processingLogic;
+
     public DataAppearedConsumer(ProcessingLogic processingLogic) {
-		this.processingLogic = processingLogic;
+        this.processingLogic = processingLogic;
     }
 
-	@RabbitListener(bindings = @QueueBinding(
-		value = @Queue,
-		exchange = @Exchange(value = "#{enablerLogicProperties.enablerLogicExchange.name}", type="topic"),
-		key = "#{enablerLogicProperties.key.enablerLogic.dataAppeared}"
-	))
+    @RabbitListener(bindings = @QueueBinding(
+        value = @Queue,
+        exchange = @Exchange(value = "#{enablerLogicProperties.enablerLogicExchange.name}", type = "topic"),
+        key = "#{enablerLogicProperties.key.enablerLogic.dataAppeared}"
+    ))
     public void dataAppeared(EnablerLogicDataAppearedMessage dataAppearedMessage) throws IOException {
-        log.info("Consumer DataAppeared message: " + dataAppearedMessage);
+        LOG.info("Consumer DataAppeared message: " + dataAppearedMessage);
         processingLogic.measurementReceived(dataAppearedMessage);
-	}
+    }
 }

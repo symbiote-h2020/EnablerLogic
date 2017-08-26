@@ -13,7 +13,7 @@ public class WrongRequestException extends RuntimeException {
 
     @Getter
     private Object request;
-    
+
     @Getter
     private String requestClassName;
 
@@ -26,7 +26,7 @@ public class WrongRequestException extends RuntimeException {
         this.request = request;
         this.requestClassName = requestClassName;
     }
-    
+
     @Override
     public int hashCode() {
         final int prime = 31;
@@ -63,13 +63,13 @@ public class WrongRequestException extends RuntimeException {
             return false;
         return true;
     }
-    
+
     private static String generateMessage(String message, Object request, String requestClassName) {
-        JsonFactory jsonFactory = new JsonFactory(); // or, for data binding, org.codehaus.jackson.mapper.MappingJsonFactory 
+        JsonFactory jsonFactory = new JsonFactory(); // or, for data binding, org.codehaus.jackson.mapper.MappingJsonFactory
         StringWriter sw = new StringWriter();
         sw.write(message);
         sw.write(" ");
-        
+
         try {
             JsonGenerator generator = jsonFactory.createGenerator(sw);
             generator.writeStartObject();
@@ -80,7 +80,7 @@ public class WrongRequestException extends RuntimeException {
         } catch (IOException e) {
             sw.write("|| Can not write JSON! ||");
         }
-        
+
         return sw.toString();
     }
 }

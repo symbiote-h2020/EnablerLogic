@@ -53,207 +53,208 @@ import lombok.NoArgsConstructor;
 @Import({RabbitManager.class})
 @EnableConfigurationProperties({RabbitConnectionProperties.class})
 public class RabbitManagerSendingTests {
-	private static Logger log = LoggerFactory.getLogger(RabbitManagerSendingTests.class);
+    private static Logger log = LoggerFactory.getLogger(RabbitManagerSendingTests.class);
+    private static final int TIMEOUT = 10_000;
+    private static final int RECEIVE_TIMEOUT = 20_000;
 
-	private static final int RABBIT_STARTING_TIMEOUT = 10_000;
-	
-	private static final String EXCHANGE_NAME = "exchangeName";
-	private static final String RECEIVING_QUEUE_NAME = "queueName";
-	private static final String RECEIVING_ROUTING_KEY = "receivingQueue";
-	
-	@Configuration
-	public static class RabbitConfig {
-		@Bean
-		public ConnectionFactory connectionFactory() {
-			return new CachingConnectionFactory("localhost");
-		}
-		
-		@Bean
-		public RabbitTemplate rabbitTemaplate(ConnectionFactory connectionFactory) {
-			RabbitTemplate rabbitTemplate = new RabbitTemplate(connectionFactory);
-			rabbitTemplate.setMessageConverter(new Jackson2JsonMessageConverter());
-			return rabbitTemplate;
-		}
-	}
+    private static final int RABBIT_STARTING_TIMEOUT = 10_000;
 
-	private Connection connection;
+    private static final String EXCHANGE_NAME = "exchangeName";
+    private static final String RECEIVING_QUEUE_NAME = "queueName";
+    private static final String RECEIVING_ROUTING_KEY = "receivingQueue";
+
+    @Configuration
+    public static class RabbitConfig {
+        @Bean
+        public ConnectionFactory connectionFactory() {
+            return new CachingConnectionFactory("localhost");
+        }
+
+        @Bean
+        public RabbitTemplate rabbitTemaplate(ConnectionFactory connectionFactory) {
+            RabbitTemplate rabbitTemplate = new RabbitTemplate(connectionFactory);
+            rabbitTemplate.setMessageConverter(new Jackson2JsonMessageConverter());
+            return rabbitTemplate;
+        }
+    }
+
+    private Connection connection;
     private Channel channel;
-    
+
     private static EmbeddedRabbitMq rabbitMq;
-    
+
     @Autowired
     private RabbitTemplate rabbitTemplate;
-    
+
     @Autowired
     private RabbitManager rabbitManager;
-    
+
     @Autowired
     private ConnectionFactory factory;
-    
+
     @BeforeClass
     public static void startEmbeddedRabbit() throws Exception {
-	    	EmbeddedRabbitMqConfig config = new EmbeddedRabbitMqConfig.Builder()
-	    			.rabbitMqServerInitializationTimeoutInMillis(RABBIT_STARTING_TIMEOUT)
-	    			.build();
+            EmbeddedRabbitMqConfig config = new EmbeddedRabbitMqConfig.Builder()
+                    .rabbitMqServerInitializationTimeoutInMillis(RABBIT_STARTING_TIMEOUT)
+                    .build();
 
-	    	cleanupVarDir(config);
-	    	
-	    rabbitMq = new EmbeddedRabbitMq(config);
-	    	rabbitMq.start();
+            cleanupVarDir(config);
 
-	    	RabbitMqPlugins rabbitMqPlugins = new RabbitMqPlugins(config);
-	    rabbitMqPlugins.enable("rabbitmq_management");
-	    rabbitMqPlugins.enable("rabbitmq_tracing");
+        rabbitMq = new EmbeddedRabbitMq(config);
+            rabbitMq.start();
+
+            RabbitMqPlugins rabbitMqPlugins = new RabbitMqPlugins(config);
+        rabbitMqPlugins.enable("rabbitmq_management");
+        rabbitMqPlugins.enable("rabbitmq_tracing");
     }
 
-	private static void cleanupVarDir(EmbeddedRabbitMqConfig config) throws IOException {
-		File varDir = new File(config.getAppFolder(), "var");
-		if(varDir.exists())
-			FileUtils.cleanDirectory(varDir);
-	}
-    
+    private static void cleanupVarDir(EmbeddedRabbitMqConfig config) throws IOException {
+        File varDir = new File(config.getAppFolder(), "var");
+        if(varDir.exists())
+            FileUtils.cleanDirectory(varDir);
+    }
+
     @AfterClass
     public static void stopEmbeddedRabbit() {
-    		rabbitMq.stop();
+            rabbitMq.stop();
     }
-    
-    
+
     /**
      * Cleaning up after previous test and creation of new connection and channel to RabbitMQ.
      * @throws Exception
      */
-	@Before
-	public void initialize() throws Exception {
-		connection = factory.createConnection();
-		channel = connection.createChannel(false);
-		
-		cleanRabbitResources();
-		createRabbitResources();
-	}
+    @Before
+    public void initialize() throws Exception {
+        connection = factory.createConnection();
+        channel = connection.createChannel(false);
 
-	private void createRabbitResources() throws IOException {
-		channel.exchangeDeclare(EXCHANGE_NAME, "topic", true, true, false, null);
-		channel.queueDeclare(RECEIVING_QUEUE_NAME, true, false, false, null);
-		channel.queueBind(RECEIVING_QUEUE_NAME, EXCHANGE_NAME, RECEIVING_ROUTING_KEY);
-	}
+        cleanRabbitResources();
+        createRabbitResources();
+    }
 
-	private void cleanRabbitResources() throws IOException {
-		channel.queueDelete(RECEIVING_QUEUE_NAME);
-		channel.exchangeDelete(EXCHANGE_NAME);
-	}
-    
+    private void createRabbitResources() throws IOException {
+        channel.exchangeDeclare(EXCHANGE_NAME, "topic", true, true, false, null);
+        channel.queueDeclare(RECEIVING_QUEUE_NAME, true, false, false, null);
+        channel.queueBind(RECEIVING_QUEUE_NAME, EXCHANGE_NAME, RECEIVING_ROUTING_KEY);
+    }
+
+    private void cleanRabbitResources() throws IOException {
+        channel.queueDelete(RECEIVING_QUEUE_NAME);
+        channel.exchangeDelete(EXCHANGE_NAME);
+    }
+
     @Test
-	public void sendingAcyncMessage_shouldReceiveAsyncMessage() throws Exception {
-		// given
+    public void sendingAcyncMessage_shouldReceiveAsyncMessage() throws Exception {
+        // given
 
-    		// when
-    		rabbitManager.sendMessage(EXCHANGE_NAME, RECEIVING_ROUTING_KEY, "Some text");
-    	
-    		// then
-    		Message message = rabbitTemplate.receive(RECEIVING_QUEUE_NAME, 10_000);
-    		assertNotNull(message);
-    		assertThat(new String(message.getBody(), StandardCharsets.UTF_8)).isEqualTo("Some text");
-	}
-    
-    @Test
-	public void sendingAcyncObject_shouldReceiveAsyncObject() throws Exception {
-		// given
-    		ModelObject sendObject = new ModelObject("joe", 25);
-    	
-    		// when
-    		rabbitManager.sendMessage(EXCHANGE_NAME, RECEIVING_ROUTING_KEY, sendObject);
-    	
-    		// then
-    		Object o = rabbitTemplate.receiveAndConvert(RECEIVING_QUEUE_NAME, 10_000);
-    		assertNotNull(o);
-    		assertThat(o).isInstanceOf(ModelObject.class);
-    		ModelObject receivedObject = (ModelObject) o;
-    		assertThat(receivedObject).isEqualToComparingFieldByField(sendObject);
-	}
-    
-    @Test
-	public void sendingAcyncObject_shouldReceiveAsyncJSON() throws Exception {
-		// given
-    		ModelObject sendObject = new ModelObject("joe", 25);
-    	
-    		// when
-    		rabbitManager.sendMessage(EXCHANGE_NAME, RECEIVING_ROUTING_KEY, sendObject);
-    	
-    		// then
-    		Message message = rabbitTemplate.receive(RECEIVING_QUEUE_NAME, 10_000);
-    		assertThat(message.getMessageProperties().getContentType()).isEqualTo("application/json");
-    		assertThat(message.getMessageProperties().getHeaders().get("__TypeId__"))
-    			.isEqualTo("eu.h2020.symbiote.messaging.RabbitManagerSendingTests$ModelObject");
-    		
-    		String json = new String(message.getBody(), StandardCharsets.UTF_8);
-		assertThat(json).isEqualTo("{\"name\":\"joe\",\"age\":25}");
-		DocumentContext ctx = JsonPath.parse(json);
-		assertThat(ctx).jsonPathAsString("name").isEqualTo("joe");
-		assertThat(ctx).jsonPathAsInteger("age").isEqualTo(25);
-	}
+            // when
+            rabbitManager.sendMessage(EXCHANGE_NAME, RECEIVING_ROUTING_KEY, "Some text");
 
-    @Data 
-    @NoArgsConstructor 
+            // then
+        Message message = rabbitTemplate.receive(RECEIVING_QUEUE_NAME, TIMEOUT);
+            assertNotNull(message);
+            assertThat(new String(message.getBody(), StandardCharsets.UTF_8)).isEqualTo("Some text");
+    }
+
+    @Test
+    public void sendingAcyncObject_shouldReceiveAsyncObject() throws Exception {
+        // given
+            ModelObject sendObject = new ModelObject("joe", 25);
+
+            // when
+            rabbitManager.sendMessage(EXCHANGE_NAME, RECEIVING_ROUTING_KEY, sendObject);
+
+            // then
+            Object o = rabbitTemplate.receiveAndConvert(RECEIVING_QUEUE_NAME, TIMEOUT);
+            assertNotNull(o);
+            assertThat(o).isInstanceOf(ModelObject.class);
+            ModelObject receivedObject = (ModelObject) o;
+            assertThat(receivedObject).isEqualToComparingFieldByField(sendObject);
+    }
+
+    @Test
+    public void sendingAcyncObject_shouldReceiveAsyncJSON() throws Exception {
+        // given
+            ModelObject sendObject = new ModelObject("joe", 25);
+
+            // when
+            rabbitManager.sendMessage(EXCHANGE_NAME, RECEIVING_ROUTING_KEY, sendObject);
+
+            // then
+            Message message = rabbitTemplate.receive(RECEIVING_QUEUE_NAME, TIMEOUT);
+            assertThat(message.getMessageProperties().getContentType()).isEqualTo("application/json");
+            assertThat(message.getMessageProperties().getHeaders().get("__TypeId__"))
+                .isEqualTo("eu.h2020.symbiote.messaging.RabbitManagerSendingTests$ModelObject");
+
+            String json = new String(message.getBody(), StandardCharsets.UTF_8);
+        assertThat(json).isEqualTo("{\"name\":\"joe\",\"age\":25}");
+        DocumentContext ctx = JsonPath.parse(json);
+        assertThat(ctx).jsonPathAsString("name").isEqualTo("joe");
+        assertThat(ctx).jsonPathAsInteger("age").isEqualTo(25);
+    }
+
+    @Data
+    @NoArgsConstructor
     @AllArgsConstructor
     public static class ModelObject {
-    		private String name;
-    		private int age;
+            private String name;
+            private int age;
     }
-	
+
     @Test
-    public void sendingRPC_shouldWaitForResponseInText() throws Exception{
-    		// given
-	    	String sendMessage = "Some RPC message";
-	    	Thread t = new Thread(() -> {
-	    		log.info("receiving thread started");
-	    		rabbitTemplate.setReceiveTimeout(20_000);
-	    		rabbitTemplate.receiveAndReply(RECEIVING_QUEUE_NAME, new ReceiveAndReplyMessageCallback() {
-					@Override
-					public Message handle(Message msg) {
-							log.info("receive thread received {}", msg);
-							String r = new String(msg.getBody(), StandardCharsets.UTF_8) + "!!!";
-							Message rmsg = new Message(r.getBytes(StandardCharsets.UTF_8),
-									MessagePropertiesBuilder.newInstance().setContentType("plain/text").build());
-							log.info("returning {}", rmsg);
-							return rmsg;
-					}
-				});
-	    		log.info("************** receiving thread finished");
-	    	});
-	    	t.start();
-    	
-    		// when
-		String response = rabbitManager.sendRpcMessage(EXCHANGE_NAME, RECEIVING_ROUTING_KEY, sendMessage);
-    	
-	    	assertThat(response).isEqualTo(sendMessage + "!!!");
+    public void sendingRPC_shouldWaitForResponseInText() throws Exception {
+            // given
+            String sendMessage = "Some RPC message";
+            Thread t = new Thread(() -> {
+                log.info("receiving thread started");
+                rabbitTemplate.setReceiveTimeout(RECEIVE_TIMEOUT);
+                rabbitTemplate.receiveAndReply(RECEIVING_QUEUE_NAME, new ReceiveAndReplyMessageCallback() {
+                @Override
+                public Message handle(Message msg) {
+                    log.info("receive thread received {}", msg);
+                    String r = new String(msg.getBody(), StandardCharsets.UTF_8) + "!!!";
+                    Message rmsg = new Message(r.getBytes(StandardCharsets.UTF_8),
+                        MessagePropertiesBuilder.newInstance().setContentType("plain/text").build());
+                    log.info("returning {}", rmsg);
+                    return rmsg;
+                }
+            });
+                log.info("************** receiving thread finished");
+            });
+            t.start();
+
+            // when
+        String response = rabbitManager.sendRpcMessage(EXCHANGE_NAME, RECEIVING_ROUTING_KEY, sendMessage);
+
+            assertThat(response).isEqualTo(sendMessage + "!!!");
     }
-    
-    public static interface ReceiveAndReplyModelObjectCallback extends ReceiveAndReplyCallback<ModelObject, ModelObject> {}
-    
+
+    public interface ReceiveAndReplyModelObjectCallback extends ReceiveAndReplyCallback<ModelObject, ModelObject> { }
+
     @Test
-    public void sendingRPC_shouldWaitForResponseInJSONObject() throws Exception{
-	    	// given
-	    	ModelObject sendObject = new ModelObject("bob", 17);
-	    	Thread t = new Thread(() -> {
-	    		log.info("receiving thread started");
-	    		rabbitTemplate.setReceiveTimeout(20_000);
-	    		rabbitTemplate.receiveAndReply(RECEIVING_QUEUE_NAME, new ReceiveAndReplyModelObjectCallback() {
-	    			@Override
-				public ModelObject handle(ModelObject payload) {
-	    				log.info("receive thread received {}", payload);
-	    				ModelObject rmsg = new ModelObject("sponge " + payload.getName(), 18);
-	    				log.info("returning {}", rmsg);
-	    				return rmsg;
-	    			}
-	    		});
-	    		log.info("receiving thread finished");
-	    	});
-	    	t.start();
-	    	
-	    	// when
-	    	ModelObject respObject = (ModelObject) rabbitManager.sendRpcMessage(EXCHANGE_NAME, RECEIVING_ROUTING_KEY, sendObject);
-	    	
-	    	assertThat(respObject.getName()).isEqualTo("sponge bob");
-	    	assertThat(respObject.getAge()).isEqualTo(18);
+    public void sendingRPC_shouldWaitForResponseInJSONObject() throws Exception {
+            // given
+            ModelObject sendObject = new ModelObject("bob", 17);
+            Thread t = new Thread(() -> {
+                log.info("receiving thread started");
+                rabbitTemplate.setReceiveTimeout(RECEIVE_TIMEOUT);
+                rabbitTemplate.receiveAndReply(RECEIVING_QUEUE_NAME, new ReceiveAndReplyModelObjectCallback() {
+                    @Override
+                public ModelObject handle(ModelObject payload) {
+                        log.info("receive thread received {}", payload);
+                        ModelObject rmsg = new ModelObject("sponge " + payload.getName(), 18);
+                        log.info("returning {}", rmsg);
+                        return rmsg;
+                    }
+                });
+                log.info("receiving thread finished");
+            });
+            t.start();
+
+            // when
+            ModelObject respObject = (ModelObject) rabbitManager.sendRpcMessage(EXCHANGE_NAME, RECEIVING_ROUTING_KEY, sendObject);
+
+            assertThat(respObject.getName()).isEqualTo("sponge bob");
+            assertThat(respObject.getAge()).isEqualTo(18);
     }
 }

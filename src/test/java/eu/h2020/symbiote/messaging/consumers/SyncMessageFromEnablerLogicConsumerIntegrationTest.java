@@ -23,7 +23,7 @@ public class SyncMessageFromEnablerLogicConsumerIntegrationTest {
         message = "message";
         msg = messageConverter.toMessage(message, null);
     }
-    
+
     @Test
     public void function_shouldBeCalledUpponReceivingMessage() throws Exception {
         // given
@@ -39,11 +39,11 @@ public class SyncMessageFromEnablerLogicConsumerIntegrationTest {
     @Test
     public void function_shouldReturnExceptionForNotRegisteredType() throws Exception {
         //given
-        
+
         // when
         consumer.registerReceiver(Long.class, (l) -> l + 1);
         WrongRequestException result = (WrongRequestException) consumer.receivedSyncMessage(msg, String.class.getName());
-        
+
         //then
         assertThat(result.getRequestClassName()).isEqualTo("java.lang.String");
         assertThat(result.getRequest()).isEqualTo(message);
@@ -53,11 +53,11 @@ public class SyncMessageFromEnablerLogicConsumerIntegrationTest {
     public void function_shouldReturnExceptionForUnregisteredType() throws Exception {
         //given
         consumer.registerReceiver(String.class, (m) -> "response: + m");
-        
+
         // when
         consumer.unregisterReceiver(String.class);
         WrongRequestException result = (WrongRequestException) consumer.receivedSyncMessage(msg, String.class.getName());
-        
+
         //then
         assertThat(result.getRequestClassName()).isEqualTo("java.lang.String");
         assertThat(result.getRequest()).isEqualTo(message);

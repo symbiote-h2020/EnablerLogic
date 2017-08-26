@@ -7,11 +7,11 @@ import lombok.NoArgsConstructor;
 
 @Data
 @NoArgsConstructor
-@ConfigurationProperties(prefix="rabbit", ignoreInvalidFields=true)
+@ConfigurationProperties(prefix = "rabbit", ignoreInvalidFields = true)
 public class RabbitConnectionProperties {
-	private String host = "localhost";
-	private String username = "guest";
-	private String password = "guest";
+    private String host = "localhost";
+    private String username = "guest";
+    private String password = "guest";
 }
 
 

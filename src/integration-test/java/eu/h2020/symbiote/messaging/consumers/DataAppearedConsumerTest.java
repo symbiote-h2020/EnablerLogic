@@ -21,13 +21,15 @@ import eu.h2020.symbiote.messaging.properties.EnablerLogicProperties;
 import eu.h2020.symbiote.messaging.properties.ExchangeProperties;
 import eu.h2020.symbiote.messaging.properties.RabbitConnectionProperties;
 import eu.h2020.symbiote.messaging.properties.RoutingKeysProperties;
+import lombok.Getter;
+import lombok.Setter;
 
 @RunWith(SpringRunner.class)
 @Import({TestingRabbitConfig.class,
-    EnablerLogicProperties.class, 
+    EnablerLogicProperties.class,
     DataAppearedConsumer.class})
 @EnableConfigurationProperties({RabbitConnectionProperties.class, ExchangeProperties.class, RoutingKeysProperties.class})
-@TestPropertySource(locations="classpath:empty.properties")
+@TestPropertySource(locations = "classpath:empty.properties")
 public class DataAppearedConsumerTest extends EmbeddedRabbitFixture {
 
     @Configuration
@@ -38,42 +40,44 @@ public class DataAppearedConsumerTest extends EmbeddedRabbitFixture {
             return new ProcessingLogicTestImpl();
         }
     }
-    
-    @Autowired
-    EnablerLogicProperties props;
 
     @Autowired
-    DataAppearedConsumer dataAppearedConsumer;
-    
+    private EnablerLogicProperties props;
+
     @Autowired
-    ProcessingLogicTestImpl processingLogic;
+    private DataAppearedConsumer dataAppearedConsumer;
+
+    @Autowired
+    private ProcessingLogicTestImpl processingLogic;
 
     public static class ProcessingLogicTestImpl implements ProcessingLogic {
-            public EnablerLogicDataAppearedMessage dataAppearedMessage;
+        @Getter
+        @Setter
+        private EnablerLogicDataAppearedMessage dataAppearedMessage;
 
         @Override
         public void init(EnablerLogic enablerLogic) {
         }
 
         @Override
-        public void measurementReceived(EnablerLogicDataAppearedMessage dataAppearedMessage) {
-            this.dataAppearedMessage = dataAppearedMessage;
+        public void measurementReceived(EnablerLogicDataAppearedMessage receivedDataAppearedMessage) {
+            this.dataAppearedMessage = receivedDataAppearedMessage;
         }
-            
+
     }
-    
+
     @Test
     public void dataAppeared_shouldReceiveMessage() {
         // given
         EnablerLogicDataAppearedMessage message = new EnablerLogicDataAppearedMessage();
         message.setTaskId("taskId");
-        
+
         // when
         rabbitTemplate.convertAndSend(
-            props.getEnablerLogicExchange().getName(), 
-            props.getKey().getEnablerLogic().getDataAppeared(), 
+            props.getEnablerLogicExchange().getName(),
+            props.getKey().getEnablerLogic().getDataAppeared(),
             message);
-        
+
         // then
         await().until(() -> processingLogic.dataAppearedMessage != null);
         EnablerLogicDataAppearedMessage receivedMessage = processingLogic.dataAppearedMessage;

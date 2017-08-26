@@ -31,32 +31,33 @@ import lombok.Getter;
 @RunWith(MockitoJUnitRunner.class)
 public class EnablerLogicTest {
     private EnablerLogic enablerLogic;
-    
+
     @Mock
-    RabbitManager rabbitManager;
+    private RabbitManager rabbitManager;
 
     @Before
     public void setup() {
         enablerLogic = new EnablerLogic(rabbitManager, new EnablerLogicProperties());
     }
-    
+
     @Test
     public void queryResourceManagerWithOneRequest_shouldReturnResponse() throws Exception {
         // given
-        ArgumentCaptor<ResourceManagerAcquisitionStartRequest> captor = ArgumentCaptor.forClass(ResourceManagerAcquisitionStartRequest.class);
+        ArgumentCaptor<ResourceManagerAcquisitionStartRequest> captor =
+            ArgumentCaptor.forClass(ResourceManagerAcquisitionStartRequest.class);
         ResourceManagerTaskInfoRequest request = new ResourceManagerTaskInfoRequest();
         ResourceManagerAcquisitionStartResponse response = new ResourceManagerAcquisitionStartResponse();
         when(rabbitManager.sendRpcMessage(
-                eq("symbIoTe.resourceManager"), 
-                eq("symbIoTe.resourceManager.startDataAcquisition"), 
+                eq("symbIoTe.resourceManager"),
+                eq("symbIoTe.resourceManager.startDataAcquisition"),
                 any(ResourceManagerAcquisitionStartRequest.class))).thenReturn(response);
-        
+
         // when
         enablerLogic.queryResourceManager(request);
-        
+
         // then
-        verify(rabbitManager).sendRpcMessage(eq("symbIoTe.resourceManager"), 
-                eq("symbIoTe.resourceManager.startDataAcquisition"), 
+        verify(rabbitManager).sendRpcMessage(eq("symbIoTe.resourceManager"),
+                eq("symbIoTe.resourceManager.startDataAcquisition"),
                 captor.capture());
         ResourceManagerAcquisitionStartRequest requests = captor.getValue();
         assertThat(requests.getResources()).hasSize(1);
@@ -66,66 +67,66 @@ public class EnablerLogicTest {
     @Test
     public void registerAsyncMessageFromEnablerLogicConsumer_shouldDelegateItToConsumer() throws Exception {
         //given
-        Consumer<String> lambda = (m) -> {};
-        
+        Consumer<String> lambda = (m) -> { };
+
         AsyncMessageFromEnablerLogicConsumer asyncConsumer = Mockito.mock(AsyncMessageFromEnablerLogicConsumer.class);
         enablerLogic.setAsyncConsumer(asyncConsumer);
-        
+
         // when
         enablerLogic.registerAsyncMessageFromEnablerLogicConsumer(String.class, lambda);
-        
+
         //then
         verify(asyncConsumer).registerReceiver(String.class, lambda);
     }
-    
+
     @Test
     public void unregisterAsyncMessageFromEnablerLogicConsumer_shouldDelegateItToConsumer() throws Exception {
         //given
         AsyncMessageFromEnablerLogicConsumer asyncConsumer = Mockito.mock(AsyncMessageFromEnablerLogicConsumer.class);
         enablerLogic.setAsyncConsumer(asyncConsumer);
-        
+
         // when
         enablerLogic.unregisterAsyncMessageFromEnablerLogicConsumer(String.class);
-        
+
         //then
         verify(asyncConsumer).unregisterReceiver(String.class);
     }
-    
+
     @Test
     public void sendingAsyncMessageToEnablerLogic_shouldCallRabbitManager() throws Exception {
         // given
         String message = "test message";
         String enablerName = "enabler name";
-        
+
         // when
         enablerLogic.sendAsyncMessageToEnablerLogic(enablerName, message);
-        
+
         // then
-        verify(rabbitManager).sendMessage(eq("symbIoTe.enablerLogic"), 
-                eq("symbIoTe.enablerLogic.asyncMessageToEnablerLogic.DefaultEnablerName"), 
-                eq((Object)message));
+        verify(rabbitManager).sendMessage(eq("symbIoTe.enablerLogic"),
+                eq("symbIoTe.enablerLogic.asyncMessageToEnablerLogic.DefaultEnablerName"),
+                eq((Object) message));
     }
-    
+
     @AllArgsConstructor
     public static class ReceivedMessage {
         @Getter
         private String receivedText;
     }
-    
+
     @Test
     public void sendingSyncMessageToEnablerLogic_shouldCallRabbitManagerAndReturnResponse() throws Exception {
         // given
         String sendMessage = "test message";
         String enablerName = "enabler name";
         ReceivedMessage mockReceiveMessage = new ReceivedMessage("received message");
-        
-        when(rabbitManager.sendRpcMessage("symbIoTe.enablerLogic", 
-                "symbIoTe.enablerLogic.syncMessageToEnablerLogic.DefaultEnablerName", 
-                (Object)sendMessage)).thenReturn(mockReceiveMessage);
-        
+
+        when(rabbitManager.sendRpcMessage("symbIoTe.enablerLogic",
+                "symbIoTe.enablerLogic.syncMessageToEnablerLogic.DefaultEnablerName",
+                (Object) sendMessage)).thenReturn(mockReceiveMessage);
+
         // when
         ReceivedMessage receivedMessage = enablerLogic.sendSyncMessageToEnablerLogic(enablerName, sendMessage, ReceivedMessage.class);
-        
+
         // then
         assertThat(receivedMessage).isSameAs(mockReceiveMessage);
     }
@@ -135,14 +136,14 @@ public class EnablerLogicTest {
         // given
         String sendMessage = "test message";
         String enablerName = "enabler name";
-        
-        when(rabbitManager.sendRpcMessage("symbIoTe.enablerLogic", 
-                "symbIoTe.enablerLogic.syncMessageToEnablerLogic.DefaultEnablerName", 
-                (Object)sendMessage)).thenReturn(null);
-        
+
+        when(rabbitManager.sendRpcMessage("symbIoTe.enablerLogic",
+                "symbIoTe.enablerLogic.syncMessageToEnablerLogic.DefaultEnablerName",
+                (Object) sendMessage)).thenReturn(null);
+
         // when
         ReceivedMessage receivedMessage = enablerLogic.sendSyncMessageToEnablerLogic(enablerName, sendMessage, ReceivedMessage.class);
-        
+
         // then
         assertThat(receivedMessage).isNull();
     }
@@ -152,11 +153,11 @@ public class EnablerLogicTest {
         // given
         String sendMessage = "test message";
         String enablerName = "enabler name";
-        
-        when(rabbitManager.sendRpcMessage("symbIoTe.enablerLogic", 
-                "symbIoTe.enablerLogic.syncMessageToEnablerLogic.DefaultEnablerName", 
-                (Object)sendMessage)).thenReturn(new Long(1));
-        
+
+        when(rabbitManager.sendRpcMessage("symbIoTe.enablerLogic",
+                "symbIoTe.enablerLogic.syncMessageToEnablerLogic.DefaultEnablerName",
+                (Object) sendMessage)).thenReturn(new Long(1));
+
         assertThatThrownBy(() -> {
             // when
             enablerLogic.sendSyncMessageToEnablerLogic(enablerName, sendMessage, ReceivedMessage.class);
@@ -166,34 +167,32 @@ public class EnablerLogicTest {
         .hasFieldOrPropertyWithValue("response", new Long(1))
         .hasNoCause();
     }
-    
+
     @Test
     public void registerSyncMessageFromEnablerLogicConsumer_shouldDelegateItToConsumer() throws Exception {
         //given
-        Function<String,String> lambda = (m) -> m;
-        
+        Function<String, String> lambda = (m) -> m;
+
         SyncMessageFromEnablerLogicConsumer syncConsumer = Mockito.mock(SyncMessageFromEnablerLogicConsumer.class);
         enablerLogic.setSyncConsumer(syncConsumer);
-        
+
         // when
         enablerLogic.registerSyncMessageFromEnablerLogicConsumer(String.class, lambda);
-        
+
         //then
         verify(syncConsumer).registerReceiver(String.class, lambda);
     }
-    
+
     @Test
     public void unregisterSyncMessageFromEnablerLogicConsumer_shouldDelegateItToConsumer() throws Exception {
         //given
         SyncMessageFromEnablerLogicConsumer syncConsumer = Mockito.mock(SyncMessageFromEnablerLogicConsumer.class);
         enablerLogic.setSyncConsumer(syncConsumer);
-        
+
         // when
         enablerLogic.unregisterSyncMessageFromEnablerLogicConsumer(String.class);
-        
+
         //then
         verify(syncConsumer).unregisterReceiver(String.class);
     }
-    
-
 }

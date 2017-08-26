@@ -26,6 +26,6 @@ public class EnablerLogicConfiguration {
 
     @PostConstruct
     public void init() {
-    		processingLogic.forEach((pl) -> pl.init(enablerLogic));
+            processingLogic.forEach((pl) -> pl.init(enablerLogic));
     }
 }

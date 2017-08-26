@@ -32,35 +32,35 @@ public class EnablerLogicInjectionTest {
         public AsyncMessageFromEnablerLogicConsumer asyncMessageFromEnablerLogicConsumer() {
             return Mockito.mock(AsyncMessageFromEnablerLogicConsumer.class);
         }
-        
+
         @Bean
         public SyncMessageFromEnablerLogicConsumer syncMessageFromEnablerLogicConsumer() {
             return Mockito.mock(SyncMessageFromEnablerLogicConsumer.class);
         }
-        
+
         @Bean
         public EnablerLogicProperties enablerLogicProperties() {
             return new EnablerLogicProperties();
         }
-        
+
         @Bean
         public RabbitManager rabbitManager() {
             return Mockito.mock(RabbitManager.class);
         }
     }
-    
+
     @Autowired
-    EnablerLogic enablerLogic;
-    
+    private EnablerLogic enablerLogic;
+
     @Autowired
-    AsyncMessageFromEnablerLogicConsumer consumer;
-    
+    private AsyncMessageFromEnablerLogicConsumer consumer;
+
     @AllArgsConstructor
     public static class CustomMessage {
         @Getter
         private String message;
     }
-    
+
     public static class CustomMessageConsumer implements Consumer<CustomMessage> {
         @Override
         public void accept(CustomMessage m) {
@@ -71,10 +71,10 @@ public class EnablerLogicInjectionTest {
     public void testThatAsyncMessageFromEnablerLogicRegistration_isCalledInConsumer() throws Exception {
         // given
         CustomMessageConsumer lambda = new CustomMessageConsumer();
-        
+
         // when
         enablerLogic.registerAsyncMessageFromEnablerLogicConsumer(CustomMessage.class, lambda);
-        
+
         // then
         ArgumentCaptor<CustomMessageConsumer> captor = ArgumentCaptor.forClass(CustomMessageConsumer.class);
         verify(consumer).registerReceiver(eq(CustomMessage.class), captor.capture());
@@ -85,10 +85,10 @@ public class EnablerLogicInjectionTest {
     @Test
     public void testThatAsyncMessageFromEnablerLogicUnregistration_isCalledInConsumer() throws Exception {
         // given
-        
+
         // when
         enablerLogic.unregisterAsyncMessageFromEnablerLogicConsumer(CustomMessage.class);
-        
+
         // then
         verify(consumer).unregisterReceiver(eq(CustomMessage.class));
     }

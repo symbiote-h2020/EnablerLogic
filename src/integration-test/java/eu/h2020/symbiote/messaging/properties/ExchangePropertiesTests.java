@@ -12,23 +12,23 @@ import org.springframework.test.context.junit4.SpringRunner;
 
 @RunWith(SpringRunner.class)
 @EnableConfigurationProperties(ExchangeProperties.class)
-@TestPropertySource(locations="classpath:custom.properties")
+@TestPropertySource(locations = "classpath:custom.properties")
 public class ExchangePropertiesTests {
-	@Autowired
-	private ExchangeProperties props;
-	
-	@Test
-	public void shouldLoadEnablerLogicProperties() {
-		assertThat(props.getEnablerLogic().getName()).isEqualTo("c_el");
-		assertThat(props.getEnablerLogic().getType()).isEqualTo("c_t");
-		assertFalse(props.getEnablerLogic().isDurable());
-		assertTrue(props.getEnablerLogic().isAutodelete());
-		assertTrue(props.getEnablerLogic().isInternal());
-	}
-	
-	@Test
-	public void shouldLoadExchangeNames() throws Exception {
-		assertThat(props.getEnablerPlatformProxy().getName()).isEqualTo("c_pp");
-		assertThat(props.getResourceManager().getName()).isEqualTo("c_rm");
-	}
+    @Autowired
+    private ExchangeProperties props;
+
+    @Test
+    public void shouldLoadEnablerLogicProperties() {
+        assertThat(props.getEnablerLogic().getName()).isEqualTo("c_el");
+        assertThat(props.getEnablerLogic().getType()).isEqualTo("c_t");
+        assertFalse(props.getEnablerLogic().isDurable());
+        assertTrue(props.getEnablerLogic().isAutodelete());
+        assertTrue(props.getEnablerLogic().isInternal());
+    }
+
+    @Test
+    public void shouldLoadExchangeNames() throws Exception {
+        assertThat(props.getEnablerPlatformProxy().getName()).isEqualTo("c_pp");
+        assertThat(props.getResourceManager().getName()).isEqualTo("c_rm");
+    }
 }

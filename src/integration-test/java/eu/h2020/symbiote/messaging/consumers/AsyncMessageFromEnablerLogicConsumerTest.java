@@ -20,38 +20,38 @@ import lombok.Getter;
 
 @RunWith(SpringRunner.class)
 @Import({TestingRabbitConfig.class,
-        EnablerLogicProperties.class, 
+        EnablerLogicProperties.class,
         AsyncMessageFromEnablerLogicConsumer.class})
 @EnableConfigurationProperties({RabbitConnectionProperties.class, ExchangeProperties.class, RoutingKeysProperties.class})
-@TestPropertySource(locations="classpath:empty.properties")
+@TestPropertySource(locations = "classpath:empty.properties")
 public class AsyncMessageFromEnablerLogicConsumerTest extends EmbeddedRabbitFixture {
 
     @Autowired
-    EnablerLogicProperties props;
+    private EnablerLogicProperties props;
 
     @Autowired
-    AsyncMessageFromEnablerLogicConsumer consumer;
-    
+    private AsyncMessageFromEnablerLogicConsumer consumer;
+
     @AllArgsConstructor
     public static class CustomMessage {
         @Getter
         private String message;
     }
-    
-    CustomMessage receivedMessage = null;
-    
+
+    private CustomMessage receivedMessage = null;
+
     @Test
     public void asyncMessage_shouldCallLambda() {
         // given
         CustomMessage message = new CustomMessage("some custom text");
         consumer.registerReceiver(CustomMessage.class, (m) -> receivedMessage = m);
-        
+
         // when
         rabbitTemplate.convertAndSend(
-                props.getEnablerLogicExchange().getName(), 
-                props.getKey().getEnablerLogic().getAsyncMessageToEnablerLogic() + "." + props.getEnablerName(), 
+                props.getEnablerLogicExchange().getName(),
+                props.getKey().getEnablerLogic().getAsyncMessageToEnablerLogic() + "." + props.getEnablerName(),
                 message);
-        
+
         // then
         await().until(() -> receivedMessage != null);
         assertThat(receivedMessage.getMessage()).isEqualTo(message.getMessage());

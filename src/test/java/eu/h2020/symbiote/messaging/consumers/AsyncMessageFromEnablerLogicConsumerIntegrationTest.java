@@ -33,7 +33,7 @@ public class AsyncMessageFromEnablerLogicConsumerIntegrationTest {
         sendMessage = "message";
         msg = messageConverter.toMessage(sendMessage, null);
     }
-    
+
     @Test
     public void consumer_shouldBeCalledUpponReceivingMessage() throws Exception {
         // given
@@ -54,23 +54,23 @@ public class AsyncMessageFromEnablerLogicConsumerIntegrationTest {
         final Appender mockAppender = Mockito.mock(Appender.class);
         when(mockAppender.getName()).thenReturn("MOCK");
         root.addAppender(mockAppender);
-        
+
         // when
-        consumer.registerReceiver(Long.class, (l) -> {});
+        consumer.registerReceiver(Long.class, (l) -> { });
         consumer.receivedAsyncMessage(msg, String.class.getName());
-        
+
         //then
-        ArgumentCaptor<Object> varArgs = ArgumentCaptor.forClass(Object.class);        
+        ArgumentCaptor<Object> varArgs = ArgumentCaptor.forClass(Object.class);
         verify(mockAppender, atLeastOnce()).doAppend(varArgs.capture());
-        
+
         assertThat(varArgs.getAllValues()).extracting("level", "message", "throwableProxy.throwable")
             .contains(
                 tuple(
-                    Level.ERROR, 
-                    "Can not handle request.", 
+                    Level.ERROR,
+                    "Can not handle request.",
                     new WrongRequestException(
-                        "Asynchronous consumer can not find consumer for handling this request type.", 
-                        "message", 
+                        "Asynchronous consumer can not find consumer for handling this request type.",
+                        "message",
                         "java.lang.String"
                     )
                 )
@@ -86,24 +86,24 @@ public class AsyncMessageFromEnablerLogicConsumerIntegrationTest {
         when(mockAppender.getName()).thenReturn("MOCK");
         root.addAppender(mockAppender);
 
-        consumer.registerReceiver(String.class, (m) -> {});
-        
+        consumer.registerReceiver(String.class, (m) -> { });
+
         // when
         consumer.unregisterReceiver(String.class);
         consumer.receivedAsyncMessage(msg, String.class.getName());
-        
+
         //then
-        ArgumentCaptor<Object> varArgs = ArgumentCaptor.forClass(Object.class);        
+        ArgumentCaptor<Object> varArgs = ArgumentCaptor.forClass(Object.class);
         verify(mockAppender, atLeastOnce()).doAppend(varArgs.capture());
-        
+
         assertThat(varArgs.getAllValues()).extracting("level", "message", "throwableProxy.throwable")
             .contains(
                 tuple(
-                    Level.ERROR, 
-                    "Can not handle request.", 
+                    Level.ERROR,
+                    "Can not handle request.",
                     new WrongRequestException(
-                        "Asynchronous consumer can not find consumer for handling this request type.", 
-                        "message", 
+                        "Asynchronous consumer can not find consumer for handling this request type.",
+                        "message",
                         "java.lang.String"
                     )
                 )

@@ -21,17 +21,17 @@ import eu.h2020.symbiote.messaging.WrongRequestException;
 
 @Component
 public class SyncMessageFromEnablerLogicConsumer {
-    private static final Logger log = LoggerFactory.getLogger(SyncMessageFromEnablerLogicConsumer.class);
+    private static final Logger LOG = LoggerFactory.getLogger(SyncMessageFromEnablerLogicConsumer.class);
 
     private Map<String, Function<?, ?>> functions;
-    
+
     private MessageConverter messageConverter;
 
     public SyncMessageFromEnablerLogicConsumer() {
         functions = new HashMap<>();
         messageConverter = new Jackson2JsonMessageConverter();
     }
-    
+
     public <O> void registerReceiver(Class<O> clazz, Function<O, ?> function) {
         functions.put(clazz.getName(), function);
     }
@@ -39,26 +39,29 @@ public class SyncMessageFromEnablerLogicConsumer {
     public void unregisterReceiver(Class<?> clazz) {
         functions.remove(clazz.getName());
     }
-    
+
     @RabbitListener(bindings = @QueueBinding(
         value = @Queue,
-        exchange = @Exchange(value = "#{enablerLogicProperties.enablerLogicExchange.name}", type="topic"),
+        exchange = @Exchange(value = "#{enablerLogicProperties.enablerLogicExchange.name}", type = "topic"),
         key = "#{enablerLogicProperties.key.enablerLogic.syncMessageToEnablerLogic}.#{enablerLogicProperties.enablerName}"
     ))
     public Object receivedSyncMessage(Message msg, @Header("__TypeId__") String className) throws IOException {
-        log.info("Consumer receivedSyncMessage: " + msg);
+        LOG.info("Consumer receivedSyncMessage: " + msg);
 
         Object request = messageConverter.fromMessage(msg);
-        
+
         @SuppressWarnings({ "unchecked" })
-        Function<Object, Object> function = (Function<Object, Object>)functions.get(className);
-        
+        Function<Object, Object> function = (Function<Object, Object>) functions.get(className);
+
         if(function == null) {
-            WrongRequestException exception = new WrongRequestException("Synchronous consumer can not find function for handling this request type.", request, className);
-            log.info("responding with exception", exception);
+            WrongRequestException exception = new WrongRequestException(
+                "Synchronous consumer can not find function for handling this request type.",
+                request,
+                className);
+            LOG.info("responding with exception", exception);
             return exception;
         }
-            
+
         Object response = function.apply(request);
         return response;
     }

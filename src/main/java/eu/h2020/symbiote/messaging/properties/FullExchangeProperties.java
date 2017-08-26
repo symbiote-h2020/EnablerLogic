@@ -8,9 +8,9 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 public class FullExchangeProperties {
-		private String name;
-		private String type;
-		private boolean durable;
-		private boolean autodelete;
-		private boolean internal;		
+    private String name;
+    private String type;
+    private boolean durable;
+    private boolean autodelete;
+    private boolean internal;
 }

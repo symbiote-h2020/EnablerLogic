@@ -10,13 +10,13 @@ public class WrongRequestExceptionTest {
     @Test
     public void messageGeneration_shouldContainSpecificJson() {
         //given
-        WrongRequestException exception = new WrongRequestException("message", 
-                "request object", 
+        WrongRequestException exception = new WrongRequestException("message",
+                "request object",
                 String.class.getName());
 
         // when
         String exceptionMessage = exception.getMessage();
-        
+
         //then
         assertThat(exceptionMessage).isEqualTo("message {\"requestClassName\":\"java.lang.String\",\"request\":\"request object\"}");
     }

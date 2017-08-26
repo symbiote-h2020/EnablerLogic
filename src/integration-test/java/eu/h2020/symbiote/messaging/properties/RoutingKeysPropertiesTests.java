@@ -13,16 +13,16 @@ import eu.h2020.symbiote.messaging.properties.RoutingKeysProperties;
 
 @RunWith(SpringRunner.class)
 @EnableConfigurationProperties(RoutingKeysProperties.class)
-@TestPropertySource(locations="classpath:custom.properties")
+@TestPropertySource(locations = "classpath:custom.properties")
 public class RoutingKeysPropertiesTests {
-	@Autowired
-	private RoutingKeysProperties props;
-	
-	@Test
-	public void shouldLoadFirstLevelProperties() {
-		assertThat(props.getEnablerLogic().getAcquireMeasurements()).isEqualTo("c_am");
-		assertThat(props.getEnablerLogic().getDataAppeared()).isEqualTo("c_da");
-		assertThat(props.getEnablerLogic().getAsyncMessageToEnablerLogic()).isEqualTo("asyncMessageToEnablerLogic");
-		assertThat(props.getEnablerLogic().getSyncMessageToEnablerLogic()).isEqualTo("syncMessageToEnablerLogic");
-	}
+    @Autowired
+    private RoutingKeysProperties props;
+
+    @Test
+    public void shouldLoadFirstLevelProperties() {
+        assertThat(props.getEnablerLogic().getAcquireMeasurements()).isEqualTo("c_am");
+        assertThat(props.getEnablerLogic().getDataAppeared()).isEqualTo("c_da");
+        assertThat(props.getEnablerLogic().getAsyncMessageToEnablerLogic()).isEqualTo("asyncMessageToEnablerLogic");
+        assertThat(props.getEnablerLogic().getSyncMessageToEnablerLogic()).isEqualTo("syncMessageToEnablerLogic");
+    }
 }
