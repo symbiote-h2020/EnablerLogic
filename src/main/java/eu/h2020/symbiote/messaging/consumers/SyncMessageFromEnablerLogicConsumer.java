@@ -19,7 +19,7 @@ import org.springframework.stereotype.Component;
 import eu.h2020.symbiote.messaging.WrongRequestException;
 
 @Component
-public class SyncMessageFromEnablerLogicConsumer implements RabbitListenerConsumer {
+public class SyncMessageFromEnablerLogicConsumer {
     private static final Logger LOG = LoggerFactory.getLogger(SyncMessageFromEnablerLogicConsumer.class);
 
     private Map<String, Function<?, ?>> functions;

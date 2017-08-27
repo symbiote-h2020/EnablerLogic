@@ -2,7 +2,6 @@ package eu.h2020.symbiote.messaging.consumers;
 
 import eu.h2020.symbiote.ProcessingLogic;
 import eu.h2020.symbiote.enabler.messaging.model.EnablerLogicDataAppearedMessage;
-import eu.h2020.symbiote.messaging.RabbitManager;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -22,7 +21,7 @@ import java.io.IOException;
  */
 
 @Component
-public class DataAppearedConsumer implements RabbitListenerConsumer {
+public class DataAppearedConsumer {
     private static final Logger LOG = LoggerFactory.getLogger(DataAppearedConsumer.class);
 
     private ProcessingLogic processingLogic;
