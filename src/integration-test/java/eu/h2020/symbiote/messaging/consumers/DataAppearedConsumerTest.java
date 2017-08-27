@@ -45,9 +45,6 @@ public class DataAppearedConsumerTest extends EmbeddedRabbitFixture {
     private EnablerLogicProperties props;
 
     @Autowired
-    private DataAppearedConsumer dataAppearedConsumer;
-
-    @Autowired
     private ProcessingLogicTestImpl processingLogic;
 
     public static class ProcessingLogicTestImpl implements ProcessingLogic {

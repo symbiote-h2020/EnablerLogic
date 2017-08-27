@@ -25,8 +25,6 @@ import java.io.IOException;
 public class DataAppearedConsumer implements RabbitListenerConsumer {
     private static final Logger LOG = LoggerFactory.getLogger(DataAppearedConsumer.class);
 
-    private RabbitManager rabbitManager;
-
     private ProcessingLogic processingLogic;
 
     public DataAppearedConsumer(ProcessingLogic processingLogic) {

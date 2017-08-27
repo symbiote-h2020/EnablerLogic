@@ -57,15 +57,15 @@ configurations {
 
 
 allprojects {
-	repositories {
-		jcenter()
-		maven { url "https://jitpack.io" }
-	}
+    repositories {
+        jcenter()
+        maven { url "https://jitpack.io" }
+    }
 }
 
 repositories {
-	mavenLocal()
-	mavenCentral()
+    mavenLocal()
+    mavenCentral()
 }
 
 sourceCompatibility = 1.8
@@ -78,15 +78,15 @@ configurations.all {
 
 
 dependencies {
-	compile('org.springframework.boot:spring-boot-starter')
+    compile('org.springframework.boot:spring-boot-starter')
     compile('org.springframework.cloud:spring-cloud-starter-zipkin') // Causes the java.net.ConnectException if Zipkin offline
-	compile('org.springframework.boot:spring-boot-starter-amqp')
+    compile('org.springframework.boot:spring-boot-starter-amqp')
     compile('org.springframework.boot:spring-boot-starter-data-rest')
 
-	//compile('eu.h2020.symbiote:SymbIoTeLibraries:1.0.1-SNAPSHOT')
-	compile('com.github.symbiote-h2020:SymbIoTeLibraries:develop-SNAPSHOT') { changing = true }
-	
-	compileOnly('org.projectlombok:lombok')
+    //compile('eu.h2020.symbiote:SymbIoTeLibraries:1.0.1-SNAPSHOT')
+    compile('com.github.symbiote-h2020:SymbIoTeLibraries:develop-SNAPSHOT') { changing = true }
+    
+    compileOnly('org.projectlombok:lombok')
 
     testCompile('org.springframework.boot:spring-boot-starter-test')
     testCompile('org.awaitility:awaitility:3.0.0')
@@ -109,22 +109,22 @@ task sourceJar(type: Jar) {
 }
 
 publishing {
-	publications {
-		mavenJava(MavenPublication) {
-			from components.java
-			
-			artifact sourceJar {
+    publications {
+        mavenJava(MavenPublication) {
+            from components.java
+            
+            artifact sourceJar {
                 classifier "sources"
             }
-		}
-	}
-	repositories {
-		mavenLocal()
-	}
+        }
+    }
+    repositories {
+        mavenLocal()
+    }
 }
 
 configurations.all {
-	resolutionStrategy.cacheChangingModulesFor 0, 'seconds'
+    resolutionStrategy.cacheChangingModulesFor 0, 'seconds'
 }
 
 // jacoco configuration section
@@ -144,7 +144,7 @@ check.dependsOn(jacocoTestReport)
 
 // integration tests
 task integrationTest(type: Test) {
-	jacoco {
+    jacoco {
       destinationFile = file("$buildDir/jacoco/integrationTest.exec")
       classDumpDir = file("$buildDir/build/classes/integrationTest")
       includes = ["eu.*"]
@@ -159,7 +159,7 @@ check.dependsOn integrationTest
 integrationTest.mustRunAfter test
 
 task allTestReport(type: TestReport) {
-	destinationDir = file("$buildDir/reports/allTests")
+    destinationDir = file("$buildDir/reports/allTests")
 }
 
 test {
@@ -202,8 +202,8 @@ task jacocoAllTestReport(type: JacocoReport) {
     }
  
     executionData = files([
-    		"${buildDir}/jacoco/integrationTest.exec", 
-    		"${buildDir}/jacoco/test.exec"])
+            "${buildDir}/jacoco/integrationTest.exec", 
+            "${buildDir}/jacoco/test.exec"])
     classDirectories = files("$buildDir/classes/main", "$buildDir/classes/integrationTest", "$buildDir/classes/test", )
     sourceDirectories = sourceSets.main.allJava
 }
@@ -234,5 +234,4 @@ Run build and exclude integration tests
 
 publishing starter to mavenLocal
 > gradle clean build publishToMavenLocal
- */
-
+*/

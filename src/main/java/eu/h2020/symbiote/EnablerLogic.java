@@ -115,9 +115,9 @@ public class EnablerLogic {
         request.setResources(Arrays.asList(requests));
 
         ResourceManagerAcquisitionStartResponse response = (ResourceManagerAcquisitionStartResponse)
-                rabbitManager.sendRpcMessage(props.getExchange().getResourceManager().getName(),
-                        props.getKey().getResourceManager().getStartDataAcquisition(),
-                        request);
+        rabbitManager.sendRpcMessage(props.getExchange().getResourceManager().getName(),
+            props.getKey().getResourceManager().getStartDataAcquisition(),
+            request);
 
         LOG.info("Received resourceIds from ResourceManager");
         return response;
@@ -130,13 +130,13 @@ public class EnablerLogic {
      */
     public void sendAsyncMessageToEnablerLogic(String enablerName, Object msg) {
         rabbitManager.sendMessage(props.getEnablerLogicExchange().getName(),
-                    generateAsyncEnablerLogicRoutingKey(),
-                    msg);
+            generateAsyncEnablerLogicRoutingKey(),
+            msg);
     }
 
     private String generateAsyncEnablerLogicRoutingKey() {
         return props.getKey().getEnablerLogic().getAsyncMessageToEnablerLogic() + "." +
-                props.getEnablerName();
+            props.getEnablerName();
     }
 
     /**
@@ -152,8 +152,8 @@ public class EnablerLogic {
     @SuppressWarnings("unchecked")
     public <O> O sendSyncMessageToEnablerLogic(String enablerName, Object msg, Class<O> clazz) {
         Object response = rabbitManager.sendRpcMessage(props.getEnablerLogicExchange().getName(),
-                generateSyncEnablerLogicRoutingKey(),
-                msg);
+            generateSyncEnablerLogicRoutingKey(),
+            msg);
 
         if(response == null)
             return null;
@@ -166,6 +166,6 @@ public class EnablerLogic {
 
     private String generateSyncEnablerLogicRoutingKey() {
         return props.getKey().getEnablerLogic().getSyncMessageToEnablerLogic() + "." +
-                props.getEnablerName();
+            props.getEnablerName();
     }
 }

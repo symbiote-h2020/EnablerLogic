@@ -14,7 +14,6 @@ import org.springframework.amqp.rabbit.annotation.QueueBinding;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.amqp.support.converter.Jackson2JsonMessageConverter;
 import org.springframework.amqp.support.converter.MessageConverter;
-import org.springframework.messaging.handler.annotation.Header;
 import org.springframework.stereotype.Component;
 
 import eu.h2020.symbiote.messaging.WrongRequestException;
@@ -56,9 +55,9 @@ public class AsyncMessageFromEnablerLogicConsumer implements RabbitListenerConsu
         Consumer consumer = consumers.get(className);
         if(consumer == null) {
             WrongRequestException exception = new WrongRequestException(
-                    "Asynchronous consumer can not find consumer for handling this request type.",
-                    request,
-                    className);
+                "Asynchronous consumer can not find consumer for handling this request type.",
+                request,
+                className);
             LOG.error("Can not handle request.", exception);
             return;
         }
