@@ -56,14 +56,13 @@ public class DataAppearedConsumerTest extends EmbeddedRabbitFixture {
         private EnablerLogicDataAppearedMessage dataAppearedMessage;
 
         @Override
-        public void init(EnablerLogic enablerLogic) {
+        public void initialization(EnablerLogic enablerLogic) {
         }
 
         @Override
         public void measurementReceived(EnablerLogicDataAppearedMessage receivedDataAppearedMessage) {
             this.dataAppearedMessage = receivedDataAppearedMessage;
         }
-
     }
 
     @Test

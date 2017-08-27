@@ -20,7 +20,7 @@ import org.springframework.stereotype.Component;
 import eu.h2020.symbiote.messaging.WrongRequestException;
 
 @Component
-public class AsyncMessageFromEnablerLogicConsumer {
+public class AsyncMessageFromEnablerLogicConsumer implements RabbitListenerConsumer {
     private static final Logger LOG = LoggerFactory.getLogger(AsyncMessageFromEnablerLogicConsumer.class);
 
     @SuppressWarnings("rawtypes")
@@ -47,11 +47,12 @@ public class AsyncMessageFromEnablerLogicConsumer {
         key = "#{enablerLogicProperties.key.enablerLogic.asyncMessageToEnablerLogic}.#{enablerLogicProperties.enablerName}"
     ))
     @SuppressWarnings({ "rawtypes", "unchecked" })
-    public void receivedAsyncMessage(Message msg, @Header("__TypeId__") String className) throws IOException {
+    public void receivedAsyncMessage(Message msg) throws IOException {
         LOG.info("Consumer receivedAsyncMessage: " + msg);
 
         Object request = messageConverter.fromMessage(msg);
-
+        String className = request.getClass().getName();
+        
         Consumer consumer = consumers.get(className);
         if(consumer == null) {
             WrongRequestException exception = new WrongRequestException(

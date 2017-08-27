@@ -9,6 +9,7 @@ import org.springframework.amqp.core.Message;
 import org.springframework.amqp.core.MessagePropertiesBuilder;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.amqp.rabbit.support.CorrelationData;
+import org.springframework.amqp.support.converter.Jackson2JsonMessageConverter;
 import org.springframework.stereotype.Component;
 
 /**
@@ -27,9 +28,8 @@ public class RabbitManager {
 
     public RabbitManager(RabbitTemplate rabbitTemplate) {
         this.rabbitTemplate = rabbitTemplate;
-
+        rabbitTemplate.setMessageConverter(new Jackson2JsonMessageConverter());
     }
-
 
     /**
      * Method publishes given message to the given exchange and routing key. Props
@@ -48,6 +48,7 @@ public class RabbitManager {
         rabbitTemplate.send(exchange, routingKey, new Message(message.getBytes(StandardCharsets.UTF_8),
                 MessagePropertiesBuilder.newInstance()
                     .setContentType("plain/text")
+                    .setHeader("__TypeId__", String.class.getName())
                     .build()));
     }
 
@@ -94,6 +95,7 @@ public class RabbitManager {
         Message sendMessage = new Message(stringMessage.getBytes(StandardCharsets.UTF_8),
                 MessagePropertiesBuilder.newInstance()
                     .setContentType("plain/text")
+                    .setHeader("__TypeId__", String.class.getName())
                     .setCorrelationIdString(correlationId)
                     .build()
                 );

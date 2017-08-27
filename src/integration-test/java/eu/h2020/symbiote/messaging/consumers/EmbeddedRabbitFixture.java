@@ -15,6 +15,9 @@ import io.arivera.oss.embedded.rabbitmq.bin.RabbitMqPlugins;
 
 public class EmbeddedRabbitFixture {
     private static final int RABBIT_STARTING_TIMEOUT = 10_000;
+    
+    // turn to false if you want to start RabbitMQ independently of tests.
+    private static final boolean RUN_EMBEDDED = true;
 
     protected static EmbeddedRabbitMq rabbitMq;
 
@@ -22,6 +25,11 @@ public class EmbeddedRabbitFixture {
     protected RabbitTemplate rabbitTemplate;
 
     @BeforeClass
+    public static void setup() throws Exception {
+        if(RUN_EMBEDDED)
+            startEmbeddedRabbit();
+    }
+    
     public static void startEmbeddedRabbit() throws Exception {
         EmbeddedRabbitMqConfig config = new EmbeddedRabbitMqConfig.Builder()
             .rabbitMqServerInitializationTimeoutInMillis(RABBIT_STARTING_TIMEOUT)
@@ -44,6 +52,11 @@ public class EmbeddedRabbitFixture {
     }
 
     @AfterClass
+    public static void teardown() {
+        if(RUN_EMBEDDED)
+            stopEmbeddedRabbit();
+    }
+    
     public static void stopEmbeddedRabbit() {
         rabbitMq.stop();
     }

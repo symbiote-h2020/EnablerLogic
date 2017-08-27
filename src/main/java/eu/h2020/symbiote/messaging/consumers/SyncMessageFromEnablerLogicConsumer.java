@@ -20,7 +20,7 @@ import org.springframework.stereotype.Component;
 import eu.h2020.symbiote.messaging.WrongRequestException;
 
 @Component
-public class SyncMessageFromEnablerLogicConsumer {
+public class SyncMessageFromEnablerLogicConsumer implements RabbitListenerConsumer {
     private static final Logger LOG = LoggerFactory.getLogger(SyncMessageFromEnablerLogicConsumer.class);
 
     private Map<String, Function<?, ?>> functions;
@@ -45,10 +45,11 @@ public class SyncMessageFromEnablerLogicConsumer {
         exchange = @Exchange(value = "#{enablerLogicProperties.enablerLogicExchange.name}", type = "topic"),
         key = "#{enablerLogicProperties.key.enablerLogic.syncMessageToEnablerLogic}.#{enablerLogicProperties.enablerName}"
     ))
-    public Object receivedSyncMessage(Message msg, @Header("__TypeId__") String className) throws IOException {
+    public Object receivedSyncMessage(Message msg) throws IOException {
         LOG.info("Consumer receivedSyncMessage: " + msg);
 
         Object request = messageConverter.fromMessage(msg);
+        String className = request.getClass().getName();
 
         @SuppressWarnings({ "unchecked" })
         Function<Object, Object> function = (Function<Object, Object>) functions.get(className);

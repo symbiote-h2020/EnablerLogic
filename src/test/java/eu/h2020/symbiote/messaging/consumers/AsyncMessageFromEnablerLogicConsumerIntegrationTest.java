@@ -40,7 +40,7 @@ public class AsyncMessageFromEnablerLogicConsumerIntegrationTest {
 
         // when
         consumer.registerReceiver(String.class, (m) -> receivedMessage = m);
-        consumer.receivedAsyncMessage(msg, String.class.getName());
+        consumer.receivedAsyncMessage(msg);
 
         //then
         assertThat(receivedMessage).isEqualTo(sendMessage);
@@ -57,7 +57,7 @@ public class AsyncMessageFromEnablerLogicConsumerIntegrationTest {
 
         // when
         consumer.registerReceiver(Long.class, (l) -> { });
-        consumer.receivedAsyncMessage(msg, String.class.getName());
+        consumer.receivedAsyncMessage(msg);
 
         //then
         ArgumentCaptor<Object> varArgs = ArgumentCaptor.forClass(Object.class);
@@ -90,7 +90,7 @@ public class AsyncMessageFromEnablerLogicConsumerIntegrationTest {
 
         // when
         consumer.unregisterReceiver(String.class);
-        consumer.receivedAsyncMessage(msg, String.class.getName());
+        consumer.receivedAsyncMessage(msg);
 
         //then
         ArgumentCaptor<Object> varArgs = ArgumentCaptor.forClass(Object.class);

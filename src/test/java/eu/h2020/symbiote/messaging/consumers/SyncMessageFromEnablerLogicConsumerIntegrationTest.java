@@ -30,7 +30,7 @@ public class SyncMessageFromEnablerLogicConsumerIntegrationTest {
 
         // when
         consumer.registerReceiver(String.class, (m) -> "return: " + m);
-        String result = (String) consumer.receivedSyncMessage(msg, String.class.getName());
+        String result = (String) consumer.receivedSyncMessage(msg);
 
         //then
         assertThat(result).isEqualTo("return: " + message);
@@ -42,7 +42,7 @@ public class SyncMessageFromEnablerLogicConsumerIntegrationTest {
 
         // when
         consumer.registerReceiver(Long.class, (l) -> l + 1);
-        WrongRequestException result = (WrongRequestException) consumer.receivedSyncMessage(msg, String.class.getName());
+        WrongRequestException result = (WrongRequestException) consumer.receivedSyncMessage(msg);
 
         //then
         assertThat(result.getRequestClassName()).isEqualTo("java.lang.String");
@@ -56,7 +56,7 @@ public class SyncMessageFromEnablerLogicConsumerIntegrationTest {
 
         // when
         consumer.unregisterReceiver(String.class);
-        WrongRequestException result = (WrongRequestException) consumer.receivedSyncMessage(msg, String.class.getName());
+        WrongRequestException result = (WrongRequestException) consumer.receivedSyncMessage(msg);
 
         //then
         assertThat(result.getRequestClassName()).isEqualTo("java.lang.String");

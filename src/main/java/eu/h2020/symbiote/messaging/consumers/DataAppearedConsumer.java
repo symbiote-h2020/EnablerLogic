@@ -22,7 +22,7 @@ import java.io.IOException;
  */
 
 @Component
-public class DataAppearedConsumer {
+public class DataAppearedConsumer implements RabbitListenerConsumer {
     private static final Logger LOG = LoggerFactory.getLogger(DataAppearedConsumer.class);
 
     private RabbitManager rabbitManager;

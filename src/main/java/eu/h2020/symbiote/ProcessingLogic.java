@@ -17,7 +17,7 @@ public interface ProcessingLogic {
      *
      * @param enablerLogic reference to EnablerLogic so messages to other components can be send
      */
-    void init(EnablerLogic enablerLogic);
+    void initialization(EnablerLogic enablerLogic);
 
     /**
      * This method is called when data from Platform Proxy component is received.
