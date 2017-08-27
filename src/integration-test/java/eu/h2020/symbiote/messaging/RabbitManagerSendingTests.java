@@ -153,25 +153,25 @@ public class RabbitManagerSendingTests extends EmbeddedRabbitFixture {
 
     @Test
     public void sendingRPC_shouldWaitForResponseInText() throws Exception {
-            // given
-            String sendMessage = "Some RPC message";
-            Thread t = new Thread(() -> {
-                log.info("receiving thread started");
-                rabbitTemplate.setReceiveTimeout(RECEIVE_TIMEOUT);
-                rabbitTemplate.receiveAndReply(RECEIVING_QUEUE_NAME, new ReceiveAndReplyMessageCallback() {
-                @Override
-                public Message handle(Message msg) {
-                    log.info("receive thread received {}", msg);
-                    String r = new String(msg.getBody(), StandardCharsets.UTF_8) + "!!!";
-                    Message rmsg = new Message(r.getBytes(StandardCharsets.UTF_8),
-                        MessagePropertiesBuilder.newInstance().setContentType("plain/text").build());
-                    log.info("returning {}", rmsg);
-                    return rmsg;
-                }
-            });
-                log.info("************** receiving thread finished");
-            });
-            t.start();
+        // given
+        String sendMessage = "Some RPC message";
+        Thread t = new Thread(() -> {
+            log.info("receiving thread started");
+            rabbitTemplate.setReceiveTimeout(RECEIVE_TIMEOUT);
+            rabbitTemplate.receiveAndReply(RECEIVING_QUEUE_NAME, new ReceiveAndReplyMessageCallback() {
+            @Override
+            public Message handle(Message msg) {
+                log.info("receive thread received {}", msg);
+                String r = new String(msg.getBody(), StandardCharsets.UTF_8) + "!!!";
+                Message rmsg = new Message(r.getBytes(StandardCharsets.UTF_8),
+                    MessagePropertiesBuilder.newInstance().setContentType("plain/text").build());
+                log.info("returning {}", rmsg);
+                return rmsg;
+            }
+        });
+            log.info("************** receiving thread finished");
+        });
+        t.start();
 
         // when
         String response = rabbitManager.sendRpcMessage(EXCHANGE_NAME, RECEIVING_ROUTING_KEY, sendMessage);

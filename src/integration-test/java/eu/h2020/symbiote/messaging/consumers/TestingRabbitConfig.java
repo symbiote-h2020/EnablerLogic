@@ -48,8 +48,8 @@ public class TestingRabbitConfig {
     @Bean
     public Exchange exchange(EnablerLogicProperties props) {
       return ExchangeBuilder
-              .topicExchange(props.getEnablerLogicExchange().getName()) //EXCHANGE_NAME
-              .build();
+          .topicExchange(props.getEnablerLogicExchange().getName()) //EXCHANGE_NAME
+          .build();
     }
 
     @Bean

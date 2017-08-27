@@ -48,17 +48,17 @@ public class EnablerLogicTest {
         ResourceManagerTaskInfoRequest request = new ResourceManagerTaskInfoRequest();
         ResourceManagerAcquisitionStartResponse response = new ResourceManagerAcquisitionStartResponse();
         when(rabbitManager.sendRpcMessage(
-                eq("symbIoTe.resourceManager"),
-                eq("symbIoTe.resourceManager.startDataAcquisition"),
-                any(ResourceManagerAcquisitionStartRequest.class))).thenReturn(response);
+            eq("symbIoTe.resourceManager"),
+            eq("symbIoTe.resourceManager.startDataAcquisition"),
+            any(ResourceManagerAcquisitionStartRequest.class))).thenReturn(response);
 
         // when
         enablerLogic.queryResourceManager(request);
 
         // then
         verify(rabbitManager).sendRpcMessage(eq("symbIoTe.resourceManager"),
-                eq("symbIoTe.resourceManager.startDataAcquisition"),
-                captor.capture());
+            eq("symbIoTe.resourceManager.startDataAcquisition"),
+            captor.capture());
         ResourceManagerAcquisitionStartRequest requests = captor.getValue();
         assertThat(requests.getResources()).hasSize(1);
         assertThat(requests.getResources()).contains(request);
@@ -103,8 +103,8 @@ public class EnablerLogicTest {
 
         // then
         verify(rabbitManager).sendMessage(eq("symbIoTe.enablerLogic"),
-                eq("symbIoTe.enablerLogic.asyncMessageToEnablerLogic.DefaultEnablerName"),
-                eq((Object) message));
+            eq("symbIoTe.enablerLogic.asyncMessageToEnablerLogic.DefaultEnablerName"),
+            eq((Object) message));
     }
 
     @AllArgsConstructor
@@ -121,8 +121,8 @@ public class EnablerLogicTest {
         ReceivedMessage mockReceiveMessage = new ReceivedMessage("received message");
 
         when(rabbitManager.sendRpcMessage("symbIoTe.enablerLogic",
-                "symbIoTe.enablerLogic.syncMessageToEnablerLogic.DefaultEnablerName",
-                (Object) sendMessage)).thenReturn(mockReceiveMessage);
+            "symbIoTe.enablerLogic.syncMessageToEnablerLogic.DefaultEnablerName",
+            (Object) sendMessage)).thenReturn(mockReceiveMessage);
 
         // when
         ReceivedMessage receivedMessage = enablerLogic.sendSyncMessageToEnablerLogic(enablerName, sendMessage, ReceivedMessage.class);
@@ -138,8 +138,8 @@ public class EnablerLogicTest {
         String enablerName = "enabler name";
 
         when(rabbitManager.sendRpcMessage("symbIoTe.enablerLogic",
-                "symbIoTe.enablerLogic.syncMessageToEnablerLogic.DefaultEnablerName",
-                (Object) sendMessage)).thenReturn(null);
+            "symbIoTe.enablerLogic.syncMessageToEnablerLogic.DefaultEnablerName",
+            (Object) sendMessage)).thenReturn(null);
 
         // when
         ReceivedMessage receivedMessage = enablerLogic.sendSyncMessageToEnablerLogic(enablerName, sendMessage, ReceivedMessage.class);
@@ -155,17 +155,18 @@ public class EnablerLogicTest {
         String enablerName = "enabler name";
 
         when(rabbitManager.sendRpcMessage("symbIoTe.enablerLogic",
-                "symbIoTe.enablerLogic.syncMessageToEnablerLogic.DefaultEnablerName",
-                (Object) sendMessage)).thenReturn(Long.valueOf(1));
+            "symbIoTe.enablerLogic.syncMessageToEnablerLogic.DefaultEnablerName",
+            (Object) sendMessage)).thenReturn(Long.valueOf(1));
 
         assertThatThrownBy(() -> {
             // when
             enablerLogic.sendSyncMessageToEnablerLogic(enablerName, sendMessage, ReceivedMessage.class);
         })
-        // then
-        .isInstanceOf(WrongResponseException.class)
-        .hasFieldOrPropertyWithValue("response", Long.valueOf(1))
-        .hasNoCause();
+        
+            // then
+            .isInstanceOf(WrongResponseException.class)
+            .hasFieldOrPropertyWithValue("response", Long.valueOf(1))
+            .hasNoCause();
     }
 
     @Test

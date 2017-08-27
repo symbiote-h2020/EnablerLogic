@@ -116,16 +116,22 @@ public class RabbitManagerTests {
         TestObject sendObject = new TestObject();
         TestObject resultObject = new TestObject();
 
-        when(rabbitTemplate.convertSendAndReceive(eq(exchange), eq(key),
-                any(TestObject.class),
-                any(CorrelationData.class))
+        when(rabbitTemplate.convertSendAndReceive(
+            eq(exchange),
+            eq(key),
+            any(TestObject.class),
+            any(CorrelationData.class))
         ).thenReturn(resultObject);
 
         // when
         Object result = rabbitManager.sendRpcMessage(exchange, key, sendObject);
 
         // then
-        verify(rabbitTemplate).convertSendAndReceive(eq(exchange), eq(key), messageCaptor.capture(), any(CorrelationData.class));
+        verify(rabbitTemplate).convertSendAndReceive(
+            eq(exchange),
+            eq(key),
+            messageCaptor.capture(),
+            any(CorrelationData.class));
         TestObject sendMessage = messageCaptor.getValue();
         assertThat(sendMessage).isEqualTo(sendObject);
 
@@ -141,15 +147,19 @@ public class RabbitManagerTests {
         TestObject sendObject = new TestObject();
 
         when(rabbitTemplate.convertSendAndReceive(eq(exchange), eq(key),
-                any(TestObject.class),
-                any(CorrelationData.class))
+            any(TestObject.class),
+            any(CorrelationData.class))
         ).thenReturn(null);
 
         // when
         Object result = rabbitManager.sendRpcMessage(exchange, key, sendObject);
 
         // then
-        verify(rabbitTemplate).convertSendAndReceive(eq(exchange), eq(key), messageCaptor.capture(), any(CorrelationData.class));
+        verify(rabbitTemplate).convertSendAndReceive(
+            eq(exchange),
+            eq(key),
+            messageCaptor.capture(),
+            any(CorrelationData.class));
         TestObject sendMessage = messageCaptor.getValue();
         assertThat(sendMessage).isEqualTo(sendObject);
 

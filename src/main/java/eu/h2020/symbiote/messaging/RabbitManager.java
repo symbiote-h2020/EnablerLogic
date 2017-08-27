@@ -46,10 +46,10 @@ public class RabbitManager {
      */
     public void sendMessage(String exchange, String routingKey, String message) {
         rabbitTemplate.send(exchange, routingKey, new Message(message.getBytes(StandardCharsets.UTF_8),
-                MessagePropertiesBuilder.newInstance()
-                    .setContentType("plain/text")
-                    .setHeader("__TypeId__", String.class.getName())
-                    .build()));
+            MessagePropertiesBuilder.newInstance()
+                .setContentType("plain/text")
+                .setHeader("__TypeId__", String.class.getName())
+                .build()));
     }
 
     /**
@@ -93,20 +93,20 @@ public class RabbitManager {
 
         String correlationId = UUID.randomUUID().toString();
         Message sendMessage = new Message(stringMessage.getBytes(StandardCharsets.UTF_8),
-                MessagePropertiesBuilder.newInstance()
-                    .setContentType("plain/text")
-                    .setHeader("__TypeId__", String.class.getName())
-                    .setCorrelationIdString(correlationId)
-                    .build()
-                );
+            MessagePropertiesBuilder.newInstance()
+                .setContentType("plain/text")
+                .setHeader("__TypeId__", String.class.getName())
+                .setCorrelationIdString(correlationId)
+                .build()
+            );
         rabbitTemplate.setReplyTimeout(REPLY_TIMEOUT);
-            Message receivedMessage = rabbitTemplate.sendAndReceive(exchange, routingKey, sendMessage);
-            if(receivedMessage == null) {
-                LOG.info("Timeout in RPC receiving. Send: {}", sendMessage);
-                return null;
-            }
+        Message receivedMessage = rabbitTemplate.sendAndReceive(exchange, routingKey, sendMessage);
+        if(receivedMessage == null) {
+            LOG.info("Timeout in RPC receiving. Send: {}", sendMessage);
+            return null;
+        }
 
-            LOG.info("RPC Response received: " + receivedMessage);
+        LOG.info("RPC Response received: " + receivedMessage);
 
         byte[] body = receivedMessage.getBody();
         LOG.info("client received: {}", body);
@@ -137,13 +137,13 @@ public class RabbitManager {
 
         String correlationId = UUID.randomUUID().toString();
         rabbitTemplate.setReplyTimeout(REPLY_TIMEOUT);
-            Object receivedObj = rabbitTemplate.convertSendAndReceive(exchange, routingKey, obj, new CorrelationData(correlationId));
-            if(receivedObj == null) {
-                LOG.info("Timeout in RPC receiving obj. Send: {}", obj);
-                return null;
-            }
+        Object receivedObj = rabbitTemplate.convertSendAndReceive(exchange, routingKey, obj, new CorrelationData(correlationId));
+        if(receivedObj == null) {
+            LOG.info("Timeout in RPC receiving obj. Send: {}", obj);
+            return null;
+        }
 
-            LOG.info("RPC Response received obj: " + receivedObj);
+        LOG.info("RPC Response received obj: " + receivedObj);
 
         return receivedObj;
     }

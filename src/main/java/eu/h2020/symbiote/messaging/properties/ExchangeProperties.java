@@ -11,7 +11,7 @@ import lombok.NoArgsConstructor;
 @ConfigurationProperties(prefix = "rabbit.exchange", ignoreInvalidFields = true)
 public class ExchangeProperties {
     private FullExchangeProperties enablerLogic = new FullExchangeProperties(
-            "symbIoTe.enablerLogic", "topic", true, false, false);
+        "symbIoTe.enablerLogic", "topic", true, false, false);
 
     private EcxhangeNameProperty resourceManager = new EcxhangeNameProperty("symbIoTe.resourceManager");
     private EcxhangeNameProperty enablerPlatformProxy = new EcxhangeNameProperty("symbIoTe.enablerPlatformProxy");

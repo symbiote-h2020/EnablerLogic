@@ -26,7 +26,6 @@ public class EnablerLogicProperties {
     @Autowired
     public EnablerLogicProperties(RabbitConnectionProperties rabbitConnection, ExchangeProperties exchangeProperties,
             RoutingKeysProperties routingKeyProperties) {
-        super();
         this.rabbitConnection = rabbitConnection;
         this.exchangeProperties = exchangeProperties;
         this.routingKeyProperties = routingKeyProperties;
