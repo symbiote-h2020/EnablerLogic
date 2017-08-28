@@ -19,7 +19,6 @@ import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
 import org.springframework.context.SmartLifecycle;
-import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
 
@@ -74,7 +73,7 @@ public class EnablerLogicConfiguration implements ApplicationContextAware, Smart
 
     @Override
     public int getPhase() {
-        return 0;
+        return Integer.MAX_VALUE - 100;
     }
 
     @Override
