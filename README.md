@@ -13,11 +13,11 @@ doesn't have to implement complex communication between those components.
 
 ## Creating specific EnablerLogic
 
-1. Creating new SpringBoot project
+### 1. Creating new SpringBoot project
 
 	- It needs following dependencies: Config Client, Eureka Discovery, Zipkin Client
 
-2. Adding symbIoTe dependencies to `build.gradle`
+### 2. Adding symbIoTe dependencies to `build.gradle`
 
 	- Add following dependencies:
 
@@ -37,7 +37,7 @@ doesn't have to implement complex communication between those components.
 			}
 			```
 
-3. Setting configuration
+### 3. Setting configuration
 
 	- Configuration needs to be put in `bootstrap.properties` or YMl file. An example is here:
 
@@ -52,7 +52,7 @@ doesn't have to implement complex communication between those components.
 	- The second line is location of config server. This is the case when config server is run in 
 	local machine which is suitable for development.
 
-4. Creating ProcessingLogic component
+### 4. Creating ProcessingLogic component
 
 	- Each enabler must have one ProcessingLogic component. This component implements 
 	`eu.h2020.symbiote.ProcessingLogic` interface.
@@ -74,7 +74,7 @@ doesn't have to implement complex communication between those components.
 		private EnablerLogic enablerLogic;
 
 		@Override
-		public void init(EnablerLogic enablerLogic) {
+		public void initialization(EnablerLogic enablerLogic) {
 			this.enablerLogic = enablerLogic;
 
 			sendQuery();
@@ -108,6 +108,111 @@ doesn't have to implement complex communication between those components.
 		}
 	}
 	```
+### 5. Communication with other Enabler Logic components in the enabler
+
+#### Asynchronous Communication
+
+##### Asynchronous Receiver
+
+In the initialization of `ProcessingLogic` you need to register consumer that will 
+receive messages form other Enabler Logic components. Consumer needs to implement
+functional interface `java.util.function.Consumer<T>`. For registering consumer
+there is method in `EnablerLogic` class 
+`registerAsyncMessageFromEnablerLogicConsumer`. This method as arguments accept:
+
+* `Class<O> clazz` - Class of object that can be consumed.
+* `Consumer<O> consumer` - Object that is called when specified type of message is received
+
+There is also method for unregistering consumer
+`unregisterAsyncMessageFromEnablerLogicConsumer`. Only one consumer can be 
+registered for one type (class).
+
+If there is no type registered for the message that is received 
+`WrongRequestException` will be logged as ERROR in the console.  
+
+Example:
+```
+enablerLogic.registerAsyncMessageFromEnablerLogicConsumer(
+    MessageRequest.class, 
+    (m) -> log.info("Received from another EnablerLogic: {}", m));
+``` 
+ 
+##### Asynchronous Sending 
+
+There is `sendAsyncMessageToEnablerLogic` method in `EnablerLogic` class that 
+is used for sending message to another Enabler Logic component. The parameters are:
+
+* `String enablerName` - the name of another Enabler Logic. When you are 
+building enabler you will know which other Enabler Logic components are part 
+of that enabler so there is no need to have flexible discovery of other Enabler 
+Logic components.
+
+* `Object msg` - the object that will be serialized into JSON and send to other
+Enabler Logic component.
+
+Example:
+```
+enablerLogic.sendAsyncMessageToEnablerLogic(
+    "EnablerLogicInterpolator", 
+    new MessageRequest());
+```
+
+#### Synchronous Communication
+
+##### Synchronous Receiver
+
+In the initialization of `ProcessingLogic` you need to register consumer that will 
+receive messages form other Enabler Logic components handle it and return response. 
+Consumer needs to implement functional interface `java.util.function.Function<O,T>`.
+`<O>` is request type and `<T>` is response type.  
+For registering consumer there is method in `EnablerLogic` class 
+`registerSyncMessageFromEnablerLogicConsumer`. This method accepts following arguments:
+
+* `Class<O> clazz` - Class of object that can be consumed (request).
+* `Function<O, ?> function` - Object that is called when specified type of message is received
+
+There is also method for unregistering consumer
+`unregisterSyncMessageFromEnablerLogicConsumer`. Only one consumer can be 
+registered for one type (class).
+
+If there is no type registered for the message that is received 
+`WrongRequestException` will be returns instead of real object.
+
+
+Example:
+```
+enablerLogic.registerSyncMessageFromEnablerLogicConsumer(
+    MessageRequest.class, 
+    (m) -> new MessageResponse("response: " + m.getRequest()));
+``` 
+
+##### Synchronous Sender
+ 
+There is `sendSyncMessageToEnablerLogic` method in `EnablerLogic` class that 
+is used for sending message to another Enabler Logic component. The parameters are:
+
+* `String enablerName` - the name of another Enabler Logic. When you are 
+building enabler you will know which other Enabler Logic components are part 
+of that enabler so there is no need to have flexible discovery of other Enabler 
+Logic components.
+
+* `Object msg` - the object that will be serialized into JSON and send to other
+Enabler Logic component.
+
+* `Class<O> clazz` - the class of expected response object 
+
+If the type of the response message can not be casted to clazz then 
+`WrongResponseException` is thrown. The exception will contain the object that is returned.
+
+In the case of timeout `null` will be returned.
+
+Example:
+```
+MessageResponse response = enablerLogic.sendSyncMessageToEnablerLogic(
+    "EnablerLogicInterpolator",
+    new MessageRequest("request"),
+    MessageResponse.class);
+```
 
 ## Running
 
@@ -119,5 +224,5 @@ or
 
 ``java -jar build/libs/EnablerLogicExample-0.0.1-SNAPSHOT.jar``
 
-Note: In order to function correctly you need to start following components before: RabbitMQ server, 
-Config Server, Eureka and Zipkin.
+Note: In order to function correctly you need to start following components before: 
+RabbitMQ server, Config Server, Eureka and Zipkin.
