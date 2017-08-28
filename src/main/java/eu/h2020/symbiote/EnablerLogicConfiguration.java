@@ -7,14 +7,19 @@ import eu.h2020.symbiote.messaging.properties.RoutingKeysProperties;
 import java.util.Arrays;
 import java.util.Collection;
 
+import javax.annotation.PostConstruct;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.amqp.rabbit.config.SimpleRabbitListenerContainerFactory;
+import org.springframework.amqp.support.converter.Jackson2JsonMessageConverter;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
 import org.springframework.context.SmartLifecycle;
+import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
 
@@ -30,9 +35,17 @@ public class EnablerLogicConfiguration implements ApplicationContextAware, Smart
     
     @Autowired
     private EnablerLogic enablerLogic;
+    
+    @Autowired
+    private SimpleRabbitListenerContainerFactory simpleRabbitListenerContainerFactory;
         
-    private boolean running = false;
+    private volatile boolean running = false;
 
+    @PostConstruct
+    public void initialize() {
+        simpleRabbitListenerContainerFactory.setMessageConverter(new Jackson2JsonMessageConverter());
+    }
+    
     @Override
     public void setApplicationContext(ApplicationContext ctx) throws BeansException {
         // print bean names in context
@@ -47,8 +60,10 @@ public class EnablerLogicConfiguration implements ApplicationContextAware, Smart
     @Override
     public void start() {
         LOG.debug("START");
-        processingLogic.forEach((pl) -> pl.initialization(enablerLogic));
-        running = true;
+        new Thread(() -> {
+            processingLogic.forEach((pl) -> pl.initialization(enablerLogic));
+            running = true;
+        }).start();
     }
 
     @Override
