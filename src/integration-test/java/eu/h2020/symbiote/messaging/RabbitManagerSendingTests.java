@@ -10,6 +10,7 @@ import java.nio.charset.StandardCharsets;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.skyscreamer.jsonassert.JSONAssert;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.amqp.core.Message;
@@ -137,7 +138,7 @@ public class RabbitManagerSendingTests extends EmbeddedRabbitFixture {
             .isEqualTo("eu.h2020.symbiote.messaging.RabbitManagerSendingTests$ModelObject");
 
         String json = new String(message.getBody(), StandardCharsets.UTF_8);
-        assertThat(json).isEqualTo("{\"name\":\"joe\",\"age\":25}");
+        JSONAssert.assertEquals("{\"name\":\"joe\",\"age\":25}", json, false);
         DocumentContext ctx = JsonPath.parse(json);
         assertThat(ctx).jsonPathAsString("name").isEqualTo("joe");
         assertThat(ctx).jsonPathAsInteger("age").isEqualTo(25);

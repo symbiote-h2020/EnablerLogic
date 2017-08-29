@@ -12,6 +12,10 @@ import org.springframework.amqp.rabbit.support.CorrelationData;
 import org.springframework.amqp.support.converter.Jackson2JsonMessageConverter;
 import org.springframework.stereotype.Component;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
+
 /**
  * Bean used to manage internal communication using RabbitMQ. It is responsible
  * for declaring exchanges and using routing keys from centralized config
@@ -28,7 +32,11 @@ public class RabbitManager {
 
     public RabbitManager(RabbitTemplate rabbitTemplate) {
         this.rabbitTemplate = rabbitTemplate;
-        rabbitTemplate.setMessageConverter(new Jackson2JsonMessageConverter());
+        ObjectMapper mapper = new ObjectMapper();
+        mapper.configure(SerializationFeature.INDENT_OUTPUT, true);
+        mapper.setSerializationInclusion(JsonInclude.Include.NON_EMPTY);
+        Jackson2JsonMessageConverter messageConverter = new Jackson2JsonMessageConverter(mapper);
+        rabbitTemplate.setMessageConverter(messageConverter);
     }
 
     /**
