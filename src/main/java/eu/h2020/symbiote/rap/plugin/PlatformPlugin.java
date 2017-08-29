@@ -26,7 +26,9 @@ import org.springframework.context.SmartLifecycle;
 
 /**
  *
- * @author Matteo Pardi <m.pardi@nextworks.it>, Mario Kušek <mario.kusek@fer.hr>
+ * @author Matteo Pardi <m.pardi@nextworks.it>
+ * @author Mario Kušek <mario.kusek@fer.hr>
+ * 
  */
 public abstract class PlatformPlugin implements SmartLifecycle {
     private static final Logger log = LoggerFactory.getLogger(PlatformPlugin.class);
