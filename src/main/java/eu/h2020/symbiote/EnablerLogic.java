@@ -27,6 +27,7 @@ import lombok.Setter;
  */
 @Service
 public class EnablerLogic {
+
     private static final Logger LOG = LoggerFactory.getLogger(EnablerLogic.class);
 
     private RabbitManager rabbitManager;
@@ -107,6 +108,10 @@ public class EnablerLogic {
      * @return response form Resource Manager component or null in case of timeout
      */
     public ResourceManagerAcquisitionStartResponse queryResourceManager(ResourceManagerTaskInfoRequest...requests) {
+    	
+		if (props==null)
+			throw new IllegalStateException("Props may not be null");
+    	
         for(ResourceManagerTaskInfoRequest request: requests) {
             LOG.info("sending message to ResourceManager: {}", request);
         }
