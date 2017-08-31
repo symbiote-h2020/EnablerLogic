@@ -60,8 +60,8 @@ public class EnablerLogicTest {
             eq("symbIoTe.resourceManager.startDataAcquisition"),
             captor.capture());
         ResourceManagerAcquisitionStartRequest requests = captor.getValue();
-        assertThat(requests.getResources()).hasSize(1);
-        assertThat(requests.getResources()).contains(request);
+        assertThat(requests.getTasks()).hasSize(1);
+        assertThat(requests.getTasks()).contains(request);
     }
 
     @Test

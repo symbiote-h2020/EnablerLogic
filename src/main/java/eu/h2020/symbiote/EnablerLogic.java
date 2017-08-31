@@ -112,7 +112,7 @@ public class EnablerLogic {
         }
 
         ResourceManagerAcquisitionStartRequest request = new ResourceManagerAcquisitionStartRequest();
-        request.setResources(Arrays.asList(requests));
+        request.setTasks(Arrays.asList(requests));
 
         ResourceManagerAcquisitionStartResponse response = (ResourceManagerAcquisitionStartResponse)
         rabbitManager.sendRpcMessage(props.getExchange().getResourceManager().getName(),
