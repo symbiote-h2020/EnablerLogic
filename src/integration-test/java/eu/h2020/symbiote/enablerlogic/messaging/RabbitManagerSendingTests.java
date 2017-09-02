@@ -34,6 +34,7 @@ import eu.h2020.symbiote.enablerlogic.messaging.consumers.EmbeddedRabbitFixture;
 import eu.h2020.symbiote.enablerlogic.messaging.consumers.TestingRabbitConfig;
 import eu.h2020.symbiote.enablerlogic.messaging.properties.EnablerLogicProperties;
 import eu.h2020.symbiote.enablerlogic.messaging.properties.ExchangeProperties;
+import eu.h2020.symbiote.enablerlogic.messaging.properties.PluginProperties;
 import eu.h2020.symbiote.enablerlogic.messaging.properties.RabbitConnectionProperties;
 import eu.h2020.symbiote.enablerlogic.messaging.properties.RoutingKeysProperties;
 import lombok.AllArgsConstructor;
@@ -49,7 +50,7 @@ import lombok.NoArgsConstructor;
 @Import({RabbitManager.class,
     TestingRabbitConfig.class,
     EnablerLogicProperties.class})
-@EnableConfigurationProperties({RabbitConnectionProperties.class, ExchangeProperties.class, RoutingKeysProperties.class})
+@EnableConfigurationProperties({RabbitConnectionProperties.class, ExchangeProperties.class, RoutingKeysProperties.class, PluginProperties.class})
 public class RabbitManagerSendingTests extends EmbeddedRabbitFixture {
     private static Logger log = LoggerFactory.getLogger(RabbitManagerSendingTests.class);
     private static final int TIMEOUT = 10_000;

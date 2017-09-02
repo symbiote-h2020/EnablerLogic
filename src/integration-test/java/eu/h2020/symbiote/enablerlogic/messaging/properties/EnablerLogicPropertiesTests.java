@@ -19,7 +19,8 @@ import eu.h2020.symbiote.enablerlogic.messaging.properties.RoutingKeysProperties
 @EnableConfigurationProperties({
     ExchangeProperties.class,
     RoutingKeysProperties.class,
-    RabbitConnectionProperties.class})
+    RabbitConnectionProperties.class,
+    PluginProperties.class})
 @TestPropertySource(locations = "classpath:custom.properties")
 @Import(EnablerLogicProperties.class)
 public class EnablerLogicPropertiesTests {
@@ -30,7 +31,8 @@ public class EnablerLogicPropertiesTests {
     public void shouldHaveLoaded3Properties() {
         assertThat(props.getExchange()).isNotNull();
         assertThat(props.getKey()).isNotNull();
-        assertThat(props.getKey()).isNotNull();
+        assertThat(props.getEnablerLogicExchange()).isNotNull();
+        assertThat(props.getPlugin()).isNotNull();
     }
 
     @Test
@@ -56,5 +58,11 @@ public class EnablerLogicPropertiesTests {
     @Test
     public void shouldHaveEnablerName() throws Exception {
         assertThat(props.getEnablerName()).isEqualTo("EnablerLogicExample");
+    }
+
+    @Test
+    public void shouldHaveLoadedPluginProperties() throws Exception {
+        assertThat(props.getPlugin().isFiltersSupported()).isTrue();
+        assertThat(props.getPlugin().isNotificationsSupported()).isTrue();
     }
 }

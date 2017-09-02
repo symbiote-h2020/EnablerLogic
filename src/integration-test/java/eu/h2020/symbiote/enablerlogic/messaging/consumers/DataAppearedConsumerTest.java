@@ -20,6 +20,7 @@ import eu.h2020.symbiote.enablerlogic.ProcessingLogic;
 import eu.h2020.symbiote.enablerlogic.messaging.consumers.DataAppearedConsumer;
 import eu.h2020.symbiote.enablerlogic.messaging.properties.EnablerLogicProperties;
 import eu.h2020.symbiote.enablerlogic.messaging.properties.ExchangeProperties;
+import eu.h2020.symbiote.enablerlogic.messaging.properties.PluginProperties;
 import eu.h2020.symbiote.enablerlogic.messaging.properties.RabbitConnectionProperties;
 import eu.h2020.symbiote.enablerlogic.messaging.properties.RoutingKeysProperties;
 import lombok.Getter;
@@ -29,7 +30,7 @@ import lombok.Setter;
 @Import({TestingRabbitConfig.class,
     EnablerLogicProperties.class,
     DataAppearedConsumer.class})
-@EnableConfigurationProperties({RabbitConnectionProperties.class, ExchangeProperties.class, RoutingKeysProperties.class})
+@EnableConfigurationProperties({RabbitConnectionProperties.class, ExchangeProperties.class, RoutingKeysProperties.class, PluginProperties.class})
 @TestPropertySource(locations = "classpath:empty.properties")
 public class DataAppearedConsumerTest extends EmbeddedRabbitFixture {
 

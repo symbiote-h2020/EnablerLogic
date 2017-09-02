@@ -14,6 +14,7 @@ import org.springframework.test.context.junit4.SpringRunner;
 import eu.h2020.symbiote.enablerlogic.messaging.consumers.AsyncMessageFromEnablerLogicConsumer;
 import eu.h2020.symbiote.enablerlogic.messaging.properties.EnablerLogicProperties;
 import eu.h2020.symbiote.enablerlogic.messaging.properties.ExchangeProperties;
+import eu.h2020.symbiote.enablerlogic.messaging.properties.PluginProperties;
 import eu.h2020.symbiote.enablerlogic.messaging.properties.RabbitConnectionProperties;
 import eu.h2020.symbiote.enablerlogic.messaging.properties.RoutingKeysProperties;
 import lombok.AllArgsConstructor;
@@ -23,7 +24,7 @@ import lombok.Getter;
 @Import({TestingRabbitConfig.class,
         EnablerLogicProperties.class,
         AsyncMessageFromEnablerLogicConsumer.class})
-@EnableConfigurationProperties({RabbitConnectionProperties.class, ExchangeProperties.class, RoutingKeysProperties.class})
+@EnableConfigurationProperties({RabbitConnectionProperties.class, ExchangeProperties.class, RoutingKeysProperties.class, PluginProperties.class})
 @TestPropertySource(locations = "classpath:empty.properties")
 public class AsyncMessageFromEnablerLogicConsumerTest extends EmbeddedRabbitFixture {
 

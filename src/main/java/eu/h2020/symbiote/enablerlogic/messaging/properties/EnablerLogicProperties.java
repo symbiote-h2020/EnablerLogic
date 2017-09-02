@@ -4,6 +4,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
+import lombok.AllArgsConstructor;
 import lombok.Getter;
 
 @Component("enablerLogicProperties")
@@ -16,37 +17,22 @@ public class EnablerLogicProperties {
     private RabbitConnectionProperties rabbitConnection;
     private ExchangeProperties exchangeProperties;
     private RoutingKeysProperties routingKeyProperties;
-// TODO
-//    private PluginProperties pluginProperties;
+    private PluginProperties pluginProperties;
 
-// TODO
-//    @Data
-//    @ConfigurationProperties(prefix = "enablerLogic.plugin", ignoreInvalidFields = true)
-//    public static class PluginProperties {
-//        // TODO test loadanja, default vrijednost, krive vrijednosti
-//        @Getter
-//        private boolean filtersSupported = false;
-//        
-//        // TODO test loadanja, default vrijednost, krive vrijednosti
-//        @Getter
-//        private boolean notificationsSupported = false;
-//        
-//        
-//    }
-    
     public EnablerLogicProperties() {
         rabbitConnection = new RabbitConnectionProperties();
         exchangeProperties = new ExchangeProperties();
         routingKeyProperties = new RoutingKeysProperties();
-// TODO        pluginProperties = new PluginProperties();
+        pluginProperties = new PluginProperties();
     }
 
     @Autowired
     public EnablerLogicProperties(RabbitConnectionProperties rabbitConnection, ExchangeProperties exchangeProperties,
-            RoutingKeysProperties routingKeyProperties) {
+            RoutingKeysProperties routingKeyProperties, PluginProperties pluginProperties) {
         this.rabbitConnection = rabbitConnection;
         this.exchangeProperties = exchangeProperties;
         this.routingKeyProperties = routingKeyProperties;
+        this.pluginProperties = pluginProperties;
     }
 
     public FullExchangeProperties getEnablerLogicExchange() {
@@ -61,8 +47,7 @@ public class EnablerLogicProperties {
         return exchangeProperties;
     }
     
-// TODO
-//    public PluginProperties getPlugin() {
-//        return pluginProperties;
-//    }
+    public PluginProperties getPlugin() {
+        return pluginProperties;
+    }
 }

@@ -32,6 +32,7 @@ import eu.h2020.symbiote.enablerlogic.messaging.consumers.EmbeddedRabbitFixture;
 import eu.h2020.symbiote.enablerlogic.messaging.consumers.TestingRabbitConfig;
 import eu.h2020.symbiote.enablerlogic.messaging.properties.EnablerLogicProperties;
 import eu.h2020.symbiote.enablerlogic.messaging.properties.ExchangeProperties;
+import eu.h2020.symbiote.enablerlogic.messaging.properties.PluginProperties;
 import eu.h2020.symbiote.enablerlogic.messaging.properties.RabbitConnectionProperties;
 import eu.h2020.symbiote.enablerlogic.messaging.properties.RoutingKeysProperties;
 import eu.h2020.symbiote.enablerlogic.rap.plugin.PlatformPlugin;
@@ -41,7 +42,7 @@ import eu.h2020.symbiote.enablerlogic.rap.resources.RapDefinitions;
 @Import({RabbitManager.class,
     TestingRabbitConfig.class,
     EnablerLogicProperties.class})
-@EnableConfigurationProperties({RabbitConnectionProperties.class, ExchangeProperties.class, RoutingKeysProperties.class})
+@EnableConfigurationProperties({RabbitConnectionProperties.class, ExchangeProperties.class, RoutingKeysProperties.class, PluginProperties.class})
 public class PlatformPluginTest extends EmbeddedRabbitFixture {
     private static final String EXCHANGE_NAME = RapDefinitions.PLUGIN_REGISTRATION_EXCHANGE_IN;
     private static final String RECEIVING_QUEUE_NAME = RapDefinitions.PLUGIN_REGISTRATION_QUEUE;
