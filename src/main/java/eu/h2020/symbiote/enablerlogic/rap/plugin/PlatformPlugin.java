@@ -130,7 +130,6 @@ public abstract class PlatformPlugin implements SmartLifecycle {
         return json;
     }
     
-    // TODO integration test for registering plugin
     private void registerPlugin(String platformId, boolean hasFilters, boolean hasNotifications) {
         try {
             RegisterPluginMessage msg = new RegisterPluginMessage(platformId, hasFilters, hasNotifications);
@@ -183,7 +182,6 @@ public abstract class PlatformPlugin implements SmartLifecycle {
     @Override
     public void start() {
         registerPlugin(platformId, hasFilters, hasNotifications);
-        
     }
 
     @Override
