@@ -136,7 +136,7 @@ public class RabbitManagerSendingTests extends EmbeddedRabbitFixture {
         Message message = rabbitTemplate.receive(RECEIVING_QUEUE_NAME, TIMEOUT);
         assertThat(message.getMessageProperties().getContentType()).isEqualTo("application/json");
         assertThat(message.getMessageProperties().getHeaders().get("__TypeId__"))
-            .isEqualTo("eu.h2020.symbiote.messaging.RabbitManagerSendingTests$ModelObject");
+            .isEqualTo("eu.h2020.symbiote.enablerlogic.messaging.RabbitManagerSendingTests$ModelObject");
 
         String json = new String(message.getBody(), StandardCharsets.UTF_8);
         JSONAssert.assertEquals("{\"name\":\"joe\",\"age\":25}", json, false);
