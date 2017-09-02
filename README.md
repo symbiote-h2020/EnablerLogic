@@ -1,4 +1,4 @@
-[![Build Status](https://api.travis-ci.org/symbiote-h2020/EnablerLogic.svg?branch=staging)](https://api.travis-ci.org/symbiote-h2020/EnablerLogic)
+[![Build Status](https://api.travis-ci.org/symbiote-h2020/EnablerLogic.svg?branch=develop)](https://api.travis-ci.org/symbiote-h2020/EnablerLogic)
 [![codecov.io](https://codecov.io/github/symbiote-h2020/EnablerLogic/branch/staging/graph/badge.svg)](https://codecov.io/github/symbiote-h2020/EnablerLogic)
 [![](https://jitpack.io/v/symbiote-h2020/EnablerLogic.svg)](https://jitpack.io/#symbiote-h2020/EnablerLogic)
 
@@ -55,7 +55,7 @@ doesn't have to implement complex communication between those components.
 ### 4. Creating ProcessingLogic component
 
 	- Each enabler must have one ProcessingLogic component. This component implements 
-	`eu.h2020.symbiote.ProcessingLogic` interface.
+	`eu.h2020.symbiote.enablerlogic.ProcessingLogic` interface.
 
 	- There are methods that are called upon receiving messages (over RabbitMQ) from 
 	other enabler components.
