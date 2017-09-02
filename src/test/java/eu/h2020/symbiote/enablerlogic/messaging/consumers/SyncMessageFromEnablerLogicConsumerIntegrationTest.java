@@ -8,6 +8,7 @@ import org.springframework.amqp.core.Message;
 import org.springframework.amqp.support.converter.Jackson2JsonMessageConverter;
 import org.springframework.amqp.support.converter.MessageConverter;
 
+import eu.h2020.symbiote.enablerlogic.messaging.VoidResponse;
 import eu.h2020.symbiote.enablerlogic.messaging.WrongRequestException;
 import eu.h2020.symbiote.enablerlogic.messaging.consumers.SyncMessageFromEnablerLogicConsumer;
 
@@ -35,6 +36,24 @@ public class SyncMessageFromEnablerLogicConsumerIntegrationTest {
 
         //then
         assertThat(result).isEqualTo("return: " + message);
+    }
+
+    @Test
+    public void voidReturnfunction_shouldBeCalledUpponReceivingMessageAndReturnVoidResponse() throws Exception {
+        // given
+
+        // when
+        consumer.registerReceiver(String.class, (m) -> {
+            someVoidMethod(m);
+            return new VoidResponse();
+        });
+        VoidResponse result = (VoidResponse) consumer.receivedSyncMessage(msg);
+
+        //then
+        assertThat(result).isNotNull();
+    }
+    
+    public void someVoidMethod(String s) {
     }
 
     @Test

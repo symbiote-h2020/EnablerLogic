@@ -22,6 +22,7 @@ import eu.h2020.symbiote.enabler.messaging.model.ResourceManagerAcquisitionStart
 import eu.h2020.symbiote.enabler.messaging.model.ResourceManagerTaskInfoRequest;
 import eu.h2020.symbiote.enablerlogic.EnablerLogic;
 import eu.h2020.symbiote.enablerlogic.messaging.RabbitManager;
+import eu.h2020.symbiote.enablerlogic.messaging.VoidResponse;
 import eu.h2020.symbiote.enablerlogic.messaging.WrongResponseException;
 import eu.h2020.symbiote.enablerlogic.messaging.consumers.AsyncMessageFromEnablerLogicConsumer;
 import eu.h2020.symbiote.enablerlogic.messaging.consumers.SyncMessageFromEnablerLogicConsumer;
@@ -127,6 +128,24 @@ public class EnablerLogicTest {
 
         // when
         ReceivedMessage receivedMessage = enablerLogic.sendSyncMessageToEnablerLogic(enablerName, sendMessage, ReceivedMessage.class);
+
+        // then
+        assertThat(receivedMessage).isSameAs(mockReceiveMessage);
+    }
+
+    @Test
+    public void sendingSyncMessageToEnablerLogicAndExpectingVoid_shouldCallRabbitManagerAndReturnVoidResponse() throws Exception {
+        // given
+        String sendMessage = "test message";
+        String enablerName = "enabler name";
+        VoidResponse mockReceiveMessage = new VoidResponse();
+
+        when(rabbitManager.sendRpcMessage("symbIoTe.enablerLogic",
+            "symbIoTe.enablerLogic.syncMessageToEnablerLogic.DefaultEnablerName",
+            (Object) sendMessage)).thenReturn(mockReceiveMessage);
+
+        // when
+        VoidResponse receivedMessage = enablerLogic.sendSyncMessageToEnablerLogic(enablerName, sendMessage, VoidResponse.class);
 
         // then
         assertThat(receivedMessage).isSameAs(mockReceiveMessage);

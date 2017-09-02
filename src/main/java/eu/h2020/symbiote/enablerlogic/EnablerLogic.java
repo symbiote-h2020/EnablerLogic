@@ -93,7 +93,6 @@ public class EnablerLogic {
      * @param <O> type of message class
      */
     public <O> void registerSyncMessageFromEnablerLogicConsumer(Class<O> clazz, Function<O, ?> function) {
-        // TODO how to register method that returns void - mora vratiti Void tip i return null
         syncConsumer.registerReceiver(clazz, function);
     }
 
