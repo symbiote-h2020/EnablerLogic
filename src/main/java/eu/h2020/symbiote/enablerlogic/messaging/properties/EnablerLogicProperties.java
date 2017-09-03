@@ -10,7 +10,7 @@ import lombok.Getter;
 @Component("enablerLogicProperties")
 public class EnablerLogicProperties {
     @Getter
-    @Value("${spring.application.name}")
+    @Value("${spring.application.name:DefaultEnablerName}")
     private String enablerName = "DefaultEnablerName";
 
     @Getter
