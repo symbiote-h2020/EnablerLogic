@@ -31,16 +31,18 @@ import eu.h2020.symbiote.cloud.model.internal.CloudResource;
 import eu.h2020.symbiote.core.model.WGS84Location;
 import eu.h2020.symbiote.core.model.resources.FeatureOfInterest;
 import eu.h2020.symbiote.core.model.resources.StationarySensor;
+import eu.h2020.symbiote.enablerlogic.messaging.consumers.EmbeddedRabbitFixture;
+import eu.h2020.symbiote.enablerlogic.messaging.consumers.TestingRabbitConfig;
 
 @RunWith(SpringRunner.class)
-@Import({RegistrationHandlerClient.class, RegistrationHandlerClientService.class})
+@Import({RegistrationHandlerClient.class, RegistrationHandlerClientService.class, TestingRabbitConfig.class})
 @EnableFeignClients
 @EnableAutoConfiguration
 @TestPropertySource(locations = "classpath:integration.properties", properties = {
         "RegistrationHandler.ribbon.listOfServers=http://localhost:9001", 
         "ribbon.eureka.enabled=false"})
 @AutoConfigureWireMock(port = 9001)
-public class RegistrationHandlerClientServiceTests { // this tests real RH
+public class RegistrationHandlerClientServiceTests extends EmbeddedRabbitFixture {
     
     @Autowired
     private RegistrationHandlerClientService service;
