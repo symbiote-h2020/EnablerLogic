@@ -13,12 +13,10 @@ import eu.h2020.symbiote.enabler.messaging.model.ResourceManagerAcquisitionStart
 import eu.h2020.symbiote.enabler.messaging.model.ResourceManagerAcquisitionStartResponse;
 import eu.h2020.symbiote.enabler.messaging.model.ResourceManagerTaskInfoRequest;
 import eu.h2020.symbiote.enablerlogic.messaging.RabbitManager;
-import eu.h2020.symbiote.enablerlogic.messaging.RegistrationHandlerClient;
 import eu.h2020.symbiote.enablerlogic.messaging.WrongResponseException;
 import eu.h2020.symbiote.enablerlogic.messaging.consumers.AsyncMessageFromEnablerLogicConsumer;
 import eu.h2020.symbiote.enablerlogic.messaging.consumers.SyncMessageFromEnablerLogicConsumer;
 import eu.h2020.symbiote.enablerlogic.messaging.properties.EnablerLogicProperties;
-import lombok.Getter;
 import lombok.Setter;
 
 /**
@@ -44,10 +42,6 @@ public class EnablerLogic {
     @Autowired
     private SyncMessageFromEnablerLogicConsumer syncConsumer;
     
-    @Setter
-    @Getter
-    private RegistrationHandlerClient registrationHandlerClient;
-
     /**
      * Initialization of EnablerLogic.
      *

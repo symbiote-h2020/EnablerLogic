@@ -214,6 +214,88 @@ MessageResponse response = enablerLogic.sendSyncMessageToEnablerLogic(
     MessageResponse.class);
 ```
 
+### 6. Registering resources
+
+Registration of resources is going by communicating with Registration Handler
+component. This communication is REST based. For getting URL Eureka discovery
+server is used. In the enabler spring boot application discovery client 
+need to be enabled by putting `@EnableDiscoveryClient` in configuration:
+
+```
+@SpringBootApplication
+@EnableDiscoveryClient
+public class EnablerLogicInterpolator {
+
+    public static void main(String[] args) {
+        SpringApplication.run(EnablerLogicInterpolator.class, args);
+    }
+}
+``` 
+
+For communication with Registration Handler component there is service
+`RegistrationHandlerClientService` which can be injected in any spring
+component like this:
+
+```
+@Autowired
+private RegistrationHandlerClientService rhClientService;
+```
+
+There are different methods for registering, unregistering and updating
+resources. Each of this methods return list of `CloudResource` objects 
+that are changed by this method.
+
+In the `CloudResoure` class should be put plugin id. The plugin id
+can be obtained from  `EnablerLogicProperties` object that can be
+injected. The method `getEnablerName()` returns plugin id.
+
+Here is example of registration:
+```
+public class InterpolatorLogic implements ProcessingLogic {
+...
+    
+    @Autowired
+    private EnablerLogicProperties props;
+    
+    @Autowired
+    private RegistrationHandlerClientService rhClientService;
+
+    @Override
+    public void initialization(EnablerLogic enablerLogic) {
+        this.enablerLogic = enablerLogic;
+
+        registerResources();
+    }
+
+    private void registerResources() {
+        CloudResource cloudResource = new CloudResource();
+        cloudResource.setInternalId("1600");
+        cloudResource.setPluginId(props.getEnablerName());
+        cloudResource.setCloudMonitoringHost("cloudMonitoringHostIP");
+
+        StationarySensor sensor = new StationarySensor();
+        cloudResource.setResource(sensor);
+        sensor.setLabels(Arrays.asList("lamp"));
+        sensor.setComments(Arrays.asList("A comment"));
+        sensor.setInterworkingServiceURL("https://symbiote-h2020.eu/example/interworkingService/");
+        sensor.setLocatedAt(new WGS84Location(2.349014, 48.864716, 15, 
+                Arrays.asList("Paris"), 
+                Arrays.asList("This is Paris")));
+        FeatureOfInterest featureOfInterest = new FeatureOfInterest();
+        sensor.setFeatureOfInterest(featureOfInterest);
+        featureOfInterest.setLabels(Arrays.asList("Room1"));
+        featureOfInterest.setComments(Arrays.asList("This is room 1"));
+        featureOfInterest.setHasProperty(Arrays.asList("temperature"));
+        sensor.setObservesProperty(Arrays.asList("temperature,humidity".split(",")));
+        
+        CloudResourceParams cloudResourceParams = new CloudResourceParams();
+        cloudResource.setParams(cloudResourceParams);
+        cloudResourceParams.setType("Type of device, used in monitoring");
+
+        rhClientService.registerResource(cloudResource);
+    }
+```
+
 ## Running
 
 You can run this enabler as any other spring boot application.
