@@ -23,7 +23,6 @@ import eu.h2020.symbiote.cloud.model.internal.CloudResource;
 import eu.h2020.symbiote.core.model.WGS84Location;
 import eu.h2020.symbiote.core.model.resources.FeatureOfInterest;
 import eu.h2020.symbiote.core.model.resources.StationarySensor;
-import eu.h2020.symbiote.enablerlogic.messaging.properties.EnablerLogicProperties;
 
 @Ignore
 @RunWith(SpringRunner.class)
@@ -38,9 +37,6 @@ public class RegistrationHandlerClientServiceExploratoryTest { // this tests rea
     
     @Autowired
     private RegistrationHandlerClientService service;
-    
-    @Autowired
-    private EnablerLogicProperties props;
     
     @Before
     public void setup() throws Exception {

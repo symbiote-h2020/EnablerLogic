@@ -10,7 +10,6 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 
 import eu.h2020.symbiote.cloud.model.internal.CloudResource;
-import eu.h2020.symbiote.cloud.model.internal.RdfCloudResorceList;
 
 @FeignClient(value = "RegistrationHandler")
 public interface RegistrationHandlerClient {
@@ -20,7 +19,7 @@ public interface RegistrationHandlerClient {
 
     @RequestMapping(method = RequestMethod.POST, path = "/resources")
     public ResponseEntity<String> registerResources(@RequestBody List<CloudResource> resources);
-//
+
 //    @RequestMapping(method = RequestMethod.POST, path = "/rdf-resources")
 //    public ResponseEntity<?> registerRdfResources(@RequestBody RdfCloudResorceList resources);
     
