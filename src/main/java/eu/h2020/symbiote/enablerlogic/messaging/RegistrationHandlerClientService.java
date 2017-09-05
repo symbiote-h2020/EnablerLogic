@@ -31,6 +31,7 @@ public class RegistrationHandlerClientService {
         return convertPayload(client.registerResources(resources).getBody());
     }
     
+// TODO
 //    @RequestMapping(method = RequestMethod.POST, path = "/rdf-resources")
 //    public ResponseEntity<?> registerRdfResources(@RequestBody RdfCloudResorceList resources);
 

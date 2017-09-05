@@ -10,6 +10,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import eu.h2020.symbiote.cloud.model.data.observation.Observation;
 import eu.h2020.symbiote.enablerlogic.messaging.RabbitManager;
+import eu.h2020.symbiote.enablerlogic.messaging.properties.EnablerLogicProperties;
 import eu.h2020.symbiote.enablerlogic.rap.messages.access.ResourceAccessGetMessage;
 import eu.h2020.symbiote.enablerlogic.rap.messages.access.ResourceAccessHistoryMessage;
 import eu.h2020.symbiote.enablerlogic.rap.messages.access.ResourceAccessMessage;
@@ -20,19 +21,24 @@ import eu.h2020.symbiote.enablerlogic.rap.messages.registration.RegisterPluginMe
 import eu.h2020.symbiote.enablerlogic.rap.resources.RapDefinitions;
 import eu.h2020.symbiote.enablerlogic.rap.resources.db.ResourceInfo;
 
+import java.util.Collections;
 import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.SmartLifecycle;
+import org.springframework.stereotype.Service;
 
 /**
- *
+ * This is class that handles requests from DSI/RAP.
+ * 
  * @author Matteo Pardi <m.pardi@nextworks.it>
  * @author Mario Kušek <mario.kusek@fer.hr>
  * 
  */
-public abstract class PlatformPlugin implements SmartLifecycle {
-    private static final Logger log = LoggerFactory.getLogger(PlatformPlugin.class);
+@Service
+public class RapPlugin implements SmartLifecycle {
+    private static final Logger LOG = LoggerFactory.getLogger(RapPlugin.class);
 
     private RabbitManager rabbitManager;
 
@@ -40,24 +46,40 @@ public abstract class PlatformPlugin implements SmartLifecycle {
 
     private String platformId;
 
-    private boolean hasFilters;
+    private boolean filtersSupported;
 
-    private boolean hasNotifications;
+    private boolean notificationsSupported;
 
+    private ReadingResourceListener readingResourceListener;
 
-    public PlatformPlugin(RabbitManager rabbitManager, String platformId, 
-            boolean hasFilters, boolean hasNotifications) {
-        this.rabbitManager = rabbitManager;
-        this.platformId = platformId;
-        this.hasFilters = hasFilters;
-        this.hasNotifications = hasNotifications;
+    private WritingToResourceListener writingToResourceListener;
+
+    private NotificationResourceListener notificationResourceListener;
+
+    @Autowired
+    public RapPlugin(RabbitManager rabbitManager, EnablerLogicProperties props) {
+        this(rabbitManager, 
+                props.getEnablerName(), 
+                props.getPlugin().isFiltersSupported(), 
+                props.getPlugin().isNotificationsSupported()
+        );
     }  
     
+    public RapPlugin(RabbitManager rabbitManager, String platformId, boolean filtersSupported,
+                boolean notificationsSupported) {
+        this.rabbitManager = rabbitManager;
+        this.platformId = platformId;
+        this.filtersSupported = filtersSupported;
+        this.notificationsSupported = notificationsSupported;
+    }
+
+    // TODO
 //    @RabbitListener(bindings = @QueueBinding(
 //            value = @Queue,
 //            exchange = @Exchange(value = "#{enablerLogicProperties.enablerLogicExchange.name}", type = "topic"),
 //            key = "#{enablerLogicProperties.key.enablerLogic.dataAppeared}"
 //        ))
+    // klasa koja šalje je ResourceAccessRestController
     public String receiveMessage(String message) {
         String json = null;
         try {            
@@ -68,6 +90,8 @@ public abstract class PlatformPlugin implements SmartLifecycle {
             mapper.setSerializationInclusion(JsonInclude.Include.NON_EMPTY);
             switch(access) {
                 case GET: {
+                    // ODATA GET https://myplatform.eu:8102/rap/Sensors('symbioteId')/Observations? $top=1
+                    // GET https://myplatform.eu:8102/rap/Sensor/{symbioteId}
                     ResourceAccessGetMessage msgGet = (ResourceAccessGetMessage) msg;
                     List<ResourceInfo> resInfoList = msgGet.getResourceInfo();
                     String internalId = null;
@@ -76,11 +100,17 @@ public abstract class PlatformPlugin implements SmartLifecycle {
                         if(internalIdTemp != null && !internalIdTemp.isEmpty())
                             internalId = internalIdTemp;
                     }
-                    List<Observation> observationLst = readResource(internalId);
+                    List<Observation> observationLst = doReadResource(internalId);
                     json = mapper.writeValueAsString(observationLst);
                     break;
                 }
                 case HISTORY: {
+                    // ODATA GET https://myplatform.eu:8102/rap/Sensors('symbioteId')/Observations
+                    /*
+                     Historical readings can be filtered, using the option $filter. Operators supported:
+                        Equals, Not Equals, Less Than, Greater Than, And, Or
+                     */
+                    // GET https://myplatform.eu:8102/rap/Sensor/{symbioteId}/history
                     ResourceAccessHistoryMessage msgHistory = (ResourceAccessHistoryMessage) msg;
                     List<ResourceInfo> resInfoList = msgHistory.getResourceInfo();
                     String internalId = null;
@@ -89,11 +119,29 @@ public abstract class PlatformPlugin implements SmartLifecycle {
                         if(internalIdTemp != null && !internalIdTemp.isEmpty())
                             internalId = internalIdTemp;
                     }
-                    List<Observation> observationLst = readResourceHistory(internalId);
+                    List<Observation> observationLst = doReadResourceHistory(internalId);
                     json = mapper.writeValueAsString(observationLst);       
                     break;
                 }
                 case SET: {
+                    // ODATA PUT https://myplatform.eu:8102/rap/ActuatingServices(‘serviceId')
+                    // POST https://myplatform.eu:8102/rap/Service(‘symbioteId')
+                    /*
+                       {
+                            "inputParameters":
+                            [  
+                                { 
+                                     "name": “prop1Name",
+                                     "value": “prop1Value“
+                                },
+                                {
+                                      "name": “prop2Name",
+                                      "value": “prop2Value“
+                                },
+                                …
+                            ]
+                        } 
+                     */
                     ResourceAccessSetMessage msgSet = (ResourceAccessSetMessage)msg;
                     List<ResourceInfo> resInfoList = msgSet.getResourceInfo();
                     String internalId = null;
@@ -102,22 +150,24 @@ public abstract class PlatformPlugin implements SmartLifecycle {
                         if(internalIdTemp != null && !internalIdTemp.isEmpty())
                             internalId = internalIdTemp;
                     }
-                    writeResource(internalId, msgSet.getBody());
+                    doWriteResource(internalId, msgSet.getBody());
                     break;
                 }
                 case SUBSCRIBE: {
+                    // WebSocketController
                     ResourceAccessSubscribeMessage mess = (ResourceAccessSubscribeMessage)msg;
                     List<ResourceInfo> infoList = mess.getResourceInfoList();
                     for(ResourceInfo info : infoList) {
-                        subscribeResource(info.getInternalId());
+                        doSubscribeResource(info.getInternalId());
                     }
                     break;
                 }
                 case UNSUBSCRIBE: {
+                    // WebSocketController
                     ResourceAccessUnSubscribeMessage mess = (ResourceAccessUnSubscribeMessage)msg;
                     List<ResourceInfo> infoList = mess.getResourceInfoList();
                     for(ResourceInfo info : infoList) {
-                        unsubscribeResource(info.getInternalId());
+                        doUnsubscribeResource(info.getInternalId());
                     }
                     break;
                 }
@@ -125,7 +175,7 @@ public abstract class PlatformPlugin implements SmartLifecycle {
                     throw new Exception("Access type " + access.toString() + " not supported");
             }
         } catch (Exception e) {
-            log.error("Error while processing message:\n" + message + "\n" + e);
+            LOG.error("Error while processing message:\n" + message + "\n" + e);
         }
         return json;
     }
@@ -137,35 +187,73 @@ public abstract class PlatformPlugin implements SmartLifecycle {
             rabbitManager.sendMessage(RapDefinitions.PLUGIN_REGISTRATION_EXCHANGE_IN, 
                     RapDefinitions.PLUGIN_REGISTRATION_KEY, msg);
         } catch (Exception e ) {
-            log.error("Error while registering plugin for platform " + platformId + "\n" + e);
+            LOG.error("Error while registering plugin for platform " + platformId + "\n" + e);
         }
     }
     
-    /*  
-    *   OVERRIDE this, inserting the query to the platform with internal resource id
-    */
-    public abstract List<Observation> readResource(String resourceId);
+    public void registerReadingResourceListener(ReadingResourceListener listener) {
+        this.readingResourceListener = listener;
+    }
+
+    public void unregisterReadingResourceListener(ReadingResourceListener listener) {
+        this.readingResourceListener = null;
+    }
+
+    public List<Observation> doReadResource(String resourceId) {
+        if(readingResourceListener == null)
+            throw new RuntimeException("ReadingResourceListener not registered in RapPlugin");
+                    
+        return readingResourceListener.readResource(resourceId);
+    }
     
-    /*  
-    *   OVERRIDE this, inserting here a call to the platform with internal resource id
-    *   setting the actuator value
-    */
-    public abstract void writeResource(String resourceId, String body);
-        
-    /*  
-    *   OVERRIDE this, inserting the query to the platform with internal resource id
-    */
-    public abstract List<Observation> readResourceHistory(String resourceId);
+    // TODO test
+    public List<Observation> doReadResourceHistory(String resourceId) {
+        if(readingResourceListener == null)
+            throw new RuntimeException("ReadingResourceListener not registered in RapPlugin");
+                    
+        return readingResourceListener.readResourceHistory(resourceId);
+    }
     
-    /*  
-    *   OVERRIDE this, inserting the subscription of the resource
-    */
-    public abstract void subscribeResource(String resourceId);
     
-    /*  
-    *   OVERRIDE this, inserting the unsubscription of the resource
-    */
-    public abstract void unsubscribeResource(String resourceId);
+    public void registerWritingToResourceListener(WritingToResourceListener listener) {
+        this.writingToResourceListener = listener;
+    }
+
+    public void unregisterWritingToResourceListener(WritingToResourceListener listener) {
+        this.writingToResourceListener = null;
+    }
+
+    // TODO test
+    public void doWriteResource(String resourceId, String body) {
+        if(writingToResourceListener == null)
+            throw new RuntimeException("WritingToResourceListener not registered in RapPlugin");
+                    
+        writingToResourceListener.writeResource(resourceId, body);
+    }
+
+    public void registerNotificationResourceListener(NotificationResourceListener listener) {
+        this.notificationResourceListener = listener;
+    }
+
+    public void unregisterNotificationResourceListener(NotificationResourceListener listener) {
+        this.notificationResourceListener = null;
+    }
+
+    // TODO test    
+    public void doSubscribeResource(String resourceId) {
+        if(notificationResourceListener == null)
+            throw new RuntimeException("NotificationResourceListener not registered in RapPlugin");
+                    
+        notificationResourceListener.subscribeResource(resourceId);
+    }
+    
+    // TODO test
+    public void doUnsubscribeResource(String resourceId) {
+        if(notificationResourceListener == null)
+            throw new RuntimeException("NotificationResourceListener not registered in RapPlugin");
+                    
+        notificationResourceListener.unsubscribeResource(resourceId);
+    }
     
     // SmartLifecycle methods
     @Override
@@ -181,7 +269,7 @@ public abstract class PlatformPlugin implements SmartLifecycle {
 
     @Override
     public void start() {
-        registerPlugin(platformId, hasFilters, hasNotifications);
+        registerPlugin(platformId, filtersSupported, notificationsSupported);
     }
 
     @Override

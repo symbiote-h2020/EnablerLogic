@@ -35,7 +35,7 @@ import eu.h2020.symbiote.enablerlogic.messaging.properties.ExchangeProperties;
 import eu.h2020.symbiote.enablerlogic.messaging.properties.PluginProperties;
 import eu.h2020.symbiote.enablerlogic.messaging.properties.RabbitConnectionProperties;
 import eu.h2020.symbiote.enablerlogic.messaging.properties.RoutingKeysProperties;
-import eu.h2020.symbiote.enablerlogic.rap.plugin.PlatformPlugin;
+import eu.h2020.symbiote.enablerlogic.rap.plugin.RapPlugin;
 import eu.h2020.symbiote.enablerlogic.rap.resources.RapDefinitions;
 
 @RunWith(SpringRunner.class)
@@ -43,7 +43,7 @@ import eu.h2020.symbiote.enablerlogic.rap.resources.RapDefinitions;
     TestingRabbitConfig.class,
     EnablerLogicProperties.class})
 @EnableConfigurationProperties({RabbitConnectionProperties.class, ExchangeProperties.class, RoutingKeysProperties.class, PluginProperties.class})
-public class PlatformPluginTest extends EmbeddedRabbitFixture {
+public class RapPluginTest extends EmbeddedRabbitFixture {
     private static final String EXCHANGE_NAME = RapDefinitions.PLUGIN_REGISTRATION_EXCHANGE_IN;
     private static final String RECEIVING_QUEUE_NAME = RapDefinitions.PLUGIN_REGISTRATION_QUEUE;
     private static final String RECEIVING_ROUTING_KEY = RapDefinitions.PLUGIN_REGISTRATION_KEY;
@@ -54,29 +54,13 @@ public class PlatformPluginTest extends EmbeddedRabbitFixture {
     @Configuration
     public static class TestConfiguration {
         @Bean
-        public PlatformPlugin platfromPlugin(RabbitManager manager) {
-            return new PlatformPlugin(manager, "platId", false, true) {
-                
-                @Override
-                public void writeResource(String resourceId, String body) { }
-                
-                @Override
-                public void unsubscribeResource(String resourceId) { }
-                
-                @Override
-                public void subscribeResource(String resourceId) { }
-                
-                @Override
-                public List<Observation> readResourceHistory(String resourceId) { return null; }
-                
-                @Override
-                public List<Observation> readResource(String resourceId) { return null; }
-            };
+        public RapPlugin platfromPlugin(RabbitManager manager) {
+            return new RapPlugin(manager, "platId", false, true);
         }
     }
     
     @Autowired
-    private PlatformPlugin platformPlugin;
+    private RapPlugin platformPlugin;
     
     @Autowired
     private RabbitTemplate rabbitTemplate;
