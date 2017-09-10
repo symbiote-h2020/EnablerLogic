@@ -7,6 +7,7 @@ import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Import;
+import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit4.SpringRunner;
 
@@ -25,6 +26,7 @@ import lombok.Getter;
         SyncMessageFromEnablerLogicConsumer.class})
 @EnableConfigurationProperties({RabbitConnectionProperties.class, ExchangeProperties.class, RoutingKeysProperties.class, PluginProperties.class})
 @TestPropertySource(locations = "classpath:empty.properties")
+@DirtiesContext
 public class SyncMessageFromEnablerLogicConsumerTest extends EmbeddedRabbitFixture {
 
     @Autowired

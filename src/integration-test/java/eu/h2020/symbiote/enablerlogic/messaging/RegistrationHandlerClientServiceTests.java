@@ -18,6 +18,7 @@ import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.cloud.contract.wiremock.AutoConfigureWireMock;
 import org.springframework.cloud.netflix.feign.EnableFeignClients;
 import org.springframework.context.annotation.Import;
+import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit4.SpringRunner;
 
@@ -42,6 +43,7 @@ import eu.h2020.symbiote.enablerlogic.messaging.consumers.TestingRabbitConfig;
         "RegistrationHandler.ribbon.listOfServers=http://localhost:9001", 
         "ribbon.eureka.enabled=false"})
 @AutoConfigureWireMock(port = 9001)
+@DirtiesContext
 public class RegistrationHandlerClientServiceTests extends EmbeddedRabbitFixture {
     
     @Autowired

@@ -24,7 +24,7 @@ import eu.h2020.symbiote.core.model.WGS84Location;
 import eu.h2020.symbiote.core.model.resources.FeatureOfInterest;
 import eu.h2020.symbiote.core.model.resources.StationarySensor;
 
-@Ignore
+@Ignore // this is exploratory test not intended for running as integration test
 @RunWith(SpringRunner.class)
 @Import({RegistrationHandlerClient.class, RegistrationHandlerClientService.class})
 @EnableFeignClients

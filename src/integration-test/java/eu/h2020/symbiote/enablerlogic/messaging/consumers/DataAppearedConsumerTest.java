@@ -11,6 +11,7 @@ import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
+import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit4.SpringRunner;
 
@@ -32,6 +33,7 @@ import lombok.Setter;
     DataAppearedConsumer.class})
 @EnableConfigurationProperties({RabbitConnectionProperties.class, ExchangeProperties.class, RoutingKeysProperties.class, PluginProperties.class})
 @TestPropertySource(locations = "classpath:empty.properties")
+@DirtiesContext
 public class DataAppearedConsumerTest extends EmbeddedRabbitFixture {
 
     @Configuration

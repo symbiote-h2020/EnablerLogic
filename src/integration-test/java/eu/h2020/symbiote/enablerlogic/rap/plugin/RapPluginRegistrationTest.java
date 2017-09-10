@@ -20,6 +20,7 @@ import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
+import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.junit4.SpringRunner;
 
 import com.jayway.jsonpath.DocumentContext;
@@ -43,10 +44,11 @@ import eu.h2020.symbiote.enablerlogic.rap.resources.RapDefinitions;
     TestingRabbitConfig.class,
     EnablerLogicProperties.class})
 @EnableConfigurationProperties({RabbitConnectionProperties.class, ExchangeProperties.class, RoutingKeysProperties.class, PluginProperties.class})
-public class RapPluginTest extends EmbeddedRabbitFixture {
-    private static final String EXCHANGE_NAME = RapDefinitions.PLUGIN_REGISTRATION_EXCHANGE_IN;
-    private static final String RECEIVING_QUEUE_NAME = RapDefinitions.PLUGIN_REGISTRATION_QUEUE;
-    private static final String RECEIVING_ROUTING_KEY = RapDefinitions.PLUGIN_REGISTRATION_KEY;
+@DirtiesContext
+public class RapPluginRegistrationTest extends EmbeddedRabbitFixture {
+    private static final String PLUGIN_REGISTRATION_EXCHANGE = RapDefinitions.PLUGIN_REGISTRATION_EXCHANGE_OUT;
+    private static final String PLUGIN_REGISTRATION_QUEUE_NAME = "test_plugin_registration";
+    private static final String PLUGIN_REGISTRATION_KEY = RapDefinitions.PLUGIN_REGISTRATION_KEY;
     
     private static final int RECEIVE_TIMEOUT = 20_000;
 
@@ -54,13 +56,13 @@ public class RapPluginTest extends EmbeddedRabbitFixture {
     @Configuration
     public static class TestConfiguration {
         @Bean
-        public RapPlugin platfromPlugin(RabbitManager manager) {
+        public RapPlugin rapPlugin(RabbitManager manager) {
             return new RapPlugin(manager, "platId", false, true);
         }
     }
     
     @Autowired
-    private RapPlugin platformPlugin;
+    private RapPlugin rapPlugin;
     
     @Autowired
     private RabbitTemplate rabbitTemplate;
@@ -81,26 +83,26 @@ public class RapPluginTest extends EmbeddedRabbitFixture {
     }
 
     private void createRabbitResources() throws IOException {
-        channel.exchangeDeclare(EXCHANGE_NAME, "topic", true, true, false, null);
-        channel.queueDeclare(RECEIVING_QUEUE_NAME, true, false, false, null);
-        channel.queueBind(RECEIVING_QUEUE_NAME, EXCHANGE_NAME, RECEIVING_ROUTING_KEY);
+        channel.exchangeDeclare(PLUGIN_REGISTRATION_EXCHANGE, "topic", true, true, false, null);
+        channel.queueDeclare(PLUGIN_REGISTRATION_QUEUE_NAME, true, false, false, null);
+        channel.queueBind(PLUGIN_REGISTRATION_QUEUE_NAME, PLUGIN_REGISTRATION_EXCHANGE, PLUGIN_REGISTRATION_KEY);
     }
 
     private void cleanRabbitResources() throws IOException {
-        channel.queueDelete(RECEIVING_QUEUE_NAME);
-        channel.exchangeDelete(EXCHANGE_NAME);
+        channel.queueDelete(PLUGIN_REGISTRATION_QUEUE_NAME);
+        channel.exchangeDelete(PLUGIN_REGISTRATION_EXCHANGE);
     }
 
 
     @Test
-    public void platformRegistration_shouldSendMessageToRAP() throws Exception {
+    public void platformRegistration_shouldSendMessageToRatStartup() throws Exception {
         //given
     
         // when
-        platformPlugin.start();
+        rapPlugin.start();
     
         //then
-        Message message = rabbitTemplate.receive(RECEIVING_QUEUE_NAME, RECEIVE_TIMEOUT);
+        Message message = rabbitTemplate.receive(PLUGIN_REGISTRATION_QUEUE_NAME, RECEIVE_TIMEOUT);
         assertNotNull(message);
         
         String jsonBody = new String(message.getBody(), StandardCharsets.UTF_8);

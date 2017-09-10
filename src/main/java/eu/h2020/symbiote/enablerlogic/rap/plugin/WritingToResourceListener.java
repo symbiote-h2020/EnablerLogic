@@ -1,5 +1,7 @@
 package eu.h2020.symbiote.enablerlogic.rap.plugin;
 
+import eu.h2020.symbiote.cloud.model.data.Result;
+
 public interface WritingToResourceListener {
     /**  
      * This method is called when DSI/RAP is received request for actuation.
@@ -7,8 +9,8 @@ public interface WritingToResourceListener {
      * with internal resource id and parameters for setting the actuator value.
      * 
      * @param resourceId internal resource id
-     * @param body actuation parameters
+     * @param body service/actuation parameters
+     * @return service result, null if actuation is triggered
      */
-    void writeResource(String resourceId, String body);
-
+    Result<Object> writeResource(String resourceId, String body);
 }

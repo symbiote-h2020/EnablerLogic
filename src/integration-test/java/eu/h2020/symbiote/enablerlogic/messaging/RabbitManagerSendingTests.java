@@ -23,6 +23,7 @@ import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Import;
+import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.junit4.SpringRunner;
 
 import com.jayway.jsonpath.DocumentContext;
@@ -51,6 +52,7 @@ import lombok.NoArgsConstructor;
     TestingRabbitConfig.class,
     EnablerLogicProperties.class})
 @EnableConfigurationProperties({RabbitConnectionProperties.class, ExchangeProperties.class, RoutingKeysProperties.class, PluginProperties.class})
+@DirtiesContext
 public class RabbitManagerSendingTests extends EmbeddedRabbitFixture {
     private static Logger log = LoggerFactory.getLogger(RabbitManagerSendingTests.class);
     private static final int TIMEOUT = 10_000;
