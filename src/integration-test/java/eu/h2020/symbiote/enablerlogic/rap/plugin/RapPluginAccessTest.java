@@ -65,6 +65,8 @@ public class RapPluginAccessTest extends EmbeddedRabbitFixture {
     private static final String PLUGIN_EXCHANGE = RapDefinitions.PLUGIN_EXCHANGE_IN;
     private static final String RAP_QUEUE_NAME = "test_rap";
     
+    private static final int RECEIVE_TIMEOUT = 20_000;
+    
     @Configuration
     public static class TestConfiguration {
         @Bean
@@ -110,6 +112,7 @@ public class RapPluginAccessTest extends EmbeddedRabbitFixture {
     }
     
     private void createRabbitResources() throws IOException {
+        rabbitTemplate.setReceiveTimeout(RECEIVE_TIMEOUT);
         channel.exchangeDeclare(PLUGIN_REGISTRATION_EXCHANGE, "topic", true, false, false, null);
         channel.exchangeDeclare(PLUGIN_EXCHANGE, "topic", true, false, false, null);
         channel.queueDeclare(RAP_QUEUE_NAME, true, false, false, null);
