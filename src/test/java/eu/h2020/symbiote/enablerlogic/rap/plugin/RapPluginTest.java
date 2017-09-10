@@ -7,7 +7,6 @@ import static org.mockito.Mockito.when;
 import java.util.LinkedList;
 import java.util.List;
 
-import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
@@ -115,7 +114,7 @@ public class RapPluginTest {
         
         assertThatThrownBy(() -> {
             // when
-            plugin.doWriteResource("resourceId", "body");
+            plugin.doWriteResource("resourceId", null);
         })
             //then
             .isInstanceOf(RuntimeException.class)
@@ -132,7 +131,7 @@ public class RapPluginTest {
         
         assertThatThrownBy(() -> {
             // when
-            plugin.doWriteResource("resourceId", "body");
+            plugin.doWriteResource("resourceId", null);
         })
         //then
         .isInstanceOf(RuntimeException.class)
@@ -145,11 +144,11 @@ public class RapPluginTest {
         //given
         RapPlugin plugin = new RapPlugin(null, "enablerName", false, false);
         Result<Object> expectedResult = new Result<>();
-        when(writingListener.writeResource("resourceId", "body")).thenReturn(expectedResult);
+        when(writingListener.writeResource("resourceId", null)).thenReturn(expectedResult);
         plugin.registerWritingToResourceListener(writingListener);
         
         // when
-        Result<Object> result = plugin.doWriteResource("resourceId", "body");
+        Result<Object> result = plugin.doWriteResource("resourceId", null);
         
         //then
         assertThat(result).isSameAs(expectedResult);

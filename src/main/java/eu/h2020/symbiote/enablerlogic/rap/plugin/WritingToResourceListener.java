@@ -1,6 +1,9 @@
 package eu.h2020.symbiote.enablerlogic.rap.plugin;
 
+import java.util.List;
+
 import eu.h2020.symbiote.cloud.model.data.Result;
+import eu.h2020.symbiote.cloud.model.data.parameter.InputParameter;
 
 public interface WritingToResourceListener {
     /**  
@@ -9,8 +12,8 @@ public interface WritingToResourceListener {
      * with internal resource id and parameters for setting the actuator value.
      * 
      * @param resourceId internal resource id
-     * @param body service/actuation parameters
-     * @return service result, null if actuation is triggered
+     * @param parameters service/actuation parameters
+     * @return service result for calling service and for actuation null if actuation is triggered
      */
-    Result<Object> writeResource(String resourceId, String body);
+    Result<Object> writeResource(String resourceId, List<InputParameter> parameters);
 }

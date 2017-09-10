@@ -58,14 +58,10 @@ configurations {
 
 allprojects {
     repositories {
+	    mavenLocal()
         jcenter()
         maven { url "https://jitpack.io" }
     }
-}
-
-repositories {
-    mavenLocal()
-    mavenCentral()
 }
 
 sourceCompatibility = 1.8
@@ -86,7 +82,7 @@ dependencies {
     compile('org.springframework.boot:spring-boot-starter-amqp')
     compile('org.springframework.boot:spring-boot-starter-data-rest')
 
-    //compile('eu.h2020.symbiote:SymbIoTeLibraries:1.0.1-SNAPSHOT')
+    //compile('eu.h2020.symbiote:SymbIoTeLibraries:1.0.1-SNAPSHOT') { changing = true }
     compile('com.github.symbiote-h2020:SymbIoTeLibraries:develop-SNAPSHOT') { changing = true }
     
     compileOnly('org.projectlombok:lombok')

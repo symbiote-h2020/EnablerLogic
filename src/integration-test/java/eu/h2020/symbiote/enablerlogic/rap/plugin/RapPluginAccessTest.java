@@ -3,6 +3,8 @@ package eu.h2020.symbiote.enablerlogic.rap.plugin;
 import static org.assertj.core.api.Assertions.*;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
+import static org.mockito.Matchers.anyList;
+import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.when;
 
 import java.io.IOException;
@@ -17,6 +19,8 @@ import org.junit.runner.RunWith;
 import org.mockito.Mockito;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.amqp.core.Message;
+import org.springframework.amqp.core.MessageProperties;
 import org.springframework.amqp.rabbit.connection.Connection;
 import org.springframework.amqp.rabbit.connection.ConnectionFactory;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
@@ -105,6 +109,7 @@ public class RapPluginAccessTest extends EmbeddedRabbitFixture {
     }
 
     public void initializeRabbitResources() throws Exception {
+        rabbitTemplate.setReceiveTimeout(RECEIVE_TIMEOUT);
         connection = factory.createConnection();
         channel = connection.createChannel(false);
 
@@ -143,13 +148,13 @@ public class RapPluginAccessTest extends EmbeddedRabbitFixture {
         String routingKey =  "enablerName.get";
     
         // when
-        Object returnedJson = rabbitTemplate.convertSendAndReceive(PLUGIN_EXCHANGE, routingKey, json);          
+        Object returnedObject = rabbitTemplate.convertSendAndReceive(PLUGIN_EXCHANGE, routingKey, json);          
     
         //then
-        assertNotNull(returnedJson);
-        assertThat(returnedJson).isInstanceOf(String.class);
+        assertNotNull(returnedObject);
+        assertThat(returnedObject).isInstanceOf(List.class);
         
-        List<Observation> returnedObservations = mapper.readValue((String)returnedJson, new TypeReference<List<Observation>>() {});
+        List<Observation> returnedObservations = (List<Observation>)returnedObject;
         assertThat(returnedObservations).isEmpty();
     }
 
@@ -166,15 +171,16 @@ public class RapPluginAccessTest extends EmbeddedRabbitFixture {
         String json = mapper.writeValueAsString(msg);
         
         String routingKey =  "enablerName.get";
+        Message sendMessage = rabbitTemplate.getMessageConverter().toMessage(json, new MessageProperties());
     
         // when
-        Object returnedJson = rabbitTemplate.convertSendAndReceive(PLUGIN_EXCHANGE, routingKey, json);          
+        Message receivedMessage = rabbitTemplate.sendAndReceive(PLUGIN_EXCHANGE, routingKey, sendMessage);    
+        
     
         //then
-        assertNotNull(returnedJson);
-        assertThat(returnedJson).isInstanceOf(String.class);
-        
-        List<Observation> returnedObservations = mapper.readValue((String)returnedJson, new TypeReference<List<Observation>>() {});
+        assertThat(receivedMessage).isNotNull();
+
+        List<Observation> returnedObservations = new ObjectMapper().readValue(receivedMessage.getBody(), new TypeReference<List<Observation>>() { });
         assertThat(returnedObservations)
             .hasSize(1)
             .extracting(Observation::getResourceId)
@@ -195,13 +201,13 @@ public class RapPluginAccessTest extends EmbeddedRabbitFixture {
         String routingKey =  "enablerName.history";
     
         // when
-        Object returnedJson = rabbitTemplate.convertSendAndReceive(PLUGIN_EXCHANGE, routingKey, json);          
+        Object returnedObject = rabbitTemplate.convertSendAndReceive(PLUGIN_EXCHANGE, routingKey, json);          
     
         //then
-        assertNotNull(returnedJson);
-        assertThat(returnedJson).isInstanceOf(String.class);
+        assertNotNull(returnedObject);
+        assertThat(returnedObject).isInstanceOf(List.class);
         
-        List<Observation> returnedObservations = mapper.readValue((String)returnedJson, new TypeReference<List<Observation>>() {});
+        List<Observation> returnedObservations = (List<Observation>) returnedObject;
         assertThat(returnedObservations).isEmpty();
     }
 
@@ -217,15 +223,16 @@ public class RapPluginAccessTest extends EmbeddedRabbitFixture {
         String json = mapper.writeValueAsString(msg);
         
         String routingKey =  "enablerName.history";
-    
+        Message sendMessage = rabbitTemplate.getMessageConverter().toMessage(json, new MessageProperties());
+        
         // when
-        Object returnedJson = rabbitTemplate.convertSendAndReceive(PLUGIN_EXCHANGE, routingKey, json);          
+        Message receivedMessage = rabbitTemplate.sendAndReceive(PLUGIN_EXCHANGE, routingKey, sendMessage);          
     
         //then
-        assertNotNull(returnedJson);
-        assertThat(returnedJson).isInstanceOf(String.class);
+        assertNotNull(receivedMessage);
         
-        List<Observation> returnedObservations = mapper.readValue((String)returnedJson, new TypeReference<List<Observation>>() {});
+        List<Observation> returnedObservations = mapper.readValue(receivedMessage.getBody(), 
+                new TypeReference<List<Observation>>() { });
         assertThat(returnedObservations)
             .hasSize(2)
             .extracting(Observation::getResourceId)
@@ -239,11 +246,11 @@ public class RapPluginAccessTest extends EmbeddedRabbitFixture {
         
         List<InputParameter> parameterList = Arrays.asList(newInputParameter("name1", "value1"),
                 newInputParameter("name2", "value2"));
-        String body = mapper.writeValueAsString(parameterList);
-        when(writingListener.writeResource(getInternalId(), body)).thenThrow(new RuntimeException("exception message"));
+        when(writingListener.writeResource(getInternalId(), parameterList)).thenThrow(new RuntimeException("exception message"));
         rapPlugin.registerWritingToResourceListener(writingListener);
         
         List<ResourceInfo> infoList = Arrays.asList(new ResourceInfo(getSymbioteId(), getInternalId()));
+        String body = mapper.writeValueAsString(parameterList);
         ResourceAccessSetMessage msg = new ResourceAccessSetMessage(infoList, body);
         String json = mapper.writeValueAsString(msg);
         
@@ -254,33 +261,6 @@ public class RapPluginAccessTest extends EmbeddedRabbitFixture {
     
         //then
         assertNull(returnedJson);
-    }
-
-    @Test @DirtiesContext
-    public void sendingResourceAccessSetMessageForActuation_shouldReturnEmptyString() throws Exception {
-        //given
-        WritingToResourceListener writingListener = Mockito.mock(WritingToResourceListener.class);
-        
-        List<InputParameter> parameterList = Arrays.asList(newInputParameter("name1", "value1"),
-                newInputParameter("name2", "value2"));
-        String body = mapper.writeValueAsString(parameterList);
-        when(writingListener.writeResource(getInternalId(), body)).thenReturn(new Result<>());
-        rapPlugin.registerWritingToResourceListener(writingListener);
-        
-        List<ResourceInfo> infoList = Arrays.asList(new ResourceInfo(getSymbioteId(), getInternalId()));
-        ResourceAccessSetMessage msg = new ResourceAccessSetMessage(infoList, body);
-        String json = mapper.writeValueAsString(msg);
-        
-        String routingKey =  "enablerName.set";
-    
-        // when
-        Object returnedJson = rabbitTemplate.convertSendAndReceive(PLUGIN_EXCHANGE, routingKey, json);          
-    
-        //then
-        assertNotNull(returnedJson);
-        assertThat(returnedJson).isInstanceOf(String.class);
-        
-        assertThat((String)returnedJson).isEmpty();
     }
 
     @Test @DirtiesContext
@@ -290,11 +270,11 @@ public class RapPluginAccessTest extends EmbeddedRabbitFixture {
         
         List<InputParameter> parameterList = Arrays.asList(newInputParameter("name1", "value1"),
                 newInputParameter("name2", "value2"));
-        String body = mapper.writeValueAsString(parameterList);
-        when(writingListener.writeResource(getInternalId(), body)).thenThrow(new RuntimeException("Exception message"));
+        when(writingListener.writeResource(getInternalId(), parameterList)).thenThrow(new RuntimeException("Exception message"));
         rapPlugin.registerWritingToResourceListener(writingListener);
         
         List<ResourceInfo> infoList = Arrays.asList(new ResourceInfo(getSymbioteId(), getInternalId()));
+        String body = mapper.writeValueAsString(parameterList);
         ResourceAccessSetMessage msg = new ResourceAccessSetMessage(infoList, body);
         String json = mapper.writeValueAsString(msg);
         
@@ -304,7 +284,12 @@ public class RapPluginAccessTest extends EmbeddedRabbitFixture {
         Object returnedJson = rabbitTemplate.convertSendAndReceive(PLUGIN_EXCHANGE, routingKey, json);          
     
         //then
-        assertNull(returnedJson);
+        assertThat(returnedJson).isNull();
+//            .isNotNull()
+//            .isInstanceOf(Result.class);
+        
+//        Result result = (Result) returnedJson;
+//        assertThat(result.getValue()).isNull();
     }
 
     @Test @DirtiesContext
@@ -312,26 +297,28 @@ public class RapPluginAccessTest extends EmbeddedRabbitFixture {
         //given
         WritingToResourceListener writingListener = Mockito.mock(WritingToResourceListener.class);
         
-        List<InputParameter> parameterList = Arrays.asList(newInputParameter("name1", "value1"),
-                newInputParameter("name2", "value2"));
-        String body = mapper.writeValueAsString(parameterList);
-        when(writingListener.writeResource(getInternalId(), body)).thenReturn(new Result<>(false, null, "result"));
+        when(writingListener.writeResource(eq(getInternalId()), anyList())).thenReturn(new Result<>(false, null, "result"));
         rapPlugin.registerWritingToResourceListener(writingListener);
         
         List<ResourceInfo> infoList = Arrays.asList(new ResourceInfo(getSymbioteId(), getInternalId()));
+        List<InputParameter> parameterList = Arrays.asList(newInputParameter("name1", "value1"),
+                newInputParameter("name2", "value2"));
+        String body = mapper.writeValueAsString(parameterList);
         ResourceAccessSetMessage msg = new ResourceAccessSetMessage(infoList, body);
         String json = mapper.writeValueAsString(msg);
         
         String routingKey =  "enablerName.set";
+        
+        Message sendMessage = rabbitTemplate.getMessageConverter().toMessage(json, new MessageProperties());
     
         // when
-        Object returnedJson = rabbitTemplate.convertSendAndReceive(PLUGIN_EXCHANGE, routingKey, json);          
+        Message receivedMessage = rabbitTemplate.sendAndReceive(PLUGIN_EXCHANGE, routingKey, sendMessage);          
     
         //then
-        assertNotNull(returnedJson);
-        assertThat(returnedJson).isInstanceOf(String.class);
+        assertThat(receivedMessage).isNotNull();
 
-        Result<String> returnedResult = mapper.readValue((String)returnedJson, new TypeReference<Result<String>>() {});
+        Result<String> returnedResult = mapper.readValue(receivedMessage.getBody(), 
+                new TypeReference<Result<String>>() { });
         assertThat(returnedResult.getValue()).isEqualTo("result");
     }
 

@@ -7,12 +7,14 @@ package eu.h2020.symbiote.enablerlogic.rap.plugin;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.core.JsonParseException;
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 
 import eu.h2020.symbiote.cloud.model.data.Result;
 import eu.h2020.symbiote.cloud.model.data.observation.Observation;
+import eu.h2020.symbiote.cloud.model.data.parameter.InputParameter;
 import eu.h2020.symbiote.enablerlogic.messaging.RabbitManager;
 import eu.h2020.symbiote.enablerlogic.messaging.properties.EnablerLogicProperties;
 import eu.h2020.symbiote.enablerlogic.rap.messages.access.ResourceAccessGetMessage;
@@ -27,7 +29,6 @@ import eu.h2020.symbiote.enablerlogic.rap.resources.db.ResourceInfo;
 import lombok.Getter;
 
 import java.io.IOException;
-import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.util.LinkedList;
 import java.util.List;
@@ -89,10 +90,10 @@ public class RapPlugin implements SmartLifecycle {
 
     @RabbitListener(bindings = @QueueBinding(
             value = @Queue,
-            exchange = @Exchange(value = "plugin-exchange", type = "topic", durable = "true", autoDelete = "false"),
+            exchange = @Exchange(value = "plugin-exchange", type = "topic", durable = "true", autoDelete = "false", ignoreDeclarationExceptions = "true"),
             key = "#{rapPlugin.enablerName + '.get'}"
     ))
-    public String fromAmqpReadResource(Message<?> msg) {
+    public List<Observation> fromAmqpReadResource(Message<?> msg) {
         LOG.debug("reading resource: {}", msg.getPayload());
 
         try {
@@ -106,7 +107,7 @@ public class RapPlugin implements SmartLifecycle {
                     internalId = internalIdTemp;
             }
             List<Observation> observationList = doReadResource(internalId);
-            return new ObjectMapper().writeValueAsString(observationList);
+            return observationList;
         } catch (Exception e) {
             if(msg.getPayload() instanceof byte[])
                 LOG.error("Can not read Observation for request: " + new String((byte[])msg.getPayload(), StandardCharsets.UTF_8), e);
@@ -114,15 +115,15 @@ public class RapPlugin implements SmartLifecycle {
                 LOG.error("Can not read Observation for request: " + msg.getPayload(), e);
         }
 
-        return "[]";
+        return new LinkedList<>();
     }
 
     @RabbitListener(bindings = @QueueBinding(
             value = @Queue,
-            exchange = @Exchange(value = "plugin-exchange", type = "topic", durable = "true", autoDelete = "false"),
+            exchange = @Exchange(value = "plugin-exchange", type = "topic", durable = "true", autoDelete = "false", ignoreDeclarationExceptions = "true"),
             key = "#{rapPlugin.enablerName + '.history'}"
             ))
-    public String fromAmqpHistoryResource(Message<?> msg) {
+    public List<Observation> fromAmqpHistoryResource(Message<?> msg) {
         LOG.debug("reading history resource: {}", msg.getPayload());
         
         try {
@@ -136,7 +137,7 @@ public class RapPlugin implements SmartLifecycle {
                     internalId = internalIdTemp;
             }
             List<Observation> observationList = doReadResourceHistory(internalId);
-            return new ObjectMapper().writeValueAsString(observationList);
+            return observationList;
         } catch (Exception e) {
             if(msg.getPayload() instanceof byte[])
                 LOG.error("Can not read history Observation for request: " + new String((byte[])msg.getPayload(), StandardCharsets.UTF_8), e);
@@ -144,15 +145,15 @@ public class RapPlugin implements SmartLifecycle {
                 LOG.error("Can not read history Observation for request: " + msg.getPayload(), e);
         }
         
-        return "[]";
+        return new LinkedList<>();
     }
     
     @RabbitListener(bindings = @QueueBinding(
             value = @Queue,
-            exchange = @Exchange(value = "plugin-exchange", type = "topic", durable = "true", autoDelete = "false"),
+            exchange = @Exchange(value = "plugin-exchange", type = "topic", durable = "true", autoDelete = "false", ignoreDeclarationExceptions = "true"),
             key = "#{rapPlugin.enablerName + '.set'}"
             ))
-    public String fromAmqpSetResource(Message<?> msg) {
+    public Result<Object> fromAmqpSetResource(Message<?> msg) {
         LOG.debug("reading history resource: {}", msg.getPayload());
         
         try {
@@ -165,10 +166,12 @@ public class RapPlugin implements SmartLifecycle {
                 if(internalIdTemp != null && !internalIdTemp.isEmpty())
                     internalId = internalIdTemp;
             }
-            Result<Object> result = doWriteResource(internalId, msgSet.getBody());
-            if(result.getValue() == null) return "";
             
-            return new ObjectMapper().writeValueAsString(result);
+            List<InputParameter> parameters = new ObjectMapper().readValue(msgSet.getBody(), new TypeReference<List<InputParameter>>() { });
+            Result<Object> result = doWriteResource(internalId, parameters);
+            if(result.getValue() == null) return null;
+            
+            return result;
         } catch (Exception e) {
             if(msg.getPayload() instanceof byte[])
                 LOG.error("Can not set/call service for request: " + new String((byte[])msg.getPayload(), StandardCharsets.UTF_8), e);
@@ -206,74 +209,6 @@ public class RapPlugin implements SmartLifecycle {
             mapper.configure(SerializationFeature.INDENT_OUTPUT, true);
             mapper.setSerializationInclusion(JsonInclude.Include.NON_EMPTY);
             switch(access) {
-                case GET: {
-                    // ODATA GET https://myplatform.eu:8102/rap/Sensors('symbioteId')/Observations? $top=1
-                    // GET https://myplatform.eu:8102/rap/Sensor/{symbioteId}
-                    ResourceAccessGetMessage msgGet = (ResourceAccessGetMessage) msg;
-                    List<ResourceInfo> resInfoList = msgGet.getResourceInfo();
-                    String internalId = null;
-                    for(ResourceInfo resInfo: resInfoList){
-                        String internalIdTemp = resInfo.getInternalId();
-                        if(internalIdTemp != null && !internalIdTemp.isEmpty())
-                            internalId = internalIdTemp;
-                    }
-                    List<Observation> observationLst = doReadResource(internalId);
-                    json = mapper.writeValueAsString(observationLst);
-                    break;
-                }
-                case HISTORY: {
-                    // TODO testing filtering
-
-                    // ODATA GET https://myplatform.eu:8102/rap/Sensors('symbioteId')/Observations
-                    /*
-                     Historical readings can be filtered, using the option $filter. Operators supported:
-                        Equals, Not Equals, Less Than, Greater Than, And, Or
-                     */
-                    // GET https://myplatform.eu:8102/rap/Sensor/{symbioteId}/history
-                    ResourceAccessHistoryMessage msgHistory = (ResourceAccessHistoryMessage) msg;
-                    List<ResourceInfo> resInfoList = msgHistory.getResourceInfo();
-                    String internalId = null;
-                    for(ResourceInfo resInfo: resInfoList){
-                        String internalIdTemp = resInfo.getInternalId();
-                        if(internalIdTemp != null && !internalIdTemp.isEmpty())
-                            internalId = internalIdTemp;
-                    }
-                    List<Observation> observationLst = doReadResourceHistory(internalId);
-                    json = mapper.writeValueAsString(observationLst);       
-                    break;
-                }
-                // TODO test SERVICE call
-                case SET: {
-                    // ODATA PUT https://myplatform.eu:8102/rap/ActuatingServices(‘serviceId')
-                    // POST https://myplatform.eu:8102/rap/Service(‘symbioteId')
-                    /*
-                       {
-                            "inputParameters":
-                            [  
-                                { 
-                                     "name": “prop1Name",
-                                     "value": “prop1Value“
-                                },
-                                {
-                                      "name": “prop2Name",
-                                      "value": “prop2Value“
-                                },
-                                …
-                            ]
-                        } 
-                     */
-                    ResourceAccessSetMessage msgSet = (ResourceAccessSetMessage)msg;
-                    List<ResourceInfo> resInfoList = msgSet.getResourceInfo();
-                    String internalId = null;
-                    for(ResourceInfo resInfo: resInfoList){
-                        String internalIdTemp = resInfo.getInternalId();
-                        if(internalIdTemp != null && !internalIdTemp.isEmpty())
-                            internalId = internalIdTemp;
-                    }
-                    Result<?> result = doWriteResource(internalId, msgSet.getBody());
-                    json = mapper.writeValueAsString(result);       
-                    break;
-                }
                 // TODO test SUBSCRIBE
                 case SUBSCRIBE: {
                     // WebSocketController
@@ -345,11 +280,11 @@ public class RapPlugin implements SmartLifecycle {
         this.writingToResourceListener = null;
     }
 
-    public Result<Object> doWriteResource(String resourceId, String body) {
+    public Result<Object> doWriteResource(String resourceId, List<InputParameter> parameters) {
         if(writingToResourceListener == null)
             throw new RuntimeException("WritingToResourceListener not registered in RapPlugin");
                     
-        return writingToResourceListener.writeResource(resourceId, body);
+        return writingToResourceListener.writeResource(resourceId, parameters);
     }
 
     public void registerNotificationResourceListener(NotificationResourceListener listener) {
