@@ -2,6 +2,7 @@ package eu.h2020.symbiote.enablerlogic;
 
 import eu.h2020.symbiote.enabler.messaging.model.EnablerLogicDataAppearedMessage;
 import eu.h2020.symbiote.enabler.messaging.model.NotEnoughResourcesAvailable;
+import eu.h2020.symbiote.enabler.messaging.model.ResourcesUpdated;
 
 /**
  * Processing Logic is interface that specific Enabler Logic needs to implement.
@@ -34,4 +35,12 @@ public interface ProcessingLogic {
      * @param notEnoughResourcesAvailableMessage message with all details about resources and acquisition task
      */
     void notEnoughResources(NotEnoughResourcesAvailable notEnoughResourcesAvailableMessage);
+
+    /**
+     * This method is called when Resource Manager component has updated resources for 
+     * specified acquisition taskId.
+     * 
+     * @param resourcesUpdatedMessage updated resources and acquisition taskId
+     */
+    void resourcesUpdated(ResourcesUpdated resourcesUpdatedMessage);
 }

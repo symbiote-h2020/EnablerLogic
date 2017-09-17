@@ -10,24 +10,26 @@ import org.springframework.amqp.rabbit.annotation.QueueBinding;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
 
 import eu.h2020.symbiote.enabler.messaging.model.NotEnoughResourcesAvailable;
+import eu.h2020.symbiote.enabler.messaging.model.ResourcesUpdated;
 import eu.h2020.symbiote.enablerlogic.ProcessingLogic;
 
-public class NotEnoughResourcesConsumer {
-    private static final Logger LOG = LoggerFactory.getLogger(NotEnoughResourcesConsumer.class);
+public class ResourcesUpdatedConsumer {
+    private static final Logger LOG = LoggerFactory.getLogger(ResourcesUpdatedConsumer.class);
 
     private ProcessingLogic processingLogic;
 
-    public NotEnoughResourcesConsumer(ProcessingLogic processingLogic) {
+    public ResourcesUpdatedConsumer(ProcessingLogic processingLogic) {
         this.processingLogic = processingLogic;
     }
 
     @RabbitListener(bindings = @QueueBinding(
         value = @Queue,
         exchange = @Exchange(value = "#{enablerLogicProperties.enablerLogicExchange.name}", type = "topic"),
-        key = "#{enablerLogicProperties.key.enablerLogic.notEnoughResources}"
+        key = "#{enablerLogicProperties.key.enablerLogic.resourcesUpdated}"
     ))
-    public void dataAppeared(NotEnoughResourcesAvailable notEnoughResourcesAvailableMessage) throws IOException {
-        LOG.info("Consumer NotEnoughResourcesAvailable message: " + notEnoughResourcesAvailableMessage);
-        processingLogic.notEnoughResources(notEnoughResourcesAvailableMessage);
+    public void dataAppeared(ResourcesUpdated resourcesUpdatedMessage) throws IOException {
+        LOG.info("Consumer ResourcesUpdated message: " + resourcesUpdatedMessage);
+        processingLogic.resourcesUpdated(resourcesUpdatedMessage);
     }
+
 }
