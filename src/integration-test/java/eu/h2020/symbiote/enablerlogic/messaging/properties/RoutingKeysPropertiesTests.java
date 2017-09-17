@@ -22,6 +22,9 @@ public class RoutingKeysPropertiesTests {
     public void shouldLoadEnablerLogicProperties() {
         assertThat(props.getEnablerLogic().getAcquireMeasurements()).isEqualTo("c_am");
         assertThat(props.getEnablerLogic().getDataAppeared()).isEqualTo("c_da");
+        assertThat(props.getEnablerLogic().getResourcesUpdated()).isEqualTo("c_ra");
+        assertThat(props.getEnablerLogic().getNotEnoughResources()).isEqualTo("c_ner");
+
         assertThat(props.getEnablerLogic().getAsyncMessageToEnablerLogic())
             .isEqualTo("asyncMessageToEnablerLogic");
         assertThat(props.getEnablerLogic().getSyncMessageToEnablerLogic())

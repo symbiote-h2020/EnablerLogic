@@ -24,6 +24,10 @@ public class RoutingKeysDefaultPropertiesTests {
             .isEqualTo("symbIoTe.enablerLogic.acquireMeasurements");
         assertThat(props.getEnablerLogic().getDataAppeared())
             .isEqualTo("symbIoTe.enablerLogic.dataAppeared");
+        assertThat(props.getEnablerLogic().getResourcesUpdated())
+        .isEqualTo("symbIoTe.enablerLogic.resourcesUpdated");
+        assertThat(props.getEnablerLogic().getNotEnoughResources())
+        .isEqualTo("symbIoTe.enablerLogic.notEnoughResources");
         assertThat(props.getEnablerLogic().getAsyncMessageToEnablerLogic())
             .isEqualTo("symbIoTe.enablerLogic.asyncMessageToEnablerLogic");
         assertThat(props.getEnablerLogic().getSyncMessageToEnablerLogic())

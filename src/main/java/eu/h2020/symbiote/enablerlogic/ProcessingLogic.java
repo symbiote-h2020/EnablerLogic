@@ -1,6 +1,7 @@
 package eu.h2020.symbiote.enablerlogic;
 
 import eu.h2020.symbiote.enabler.messaging.model.EnablerLogicDataAppearedMessage;
+import eu.h2020.symbiote.enabler.messaging.model.NotEnoughResourcesAvailable;
 
 /**
  * Processing Logic is interface that specific Enabler Logic needs to implement.
@@ -25,4 +26,12 @@ public interface ProcessingLogic {
      * @param dataAppearedMessage data from Platform Proxy component
      */
     void measurementReceived(EnablerLogicDataAppearedMessage dataAppearedMessage);
+
+    /**
+     * This method is called when Resource Manager component can not find enough resources for 
+     * specified acquisition taskId.
+     * 
+     * @param notEnoughResourcesAvailableMessage message with all details about resources and acquisition task
+     */
+    void notEnoughResources(NotEnoughResourcesAvailable notEnoughResourcesAvailableMessage);
 }

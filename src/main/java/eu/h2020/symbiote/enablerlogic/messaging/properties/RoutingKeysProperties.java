@@ -29,8 +29,11 @@ public class RoutingKeysProperties {
     public static class EnablerLogicKeys {
         private String acquireMeasurements = "symbIoTe.enablerLogic.acquireMeasurements";
         private String dataAppeared = "symbIoTe.enablerLogic.dataAppeared";
+        private String resourcesUpdated = "symbIoTe.enablerLogic.resourcesUpdated";
+        private String notEnoughResources = "symbIoTe.enablerLogic.notEnoughResources";
         private String asyncMessageToEnablerLogic = "symbIoTe.enablerLogic.asyncMessageToEnablerLogic";
         private String syncMessageToEnablerLogic = "symbIoTe.enablerLogic.syncMessageToEnablerLogic";
+
 
     }
 
@@ -42,7 +45,6 @@ public class RoutingKeysProperties {
         private String startDataAcquisition = "symbIoTe.resourceManager.startDataAcquisition";
         private String cancelTask = "symbIoTe.resourceManager.cancelTask";
         private String updateTask = "symbIoTe.resourceManager.updateTask";
-// TODO        unavailableResources=symbIoTe.resourceManager.unavailableResources - 
 // TODO       wrongData=symbIoTe.resourceManager.wrongData
 
     }

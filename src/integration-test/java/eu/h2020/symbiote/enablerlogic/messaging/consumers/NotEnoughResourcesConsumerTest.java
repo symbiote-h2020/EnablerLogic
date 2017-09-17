@@ -32,11 +32,11 @@ import lombok.Setter;
 @RunWith(SpringRunner.class)
 @Import({TestingRabbitConfig.class,
     EnablerLogicProperties.class,
-    DataAppearedConsumer.class})
+    NotEnoughResourcesConsumer.class})
 @EnableConfigurationProperties({RabbitConnectionProperties.class, ExchangeProperties.class, RoutingKeysProperties.class, PluginProperties.class})
 @TestPropertySource(locations = "classpath:empty.properties")
 @DirtiesContext
-public class DataAppearedConsumerTest extends EmbeddedRabbitFixture {
+public class NotEnoughResourcesConsumerTest extends EmbeddedRabbitFixture {
 
     @Configuration
     @EnableRabbit
@@ -58,32 +58,33 @@ public class DataAppearedConsumerTest extends EmbeddedRabbitFixture {
     @Autowired
     private ProcessingLogicTestImpl processingLogic;
 
+    // TODO ProcessingLogicAdapter
     public static class ProcessingLogicTestImpl extends ProcessingLogicAdapter {
         @Getter
         @Setter
-        private EnablerLogicDataAppearedMessage dataAppearedMessage;
+        private NotEnoughResourcesAvailable notEnoughtResourcesAvailableMessage;
 
         @Override
-        public void measurementReceived(EnablerLogicDataAppearedMessage receivedDataAppearedMessage) {
-            this.dataAppearedMessage = receivedDataAppearedMessage;
+        public void notEnoughResources(NotEnoughResourcesAvailable notEnoughResourcesAvailableMessage) {
+            this.notEnoughtResourcesAvailableMessage = notEnoughResourcesAvailableMessage;
         }
     }
 
     @Test
-    public void dataAppeared_shouldReceiveMessage() {
+    public void notEnoughResources_shouldReceiveMessage() {
         // given
-        EnablerLogicDataAppearedMessage message = new EnablerLogicDataAppearedMessage();
+        NotEnoughResourcesAvailable message = new NotEnoughResourcesAvailable();
         message.setTaskId("taskId");
 
         // when
         rabbitTemplate.convertAndSend(
             props.getEnablerLogicExchange().getName(),
-            props.getKey().getEnablerLogic().getDataAppeared(),
+            props.getKey().getEnablerLogic().getNotEnoughResources(),
             message);
 
         // then
-        await().until(() -> processingLogic.dataAppearedMessage != null);
-        EnablerLogicDataAppearedMessage receivedMessage = processingLogic.dataAppearedMessage;
+        await().until(() -> processingLogic.notEnoughtResourcesAvailableMessage != null);
+        NotEnoughResourcesAvailable receivedMessage = processingLogic.notEnoughtResourcesAvailableMessage;
         assertThat(receivedMessage.getTaskId()).isEqualTo("taskId");
     }
 }
