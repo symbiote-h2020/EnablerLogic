@@ -211,7 +211,7 @@ public class EnablerLogic {
     }
 
     /**
-     * Sends message to Resource Manager that specified broken resource is producing wrong.
+     * Sends message to Resource Manager that specified broken resource is producing wrong data.
      * @param message broken resources
      */
     public void reportBrokenResource(ProblematicResourcesMessage message) {

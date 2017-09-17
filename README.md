@@ -15,99 +15,124 @@ doesn't have to implement complex communication between those components.
 
 ### 1. Creating new SpringBoot project
 
-	- It needs following dependencies: Config Client, Eureka Discovery, Zipkin Client
+It needs following dependencies: Config Client, Eureka Discovery, Zipkin Client
 
 ### 2. Adding symbIoTe dependencies to `build.gradle`
 
-	- Add following dependencies:
+Add following dependencies:
 
-		``compile('com.github.symbiote-h2020:EnablerLogic:develop-SNAPSHOT') { changing = true }``
+`compile('com.github.symbiote-h2020:EnablerLogic:develop-SNAPSHOT') { changing = true }`
 
-		- This is dependency to development version of EnablerLogic from jitpack. It will use the newest version of 
-		EnablerLogic published in jitpack. This is only for development. In the future this will be 
-		published in some official repository. In order to use jitpack you need to put in `build.gradle` 
-		following lines as well:
+This is dependency to development version of EnablerLogic from jitpack. It will use the newest version of 
+EnablerLogic published in jitpack. This is only for development. In the future this will be 
+published in some official repository. In order to use jitpack you need to put in `build.gradle` 
+following lines as well:
 
-			```
-			allprojects {
-				repositories {
-					jcenter()
-					maven { url "https://jitpack.io" }
-				}
-			}
-			```
+```
+allprojects {
+	repositories {
+		jcenter()
+		maven { url "https://jitpack.io" }
+	}
+}
+```
 
 ### 3. Setting configuration
 
-	- Configuration needs to be put in `bootstrap.properties` or YMl file. An example is here:
+Configuration needs to be put in `bootstrap.properties` or YMl file. An example is here:
 
-	```
-	spring.application.name=EnablerLogicExample
-	spring.cloud.config.uri=http://localhost:8888
-	```
+```
+spring.application.name=EnablerLogicExample
+spring.cloud.config.uri=http://localhost:8888
+```
 
-	- The first line is defining the name of this specific EnablerLogic. Under this name properties 
-	are loaded from config server.
+The first line is defining the name of this specific EnablerLogic. Under this name properties 
+are loaded from config server.
 
-	- The second line is location of config server. This is the case when config server is run in 
-	local machine which is suitable for development.
+The second line is location of config server. This is the case when config server is run in 
+local machine which is suitable for development.
 
 ### 4. Creating ProcessingLogic component
 
-	- Each enabler must have one ProcessingLogic component. This component implements 
-	`eu.h2020.symbiote.enablerlogic.ProcessingLogic` interface.
+Each enabler must have one ProcessingLogic component. This component implements 
+`eu.h2020.symbiote.enablerlogic.ProcessingLogic` interface or extend 
+`eu.h2020.symbiote.enablerlogic.ProcessingAdapter` and override some methods.
 
-	- There are methods that are called upon receiving messages (over RabbitMQ) from 
-	other enabler components.
+The most important method is `initialization` that is called when the enabler is started. It 
+has as parameter `EnablerLogic` object that has methods for sending messages to other 
+components.
 
-	- The most important method is `init` that is called when the enabler is started. It 
-	has as parameter `EnablerLogic` object that has methods for sending messages to other 
-	components.
+Here is an example of one component:
 
-	- Here is an example of one component:
+```java
+@Component
+public class InterpolatorLogic implements ProcessingLogic {
+	private static final Logger log = LoggerFactory.getLogger(InterpolatorLogic.class);
 
-	```java
-	@Component
-	public class InterpolatorLogic implements ProcessingLogic {
-		private static final Logger log = LoggerFactory.getLogger(InterpolatorLogic.class);
+	private EnablerLogic enablerLogic;
 
-		private EnablerLogic enablerLogic;
+	@Override
+	public void initialization(EnablerLogic enablerLogic) {
+		this.enablerLogic = enablerLogic;
 
-		@Override
-		public void initialization(EnablerLogic enablerLogic) {
-			this.enablerLogic = enablerLogic;
+		sendQuery();
+	}
 
-			sendQuery();
-		}
+	private void sendQuery() {
+		ResourceManagerTaskInfoRequest request = new ResourceManagerTaskInfoRequest();
+		request.setTaskId("someId");
+		request.setEnablerLogicName("exampleEnabler");
+		request.setMinNoResources(1);
+		request.setCachingInterval_ms(3600L);
 
-		@Override
-		public void measurementReceived(EnablerLogicDataAppearedMessage dataAppeared) {
-			System.out.println("received new Observations:\n"+dataAppeared);
-		}
+		CoreQueryRequest coreQueryRequest = new CoreQueryRequest();
+		coreQueryRequest.setLocation_lat(48.208174);
+		coreQueryRequest.setLocation_long(16.373819);
+		coreQueryRequest.setMax_distance(10_000); // radius 10km
+		coreQueryRequest.setObserved_property(Arrays.asList("NOx"));
+		request.setCoreQueryRequest(coreQueryRequest);
+		ResourceManagerAcquisitionStartResponse response = enablerLogic.queryResourceManager(request);
 
-		private void sendQuery() {
-			ResourceManagerTaskInfoRequest request = new ResourceManagerTaskInfoRequest();
-			request.setTaskId("someId");
-			request.setEnablerLogicName("exampleEnabler");
-			request.setMinNoResources(1);
-			request.setCachingInterval_ms(3600L);
-
-			CoreQueryRequest coreQueryRequest = new CoreQueryRequest();
-			coreQueryRequest.setLocation_lat(48.208174);
-			coreQueryRequest.setLocation_long(16.373819);
-			coreQueryRequest.setMax_distance(10_000); // radius 10km
-			coreQueryRequest.setObserved_property(Arrays.asList("NOx"));
-			request.setCoreQueryRequest(coreQueryRequest);
-			ResourceManagerAcquisitionStartResponse response = enablerLogic.queryResourceManager(request);
-
-			try {
-				log.info("querying fixed resources: {}", new ObjectMapper().writeValueAsString(response));
-			} catch (JsonProcessingException e) {
-				log.error("Problem with deserializing ResourceManagerAcquisitionStartResponse", e);
-			}
+		try {
+			log.info("querying fixed resources: {}", new ObjectMapper().writeValueAsString(response));
+		} catch (JsonProcessingException e) {
+			log.error("Problem with deserializing ResourceManagerAcquisitionStartResponse", e);
 		}
 	}
-	```
+	...
+}
+```
+
+There are also methods that are called upon receiving messages (over RabbitMQ) from 
+other enabler components. Here is list of them:
+
+- `void measurementReceived(EnablerLogicDataAppearedMessage dataAppearedMessage)` - 
+this method is called when sensor data from Platform Proxy component is received.
+
+- `void notEnoughResources(NotEnoughResourcesAvailable notEnoughResourcesAvailableMessage)` -
+this method is called when Resource Manager component can not find enough 
+resources for specified acquisition taskId.
+
+- `void resourcesUpdated(ResourcesUpdated resourcesUpdatedMessage)` -
+this method is called when Resource Manager component has updated resources 
+for specified acquisition taskId.
+
+#### Enabler Logic communicating with Resource Manager or Platform Proxy components
+
+- `public ResourceManagerAcquisitionStartResponse queryResourceManager(ResourceManagerTaskInfoRequest...requests)` - 
+this method sends to Registration Manager to start data acquisition. The argument
+is request for resources and the result contains list of resources and taskId.
+
+- `public CancelTaskResponse cancelTask(CancelTaskRequest request)` -
+this method sends to Resource Manager to cancel acquisition task request.
+
+- `public ResourceManagerUpdateResponse updateTask(ResourceManagerUpdateRequest request)` -
+this method sends to Resource Manager to request for update acquisition task.
+
+- `public void reportBrokenResource(ProblematicResourcesMessage message)` -
+this method sends message to Resource Manager that specified broken resource 
+is producing wrong data.
+
 ### 5. Communication with other Enabler Logic components in the enabler
 
 #### Asynchronous Communication
@@ -131,7 +156,7 @@ If there is no type registered for the message that is received
 `WrongRequestException` will be logged as ERROR in the console.  
 
 Example:
-```
+```java
 enablerLogic.registerAsyncMessageFromEnablerLogicConsumer(
     MessageRequest.class, 
     (m) -> log.info("Received from another EnablerLogic: {}", m));
@@ -151,7 +176,7 @@ Logic components.
 Enabler Logic component.
 
 Example:
-```
+```java
 enablerLogic.sendAsyncMessageToEnablerLogic(
     "EnablerLogicInterpolator", 
     new MessageRequest());
@@ -180,7 +205,7 @@ If there is no type registered for the message that is received
 
 
 Example:
-```
+```java
 enablerLogic.registerSyncMessageFromEnablerLogicConsumer(
     MessageRequest.class, 
     (m) -> new MessageResponse("response: " + m.getRequest()));
@@ -207,7 +232,7 @@ If the type of the response message can not be casted to clazz then
 In the case of timeout `null` will be returned.
 
 Example:
-```
+```java
 MessageResponse response = enablerLogic.sendSyncMessageToEnablerLogic(
     "EnablerLogicInterpolator",
     new MessageRequest("request"),
@@ -221,7 +246,7 @@ component. This communication is REST based. For getting URL Eureka discovery
 server is used. In the enabler spring boot application discovery client 
 need to be enabled by putting `@EnableDiscoveryClient` in configuration:
 
-```
+```java
 @SpringBootApplication
 @EnableDiscoveryClient
 public class EnablerLogicInterpolator {
@@ -236,7 +261,7 @@ For communication with Registration Handler component there is service
 `RegistrationHandlerClientService` which can be injected in any spring
 component like this:
 
-```
+```java
 @Autowired
 private RegistrationHandlerClientService rhClientService;
 ```
@@ -250,7 +275,7 @@ can be obtained from  `EnablerLogicProperties` object that can be
 injected. The method `getEnablerName()` returns plugin id.
 
 Here is example of registration:
-```
+```java
 public class InterpolatorLogic implements ProcessingLogic {
 ...
     
@@ -372,7 +397,6 @@ public class InterpolatorLogic implements ProcessingLogic {
 
         return cloudResource;
     }
-    
 ```
 
 ### 7. Registering RAP plugin consumers
@@ -386,7 +410,7 @@ Registering and unregistering resources is done by calling `register...` or `unr
 in `RapPlugin` class. `RapPlugin`class can be injected in `ProcessingLogic` 
 implementation like this:
 
-```
+```java
 @Autowired
 private RapPlugin rapPlugin;
 ```
@@ -403,7 +427,7 @@ In the case that reading is not possible listener should return `null`.
 
 Here is example of registering and handling faked values:
 
-```
+```java
 rapPlugin.registerReadingResourceListener(new ReadingResourceListener() {
     
     @Override
@@ -437,7 +461,7 @@ for actuation and service call:
 - service call - must have return value that is put in `Result` object.
 
 Here is example of both implementations of listener:
-```
+```java
 rapPlugin.registerWritingToResourceListener(new WritingToResourceListener() {
     
     @Override
@@ -467,21 +491,17 @@ rapPlugin.registerWritingToResourceListener(new WritingToResourceListener() {
         }
     });
 }
-
 ```
- 
-
-
 
 ## Running
 
 You can run this enabler as any other spring boot application.
 
-``./gradlew bootRun``
+`./gradlew bootRun`
 
 or
 
-``java -jar build/libs/EnablerLogicExample-0.0.1-SNAPSHOT.jar``
+`java -jar build/libs/EnablerLogicExample-0.0.1-SNAPSHOT.jar`
 
 Note: In order to function correctly you need to start following components before: 
 RabbitMQ server, Config Server, Eureka and Zipkin.
