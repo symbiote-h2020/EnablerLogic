@@ -45,8 +45,7 @@ public class RoutingKeysProperties {
         private String startDataAcquisition = "symbIoTe.resourceManager.startDataAcquisition";
         private String cancelTask = "symbIoTe.resourceManager.cancelTask";
         private String updateTask = "symbIoTe.resourceManager.updateTask";
-// TODO       wrongData=symbIoTe.resourceManager.wrongData
-
+        private String wrongData = "symbIoTe.resourceManager.wrongData";
     }
 
     @Getter

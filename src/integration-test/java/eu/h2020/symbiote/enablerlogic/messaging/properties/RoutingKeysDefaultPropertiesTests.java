@@ -42,6 +42,8 @@ public class RoutingKeysDefaultPropertiesTests {
             .isEqualTo("symbIoTe.resourceManager.cancelTask");
         assertThat(props.getResourceManager().getUpdateTask())
             .isEqualTo("symbIoTe.resourceManager.updateTask");
+        assertThat(props.getResourceManager().getWrongData())
+            .isEqualTo("symbIoTe.resourceManager.wrongData");
     }
 
     @Test

@@ -11,6 +11,7 @@ import org.springframework.stereotype.Service;
 
 import eu.h2020.symbiote.enabler.messaging.model.CancelTaskRequest;
 import eu.h2020.symbiote.enabler.messaging.model.CancelTaskResponse;
+import eu.h2020.symbiote.enabler.messaging.model.ProblematicResourcesMessage;
 import eu.h2020.symbiote.enabler.messaging.model.ResourceManagerAcquisitionStartRequest;
 import eu.h2020.symbiote.enabler.messaging.model.ResourceManagerAcquisitionStartResponse;
 import eu.h2020.symbiote.enabler.messaging.model.ResourceManagerTaskInfoRequest;
@@ -207,5 +208,16 @@ public class EnablerLogic {
     private String generateSyncEnablerLogicRoutingKey() {
         return props.getKey().getEnablerLogic().getSyncMessageToEnablerLogic() + "." +
             props.getEnablerName();
+    }
+
+    /**
+     * Sends message to Resource Manager that specified broken resource is producing wrong.
+     * @param message broken resources
+     */
+    public void reportBrokenResource(ProblematicResourcesMessage message) {
+        rabbitManager.sendMessage(
+                props.getExchange().getResourceManager().getName(),
+                props.getKey().getResourceManager().getWrongData(),
+                message);
     }
 }

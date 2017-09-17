@@ -39,6 +39,8 @@ public class RoutingKeysPropertiesTests {
             .isEqualTo("c_ct");
         assertThat(props.getResourceManager().getUpdateTask())
             .isEqualTo("c_ut");
+        assertThat(props.getResourceManager().getWrongData())
+        .isEqualTo("c_wd");
     }
 
     @Test

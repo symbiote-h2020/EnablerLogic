@@ -19,6 +19,7 @@ import org.mockito.runners.MockitoJUnitRunner;
 
 import eu.h2020.symbiote.enabler.messaging.model.CancelTaskRequest;
 import eu.h2020.symbiote.enabler.messaging.model.CancelTaskResponse;
+import eu.h2020.symbiote.enabler.messaging.model.ProblematicResourcesMessage;
 import eu.h2020.symbiote.enabler.messaging.model.ResourceManagerAcquisitionStartRequest;
 import eu.h2020.symbiote.enabler.messaging.model.ResourceManagerAcquisitionStartResponse;
 import eu.h2020.symbiote.enabler.messaging.model.ResourceManagerTaskInfoRequest;
@@ -117,8 +118,24 @@ public class EnablerLogicTest {
                 captor.capture());
         ResourceManagerUpdateRequest request = captor.getValue();
         assertThat(request).isSameAs(expectedRequest);
+    }    
+
+    // ProblematicResourcesMessage
+    @Test
+    public void reportBrokenResource_shouldCallRabbitManager() throws Exception {
+        // given
+        ProblematicResourcesMessage message = new ProblematicResourcesMessage();
+        
+        // when
+        enablerLogic.reportBrokenResource(message);
+
+        // then
+        verify(rabbitManager).sendMessage(
+                eq(props.getExchange().getResourceManager().getName()),
+                eq(props.getKey().getResourceManager().getWrongData()),
+                eq((Object) message));
     }
-    
+
 
     
     @Test
