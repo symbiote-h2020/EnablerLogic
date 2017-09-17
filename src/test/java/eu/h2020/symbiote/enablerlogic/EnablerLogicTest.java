@@ -22,6 +22,8 @@ import eu.h2020.symbiote.enabler.messaging.model.CancelTaskResponse;
 import eu.h2020.symbiote.enabler.messaging.model.ResourceManagerAcquisitionStartRequest;
 import eu.h2020.symbiote.enabler.messaging.model.ResourceManagerAcquisitionStartResponse;
 import eu.h2020.symbiote.enabler.messaging.model.ResourceManagerTaskInfoRequest;
+import eu.h2020.symbiote.enabler.messaging.model.ResourceManagerUpdateRequest;
+import eu.h2020.symbiote.enabler.messaging.model.ResourceManagerUpdateResponse;
 import eu.h2020.symbiote.enablerlogic.EnablerLogic;
 import eu.h2020.symbiote.enablerlogic.messaging.RabbitManager;
 import eu.h2020.symbiote.enablerlogic.messaging.VoidResponse;
@@ -72,7 +74,7 @@ public class EnablerLogicTest {
     }
 
     @Test
-    public void cancelTask_shouldReturnCancelationResponse() throws Exception {
+    public void cancelTask_shouldReturnCancellationResponse() throws Exception {
         // given
         ArgumentCaptor<CancelTaskRequest> captor =
                 ArgumentCaptor.forClass(CancelTaskRequest.class);
@@ -93,6 +95,31 @@ public class EnablerLogicTest {
         CancelTaskRequest request = captor.getValue();
         assertThat(request).isSameAs(expectedRequest);
     }
+    
+    @Test
+    public void updateTask_shouldReturnUpdateResponse() throws Exception {
+        // given
+        ArgumentCaptor<ResourceManagerUpdateRequest> captor =
+                ArgumentCaptor.forClass(ResourceManagerUpdateRequest.class);
+        ResourceManagerUpdateRequest expectedRequest = new ResourceManagerUpdateRequest();
+        ResourceManagerUpdateResponse response = new ResourceManagerUpdateResponse();
+        when(rabbitManager.sendRpcMessage(
+                eq(props.getExchange().getResourceManager().getName()),
+                eq(props.getKey().getResourceManager().getCancelTask()),
+                any(ResourceManagerUpdateRequest.class))).thenReturn(response);
+        
+        // when
+        enablerLogic.updateTask(expectedRequest);
+        
+        // then
+        verify(rabbitManager).sendRpcMessage(eq(props.getExchange().getResourceManager().getName()),
+                eq(props.getKey().getResourceManager().getUpdateTask()),
+                captor.capture());
+        ResourceManagerUpdateRequest request = captor.getValue();
+        assertThat(request).isSameAs(expectedRequest);
+    }
+    
+
     
     @Test
     public void registerAsyncMessageFromEnablerLogicConsumer_shouldDelegateItToConsumer() throws Exception {

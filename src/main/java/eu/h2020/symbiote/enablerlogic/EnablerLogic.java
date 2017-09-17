@@ -14,6 +14,8 @@ import eu.h2020.symbiote.enabler.messaging.model.CancelTaskResponse;
 import eu.h2020.symbiote.enabler.messaging.model.ResourceManagerAcquisitionStartRequest;
 import eu.h2020.symbiote.enabler.messaging.model.ResourceManagerAcquisitionStartResponse;
 import eu.h2020.symbiote.enabler.messaging.model.ResourceManagerTaskInfoRequest;
+import eu.h2020.symbiote.enabler.messaging.model.ResourceManagerUpdateRequest;
+import eu.h2020.symbiote.enabler.messaging.model.ResourceManagerUpdateResponse;
 import eu.h2020.symbiote.enablerlogic.messaging.RabbitManager;
 import eu.h2020.symbiote.enablerlogic.messaging.WrongResponseException;
 import eu.h2020.symbiote.enablerlogic.messaging.consumers.AsyncMessageFromEnablerLogicConsumer;
@@ -143,6 +145,21 @@ public class EnablerLogic {
         return (CancelTaskResponse) rabbitManager.sendRpcMessage(
                 props.getExchange().getResourceManager().getName(), 
                 props.getKey().getResourceManager().getCancelTask(), 
+                request);
+    }
+    
+    /**
+     * Sends to Resource Manager to update acquisition task. It is blocking until response received or timeout.
+     *
+     * In the case of timeout the null is returned.
+     * 
+     * @param request updated request
+     * @return response of task update
+     */
+    public ResourceManagerUpdateResponse updateTask(ResourceManagerUpdateRequest request) {
+        return (ResourceManagerUpdateResponse) rabbitManager.sendRpcMessage(
+                props.getExchange().getResourceManager().getName(),
+                props.getKey().getResourceManager().getUpdateTask(),
                 request);
     }
 
