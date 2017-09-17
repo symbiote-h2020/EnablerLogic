@@ -19,7 +19,7 @@ public class RoutingKeysPropertiesTests {
     private RoutingKeysProperties props;
 
     @Test
-    public void shouldLoadFirstLevelProperties() {
+    public void shouldLoadEnablerLogicProperties() {
         assertThat(props.getEnablerLogic().getAcquireMeasurements()).isEqualTo("c_am");
         assertThat(props.getEnablerLogic().getDataAppeared()).isEqualTo("c_da");
         assertThat(props.getEnablerLogic().getAsyncMessageToEnablerLogic())
@@ -27,4 +27,21 @@ public class RoutingKeysPropertiesTests {
         assertThat(props.getEnablerLogic().getSyncMessageToEnablerLogic())
             .isEqualTo("syncMessageToEnablerLogic");
     }
+    
+    @Test
+    public void shouldLoadResourceManagerProperties() {
+        assertThat(props.getResourceManager().getStartDataAcquisition())
+            .isEqualTo("c_sda");
+        assertThat(props.getResourceManager().getCancelTask())
+            .isEqualTo("c_ct");
+    }
+
+    @Test
+    public void shouldLoadPlatformProxyProperties() {
+        assertThat(props.getEnablerPlatformProxy().getAcquisitionStartRequested())
+            .isEqualTo("c_asr");
+        assertThat(props.getEnablerPlatformProxy().getAcquisitionStopRequested())
+            .isEqualTo("c_asr2");
+    }
+
 }

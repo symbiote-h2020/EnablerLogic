@@ -19,7 +19,7 @@ public class RoutingKeysDefaultPropertiesTests {
     private RoutingKeysProperties props;
 
     @Test
-    public void shouldLoadFirstLevelProperties() {
+    public void shouldLoadEnablerLogicProperties() {
         assertThat(props.getEnablerLogic().getAcquireMeasurements())
             .isEqualTo("symbIoTe.enablerLogic.acquireMeasurements");
         assertThat(props.getEnablerLogic().getDataAppeared())
@@ -28,5 +28,21 @@ public class RoutingKeysDefaultPropertiesTests {
             .isEqualTo("symbIoTe.enablerLogic.asyncMessageToEnablerLogic");
         assertThat(props.getEnablerLogic().getSyncMessageToEnablerLogic())
             .isEqualTo("symbIoTe.enablerLogic.syncMessageToEnablerLogic");
+    }
+
+    @Test
+    public void shouldLoadResourceManagerProperties() {
+        assertThat(props.getResourceManager().getStartDataAcquisition())
+            .isEqualTo("symbIoTe.resourceManager.startDataAcquisition");
+        assertThat(props.getResourceManager().getCancelTask())
+            .isEqualTo("symbIoTe.resourceManager.cancelTask");
+    }
+
+    @Test
+    public void shouldLoadPlatformProxyProperties() {
+        assertThat(props.getEnablerPlatformProxy().getAcquisitionStartRequested())
+            .isEqualTo("symbIoTe.enablerPlatformProxy.acquisitionStartRequested");
+        assertThat(props.getEnablerPlatformProxy().getAcquisitionStopRequested())
+            .isEqualTo("symbIoTe.enablerPlatformProxy.acquisitionStopRequested");
     }
 }

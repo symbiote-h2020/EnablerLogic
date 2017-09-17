@@ -40,6 +40,11 @@ public class RoutingKeysProperties {
     @NoArgsConstructor
     public static class ResourceManagerKeys {
         private String startDataAcquisition = "symbIoTe.resourceManager.startDataAcquisition";
+        private String cancelTask = "symbIoTe.resourceManager.cancelTask";
+// TODO       updateTask=symbIoTe.resourceManager.updateTask
+// TODO        unavailableResources=symbIoTe.resourceManager.unavailableResources - 
+// TODO       wrongData=symbIoTe.resourceManager.wrongData
+
     }
 
     @Getter

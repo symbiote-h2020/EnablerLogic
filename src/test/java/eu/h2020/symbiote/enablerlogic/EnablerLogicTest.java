@@ -17,6 +17,8 @@ import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.runners.MockitoJUnitRunner;
 
+import eu.h2020.symbiote.enabler.messaging.model.CancelTaskRequest;
+import eu.h2020.symbiote.enabler.messaging.model.CancelTaskResponse;
 import eu.h2020.symbiote.enabler.messaging.model.ResourceManagerAcquisitionStartRequest;
 import eu.h2020.symbiote.enabler.messaging.model.ResourceManagerAcquisitionStartResponse;
 import eu.h2020.symbiote.enabler.messaging.model.ResourceManagerTaskInfoRequest;
@@ -32,14 +34,17 @@ import lombok.Getter;
 
 @RunWith(MockitoJUnitRunner.class)
 public class EnablerLogicTest {
+    private EnablerLogicProperties props;
     private EnablerLogic enablerLogic;
 
     @Mock
     private RabbitManager rabbitManager;
 
+
     @Before
     public void setup() {
-        enablerLogic = new EnablerLogic(rabbitManager, new EnablerLogicProperties());
+        props = new EnablerLogicProperties();
+        enablerLogic = new EnablerLogic(rabbitManager, props);
     }
 
     @Test
@@ -50,22 +55,45 @@ public class EnablerLogicTest {
         ResourceManagerTaskInfoRequest request = new ResourceManagerTaskInfoRequest();
         ResourceManagerAcquisitionStartResponse response = new ResourceManagerAcquisitionStartResponse();
         when(rabbitManager.sendRpcMessage(
-            eq("symbIoTe.resourceManager"),
-            eq("symbIoTe.resourceManager.startDataAcquisition"),
+            eq(props.getExchange().getResourceManager().getName()),
+            eq(props.getKey().getResourceManager().getStartDataAcquisition()),
             any(ResourceManagerAcquisitionStartRequest.class))).thenReturn(response);
 
         // when
         enablerLogic.queryResourceManager(request);
 
         // then
-        verify(rabbitManager).sendRpcMessage(eq("symbIoTe.resourceManager"),
-            eq("symbIoTe.resourceManager.startDataAcquisition"),
+        verify(rabbitManager).sendRpcMessage(eq(props.getExchange().getResourceManager().getName()),
+            eq(props.getKey().getResourceManager().getStartDataAcquisition()),
             captor.capture());
         ResourceManagerAcquisitionStartRequest requests = captor.getValue();
         assertThat(requests.getTasks()).hasSize(1);
         assertThat(requests.getTasks()).contains(request);
     }
 
+    @Test
+    public void cancelTask_shouldReturnCancelationResponse() throws Exception {
+        // given
+        ArgumentCaptor<CancelTaskRequest> captor =
+                ArgumentCaptor.forClass(CancelTaskRequest.class);
+        CancelTaskRequest expectedRequest = new CancelTaskRequest();
+        CancelTaskResponse response = new CancelTaskResponse();
+        when(rabbitManager.sendRpcMessage(
+                eq(props.getExchange().getResourceManager().getName()),
+                eq(props.getKey().getResourceManager().getCancelTask()),
+                any(ResourceManagerAcquisitionStartRequest.class))).thenReturn(response);
+        
+        // when
+        enablerLogic.cancelTask(expectedRequest);
+        
+        // then
+        verify(rabbitManager).sendRpcMessage(eq(props.getExchange().getResourceManager().getName()),
+                eq(props.getKey().getResourceManager().getCancelTask()),
+                captor.capture());
+        CancelTaskRequest request = captor.getValue();
+        assertThat(request).isSameAs(expectedRequest);
+    }
+    
     @Test
     public void registerAsyncMessageFromEnablerLogicConsumer_shouldDelegateItToConsumer() throws Exception {
         //given

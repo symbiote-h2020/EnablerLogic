@@ -9,6 +9,8 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import eu.h2020.symbiote.enabler.messaging.model.CancelTaskRequest;
+import eu.h2020.symbiote.enabler.messaging.model.CancelTaskResponse;
 import eu.h2020.symbiote.enabler.messaging.model.ResourceManagerAcquisitionStartRequest;
 import eu.h2020.symbiote.enabler.messaging.model.ResourceManagerAcquisitionStartResponse;
 import eu.h2020.symbiote.enabler.messaging.model.ResourceManagerTaskInfoRequest;
@@ -101,6 +103,7 @@ public class EnablerLogic {
 
     /**
      * Queries Resource Manager component. It is blocking until response received or timeout.
+     * It starts acquisition.
      *
      * In the case of timeout the null is returned.
      *
@@ -120,12 +123,27 @@ public class EnablerLogic {
         request.setTasks(Arrays.asList(requests));
 
         ResourceManagerAcquisitionStartResponse response = (ResourceManagerAcquisitionStartResponse)
-        rabbitManager.sendRpcMessage(props.getExchange().getResourceManager().getName(),
-            props.getKey().getResourceManager().getStartDataAcquisition(),
-            request);
+            rabbitManager.sendRpcMessage(props.getExchange().getResourceManager().getName(),
+                props.getKey().getResourceManager().getStartDataAcquisition(),
+                request);
 
         LOG.info("Received resourceIds from ResourceManager");
         return response;
+    }
+    
+    /**
+     * Sends to Resource Manager to cancel task for acquisition. It is blocking until response received or timeout.
+     *
+     * In the case of timeout the null is returned.
+     *
+     * @param request for canceling task
+     * @return response of task cancellation
+     */
+    public CancelTaskResponse cancelTask(CancelTaskRequest request) {
+        return (CancelTaskResponse) rabbitManager.sendRpcMessage(
+                props.getExchange().getResourceManager().getName(), 
+                props.getKey().getResourceManager().getCancelTask(), 
+                request);
     }
 
     /**
