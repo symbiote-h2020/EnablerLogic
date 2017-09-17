@@ -9,7 +9,6 @@ import org.springframework.amqp.rabbit.annotation.Queue;
 import org.springframework.amqp.rabbit.annotation.QueueBinding;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
 
-import eu.h2020.symbiote.enabler.messaging.model.EnablerLogicDataAppearedMessage;
 import eu.h2020.symbiote.enabler.messaging.model.NotEnoughResourcesAvailable;
 import eu.h2020.symbiote.enablerlogic.ProcessingLogic;
 

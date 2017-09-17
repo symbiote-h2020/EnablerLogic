@@ -15,12 +15,8 @@ import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit4.SpringRunner;
 
-import eu.h2020.symbiote.enabler.messaging.model.EnablerLogicDataAppearedMessage;
 import eu.h2020.symbiote.enabler.messaging.model.NotEnoughResourcesAvailable;
-import eu.h2020.symbiote.enablerlogic.EnablerLogic;
-import eu.h2020.symbiote.enablerlogic.ProcessingLogic;
 import eu.h2020.symbiote.enablerlogic.ProcessingLogicAdapter;
-import eu.h2020.symbiote.enablerlogic.messaging.consumers.DataAppearedConsumer;
 import eu.h2020.symbiote.enablerlogic.messaging.properties.EnablerLogicProperties;
 import eu.h2020.symbiote.enablerlogic.messaging.properties.ExchangeProperties;
 import eu.h2020.symbiote.enablerlogic.messaging.properties.PluginProperties;
@@ -58,7 +54,6 @@ public class NotEnoughResourcesConsumerTest extends EmbeddedRabbitFixture {
     @Autowired
     private ProcessingLogicTestImpl processingLogic;
 
-    // TODO ProcessingLogicAdapter
     public static class ProcessingLogicTestImpl extends ProcessingLogicAdapter {
         @Getter
         @Setter
