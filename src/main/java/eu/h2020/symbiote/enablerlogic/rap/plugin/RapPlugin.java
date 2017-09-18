@@ -5,33 +5,11 @@
  */
 package eu.h2020.symbiote.enablerlogic.rap.plugin;
 
-import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.core.JsonParseException;
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.JsonMappingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializationFeature;
-
-import eu.h2020.symbiote.cloud.model.data.Result;
-import eu.h2020.symbiote.cloud.model.data.observation.Observation;
-import eu.h2020.symbiote.cloud.model.data.parameter.InputParameter;
-import eu.h2020.symbiote.enablerlogic.messaging.RabbitManager;
-import eu.h2020.symbiote.enablerlogic.messaging.properties.EnablerLogicProperties;
-import eu.h2020.symbiote.enablerlogic.rap.messages.access.ResourceAccessGetMessage;
-import eu.h2020.symbiote.enablerlogic.rap.messages.access.ResourceAccessHistoryMessage;
-import eu.h2020.symbiote.enablerlogic.rap.messages.access.ResourceAccessMessage;
-import eu.h2020.symbiote.enablerlogic.rap.messages.access.ResourceAccessSetMessage;
-import eu.h2020.symbiote.enablerlogic.rap.messages.access.ResourceAccessSubscribeMessage;
-import eu.h2020.symbiote.enablerlogic.rap.messages.access.ResourceAccessUnSubscribeMessage;
-import eu.h2020.symbiote.enablerlogic.rap.messages.registration.RegisterPluginMessage;
-import eu.h2020.symbiote.enablerlogic.rap.resources.RapDefinitions;
-import eu.h2020.symbiote.enablerlogic.rap.resources.db.ResourceInfo;
-import lombok.Getter;
-
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.LinkedList;
 import java.util.List;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.amqp.rabbit.annotation.Exchange;
@@ -42,6 +20,29 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.SmartLifecycle;
 import org.springframework.messaging.Message;
 import org.springframework.stereotype.Service;
+
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.core.JsonParseException;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.JsonMappingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
+
+import eu.h2020.symbiote.cloud.model.data.Result;
+import eu.h2020.symbiote.cloud.model.data.observation.Observation;
+import eu.h2020.symbiote.cloud.model.data.parameter.InputParameter;
+import eu.h2020.symbiote.enabler.messaging.model.rap.access.ResourceAccessGetMessage;
+import eu.h2020.symbiote.enabler.messaging.model.rap.access.ResourceAccessHistoryMessage;
+import eu.h2020.symbiote.enabler.messaging.model.rap.access.ResourceAccessMessage;
+import eu.h2020.symbiote.enabler.messaging.model.rap.access.ResourceAccessSetMessage;
+import eu.h2020.symbiote.enabler.messaging.model.rap.access.ResourceAccessSubscribeMessage;
+import eu.h2020.symbiote.enabler.messaging.model.rap.access.ResourceAccessUnSubscribeMessage;
+import eu.h2020.symbiote.enabler.messaging.model.rap.db.ResourceInfo;
+import eu.h2020.symbiote.enabler.messaging.model.rap.registration.RegisterPluginMessage;
+import eu.h2020.symbiote.enablerlogic.messaging.RabbitManager;
+import eu.h2020.symbiote.enablerlogic.messaging.properties.EnablerLogicProperties;
+import eu.h2020.symbiote.enablerlogic.rap.resources.RapDefinitions;
+import lombok.Getter;
 
 /**
  * This is class that handles requests from DSI/RAP.

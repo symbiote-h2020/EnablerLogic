@@ -1,6 +1,6 @@
 package eu.h2020.symbiote.enablerlogic.rap.plugin;
 
-import static org.assertj.core.api.Assertions.*;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.mockito.Matchers.anyList;
@@ -42,6 +42,10 @@ import com.rabbitmq.client.Channel;
 import eu.h2020.symbiote.cloud.model.data.Result;
 import eu.h2020.symbiote.cloud.model.data.observation.Observation;
 import eu.h2020.symbiote.cloud.model.data.parameter.InputParameter;
+import eu.h2020.symbiote.enabler.messaging.model.rap.access.ResourceAccessGetMessage;
+import eu.h2020.symbiote.enabler.messaging.model.rap.access.ResourceAccessHistoryMessage;
+import eu.h2020.symbiote.enabler.messaging.model.rap.access.ResourceAccessSetMessage;
+import eu.h2020.symbiote.enabler.messaging.model.rap.db.ResourceInfo;
 import eu.h2020.symbiote.enablerlogic.messaging.RabbitManager;
 import eu.h2020.symbiote.enablerlogic.messaging.consumers.EmbeddedRabbitFixture;
 import eu.h2020.symbiote.enablerlogic.messaging.consumers.TestingRabbitConfig;
@@ -50,12 +54,7 @@ import eu.h2020.symbiote.enablerlogic.messaging.properties.ExchangeProperties;
 import eu.h2020.symbiote.enablerlogic.messaging.properties.PluginProperties;
 import eu.h2020.symbiote.enablerlogic.messaging.properties.RabbitConnectionProperties;
 import eu.h2020.symbiote.enablerlogic.messaging.properties.RoutingKeysProperties;
-import eu.h2020.symbiote.enablerlogic.rap.messages.access.ResourceAccessGetMessage;
-import eu.h2020.symbiote.enablerlogic.rap.messages.access.ResourceAccessHistoryMessage;
-import eu.h2020.symbiote.enablerlogic.rap.messages.access.ResourceAccessSetMessage;
-import eu.h2020.symbiote.enablerlogic.rap.plugin.RapPlugin;
 import eu.h2020.symbiote.enablerlogic.rap.resources.RapDefinitions;
-import eu.h2020.symbiote.enablerlogic.rap.resources.db.ResourceInfo;
 
 @RunWith(SpringRunner.class)
 @Import({RabbitManager.class,

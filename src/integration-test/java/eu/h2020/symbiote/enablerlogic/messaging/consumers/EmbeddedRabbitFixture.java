@@ -14,7 +14,7 @@ import io.arivera.oss.embedded.rabbitmq.EmbeddedRabbitMqConfig;
 import io.arivera.oss.embedded.rabbitmq.bin.RabbitMqPlugins;
 
 public class EmbeddedRabbitFixture {
-    private static final int RABBIT_STARTING_TIMEOUT = 10_000;
+    private static final int RABBIT_STARTING_TIMEOUT = 20_000;
     
     // turn to false if you want to start RabbitMQ independently of tests.
     private static final boolean RUN_EMBEDDED = true;
