@@ -49,6 +49,8 @@ public class RoutingKeysPropertiesTests {
             .isEqualTo("c_asr");
         assertThat(props.getEnablerPlatformProxy().getAcquisitionStopRequested())
             .isEqualTo("c_asr2");
+        assertThat(props.getEnablerPlatformProxy().getSingleReadRequested())
+            .isEqualTo("c_srr");
     }
 
 }

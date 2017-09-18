@@ -52,5 +52,7 @@ public class RoutingKeysDefaultPropertiesTests {
             .isEqualTo("symbIoTe.enablerPlatformProxy.acquisitionStartRequested");
         assertThat(props.getEnablerPlatformProxy().getAcquisitionStopRequested())
             .isEqualTo("symbIoTe.enablerPlatformProxy.acquisitionStopRequested");
+        assertThat(props.getEnablerPlatformProxy().getSingleReadRequested())
+            .isEqualTo("symbIoTe.enablerPlatformProxy.singleReadRequested");
     }
 }

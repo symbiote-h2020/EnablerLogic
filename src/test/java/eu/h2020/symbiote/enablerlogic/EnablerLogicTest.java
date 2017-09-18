@@ -19,6 +19,8 @@ import org.mockito.runners.MockitoJUnitRunner;
 
 import eu.h2020.symbiote.enabler.messaging.model.CancelTaskRequest;
 import eu.h2020.symbiote.enabler.messaging.model.CancelTaskResponse;
+import eu.h2020.symbiote.enabler.messaging.model.EnablerLogicDataAppearedMessage;
+import eu.h2020.symbiote.enabler.messaging.model.PlatformProxyTaskInfo;
 import eu.h2020.symbiote.enabler.messaging.model.ProblematicResourcesMessage;
 import eu.h2020.symbiote.enabler.messaging.model.ResourceManagerAcquisitionStartRequest;
 import eu.h2020.symbiote.enabler.messaging.model.ResourceManagerAcquisitionStartResponse;
@@ -120,7 +122,6 @@ public class EnablerLogicTest {
         assertThat(request).isSameAs(expectedRequest);
     }    
 
-    // ProblematicResourcesMessage
     @Test
     public void reportBrokenResource_shouldCallRabbitManager() throws Exception {
         // given
@@ -134,6 +135,30 @@ public class EnablerLogicTest {
                 eq(props.getExchange().getResourceManager().getName()),
                 eq(props.getKey().getResourceManager().getWrongData()),
                 eq((Object) message));
+    }
+    
+    @Test
+    public void readResource_shouldReturnResponse() throws Exception {
+        // given
+        ArgumentCaptor<PlatformProxyTaskInfo> captor =
+            ArgumentCaptor.forClass(PlatformProxyTaskInfo.class);
+        PlatformProxyTaskInfo expectedRequest = new PlatformProxyTaskInfo();
+        EnablerLogicDataAppearedMessage response = new EnablerLogicDataAppearedMessage();
+        when(rabbitManager.sendRpcMessage(
+            eq(props.getExchange().getEnablerPlatformProxy().getName()),
+            eq(props.getKey().getEnablerPlatformProxy().getSingleReadRequested()),
+            any(PlatformProxyTaskInfo.class))).thenReturn(response);
+
+        // when
+        EnablerLogicDataAppearedMessage readResponse = enablerLogic.readResource(expectedRequest);
+
+        // then
+        verify(rabbitManager).sendRpcMessage(eq(props.getExchange().getEnablerPlatformProxy().getName()),
+            eq(props.getKey().getEnablerPlatformProxy().getSingleReadRequested()),
+            captor.capture());
+        PlatformProxyTaskInfo request = captor.getValue();
+        assertThat(request).isSameAs(expectedRequest);
+        assertThat(readResponse).isSameAs(response);
     }
 
 

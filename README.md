@@ -117,6 +117,10 @@ resources for specified acquisition taskId.
 this method is called when Resource Manager component has updated resources 
 for specified acquisition taskId.
 
+- `public EnablerLogicDataAppearedMessage readResource(PlatformProxyTaskInfo info)` -
+this method sends request to Platform Proxy to read resource and return 
+result.
+
 #### Enabler Logic communicating with Resource Manager or Platform Proxy components
 
 - `public ResourceManagerAcquisitionStartResponse queryResourceManager(ResourceManagerTaskInfoRequest...requests)` - 

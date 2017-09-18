@@ -11,6 +11,8 @@ import org.springframework.stereotype.Service;
 
 import eu.h2020.symbiote.enabler.messaging.model.CancelTaskRequest;
 import eu.h2020.symbiote.enabler.messaging.model.CancelTaskResponse;
+import eu.h2020.symbiote.enabler.messaging.model.EnablerLogicDataAppearedMessage;
+import eu.h2020.symbiote.enabler.messaging.model.PlatformProxyTaskInfo;
 import eu.h2020.symbiote.enabler.messaging.model.ProblematicResourcesMessage;
 import eu.h2020.symbiote.enabler.messaging.model.ResourceManagerAcquisitionStartRequest;
 import eu.h2020.symbiote.enabler.messaging.model.ResourceManagerAcquisitionStartResponse;
@@ -220,4 +222,18 @@ public class EnablerLogic {
                 props.getKey().getResourceManager().getWrongData(),
                 message);
     }
+    
+    /**
+     * Send request to Platform Proxy to read resource and return result.
+     * 
+     * @param info requested resource info
+     * @return reading result
+     */
+    public EnablerLogicDataAppearedMessage readResource(PlatformProxyTaskInfo info) {
+        return (EnablerLogicDataAppearedMessage) rabbitManager.sendRpcMessage(
+                props.getExchange().getEnablerPlatformProxy().getName(),
+                props.getKey().getEnablerPlatformProxy().getSingleReadRequested(),
+                info);
+    }
+    
 }

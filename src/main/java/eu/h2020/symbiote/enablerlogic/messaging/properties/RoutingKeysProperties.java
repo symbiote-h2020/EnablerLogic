@@ -55,6 +55,7 @@ public class RoutingKeysProperties {
     public static class PlatformProxyKeys {
         private String acquisitionStartRequested = "symbIoTe.enablerPlatformProxy.acquisitionStartRequested";
         private String acquisitionStopRequested = "symbIoTe.enablerPlatformProxy.acquisitionStopRequested";
+        private String singleReadRequested = "symbIoTe.enablerPlatformProxy.singleReadRequested";
 
     }
 }
