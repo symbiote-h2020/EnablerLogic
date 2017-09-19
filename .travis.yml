@@ -21,6 +21,8 @@ cache:
 before_script:
 - chmod a+x merge_script.sh
 - "./merge_script.sh"
+script:
+- ./gradlew check --info
 after_success:
 - chmod a+x pushing_script.sh
 - "./pushing_script.sh"
