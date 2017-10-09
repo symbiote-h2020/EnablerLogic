@@ -195,14 +195,14 @@ public class EnablerLogicTest {
     public void sendingAsyncMessageToEnablerLogic_shouldCallRabbitManager() throws Exception {
         // given
         String message = "test message";
-        String enablerName = "enabler name";
+        String enablerName = "destEnablerName";
 
         // when
         enablerLogic.sendAsyncMessageToEnablerLogic(enablerName, message);
 
         // then
         verify(rabbitManager).sendMessage(eq("symbIoTe.enablerLogic"),
-            eq("symbIoTe.enablerLogic.asyncMessageToEnablerLogic.DefaultEnablerName"),
+            eq("symbIoTe.enablerLogic.asyncMessageToEnablerLogic.destEnablerName"),
             eq((Object) message));
     }
 
@@ -216,11 +216,11 @@ public class EnablerLogicTest {
     public void sendingSyncMessageToEnablerLogic_shouldCallRabbitManagerAndReturnResponse() throws Exception {
         // given
         String sendMessage = "test message";
-        String enablerName = "enabler name";
+        String enablerName = "destEnablerName";
         ReceivedMessage mockReceiveMessage = new ReceivedMessage("received message");
 
         when(rabbitManager.sendRpcMessage("symbIoTe.enablerLogic",
-            "symbIoTe.enablerLogic.syncMessageToEnablerLogic.DefaultEnablerName",
+            "symbIoTe.enablerLogic.syncMessageToEnablerLogic.destEnablerName",
             (Object) sendMessage)).thenReturn(mockReceiveMessage);
 
         // when
@@ -234,11 +234,11 @@ public class EnablerLogicTest {
     public void sendingSyncMessageToEnablerLogicAndExpectingVoid_shouldCallRabbitManagerAndReturnVoidResponse() throws Exception {
         // given
         String sendMessage = "test message";
-        String enablerName = "enabler name";
+        String enablerName = "destEnablerName";
         VoidResponse mockReceiveMessage = new VoidResponse();
 
         when(rabbitManager.sendRpcMessage("symbIoTe.enablerLogic",
-            "symbIoTe.enablerLogic.syncMessageToEnablerLogic.DefaultEnablerName",
+            "symbIoTe.enablerLogic.syncMessageToEnablerLogic.destEnablerName",
             (Object) sendMessage)).thenReturn(mockReceiveMessage);
 
         // when
@@ -286,10 +286,10 @@ public class EnablerLogicTest {
     public void sendingSyncMessageToEnablerLogic_whenReturnedWrongObjectType_shouldCallRabbitManagerAndThrowException() throws Exception {
         // given
         String sendMessage = "test message";
-        String enablerName = "enabler name";
+        String enablerName = "destEnablerName";
 
         when(rabbitManager.sendRpcMessage("symbIoTe.enablerLogic",
-            "symbIoTe.enablerLogic.syncMessageToEnablerLogic.DefaultEnablerName",
+            "symbIoTe.enablerLogic.syncMessageToEnablerLogic.destEnablerName",
             (Object) sendMessage)).thenReturn(Long.valueOf(1));
 
         assertThatThrownBy(() -> {

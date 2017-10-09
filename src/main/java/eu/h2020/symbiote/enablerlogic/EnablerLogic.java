@@ -173,13 +173,13 @@ public class EnablerLogic {
      */
     public void sendAsyncMessageToEnablerLogic(String enablerName, Object msg) {
         rabbitManager.sendMessage(props.getEnablerLogicExchange().getName(),
-            generateAsyncEnablerLogicRoutingKey(),
+            generateAsyncEnablerLogicRoutingKey(enablerName),
             msg);
     }
 
-    private String generateAsyncEnablerLogicRoutingKey() {
+    private String generateAsyncEnablerLogicRoutingKey(String enablerName) {
         return props.getKey().getEnablerLogic().getAsyncMessageToEnablerLogic() + "." +
-            props.getEnablerName();
+            enablerName;
     }
 
     /**
@@ -195,7 +195,7 @@ public class EnablerLogic {
     @SuppressWarnings("unchecked")
     public <O> O sendSyncMessageToEnablerLogic(String enablerName, Object msg, Class<O> clazz) {
         Object response = rabbitManager.sendRpcMessage(props.getEnablerLogicExchange().getName(),
-            generateSyncEnablerLogicRoutingKey(),
+            generateSyncEnablerLogicRoutingKey(enablerName),
             msg);
 
         if(response == null)
@@ -207,9 +207,9 @@ public class EnablerLogic {
         throw new WrongResponseException(response);
     }
 
-    private String generateSyncEnablerLogicRoutingKey() {
+    private String generateSyncEnablerLogicRoutingKey(String enablerName) {
         return props.getKey().getEnablerLogic().getSyncMessageToEnablerLogic() + "." +
-            props.getEnablerName();
+            enablerName;
     }
 
     /**
