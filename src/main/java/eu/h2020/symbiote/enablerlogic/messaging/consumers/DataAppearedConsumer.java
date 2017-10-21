@@ -32,7 +32,7 @@ public class DataAppearedConsumer {
 
     @RabbitListener(bindings = @QueueBinding(
         value = @Queue,
-        exchange = @Exchange(value = "#{enablerLogicProperties.enablerLogicExchange.name}", type = "topic"),
+        exchange = @Exchange(value = "#{enablerLogicProperties.enablerLogicExchange.name}", type = "topic", ignoreDeclarationExceptions = "true"),
         key = "#{enablerLogicProperties.key.enablerLogic.dataAppeared}"
     ))
     public void dataAppeared(EnablerLogicDataAppearedMessage dataAppearedMessage) throws IOException {

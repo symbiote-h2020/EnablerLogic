@@ -1,6 +1,7 @@
 package eu.h2020.symbiote.enablerlogic.rap.plugin;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.mockito.Matchers.anyList;
@@ -19,10 +20,13 @@ import org.junit.runner.RunWith;
 import org.mockito.Mockito;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.amqp.core.ExchangeBuilder;
 import org.springframework.amqp.core.Message;
 import org.springframework.amqp.core.MessageProperties;
+import org.springframework.amqp.core.QueueBuilder;
 import org.springframework.amqp.rabbit.connection.Connection;
 import org.springframework.amqp.rabbit.connection.ConnectionFactory;
+import org.springframework.amqp.rabbit.core.RabbitAdmin;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
@@ -94,6 +98,9 @@ public class RapPluginAccessTest extends EmbeddedRabbitFixture {
     @Autowired
     private ApplicationContext ctx;
     
+    @Autowired
+    private RabbitAdmin rabbitAdmin;
+    
     @Before
     public void initialize() throws Exception {
         LOG.debug("All beans - names: {}", String.join(", ", ctx.getBeanDefinitionNames()));
@@ -116,10 +123,10 @@ public class RapPluginAccessTest extends EmbeddedRabbitFixture {
     }
     
     private void createRabbitResources() throws IOException {
-        rabbitTemplate.setReceiveTimeout(RECEIVE_TIMEOUT);
-        channel.exchangeDeclare(PLUGIN_REGISTRATION_EXCHANGE, "topic", true, false, false, null);
-        channel.exchangeDeclare(PLUGIN_EXCHANGE, "topic", true, false, false, null);
-        channel.queueDeclare(RAP_QUEUE_NAME, true, false, false, null);
+        rabbitAdmin.declareExchange(ExchangeBuilder.topicExchange(PLUGIN_REGISTRATION_EXCHANGE).build());
+        rabbitAdmin.declareExchange(ExchangeBuilder.topicExchange(PLUGIN_EXCHANGE).build());
+        rabbitAdmin.declareQueue(QueueBuilder.durable(RAP_QUEUE_NAME).build());
+        rabbitAdmin.purgeQueue(RAP_QUEUE_NAME, true);
     }
 
     @After
@@ -128,9 +135,9 @@ public class RapPluginAccessTest extends EmbeddedRabbitFixture {
     }
 
     private void cleanRabbitResources() throws IOException {
-        channel.exchangeDelete(PLUGIN_REGISTRATION_EXCHANGE);
+//      channel.exchangeDelete(PLUGIN_REGISTRATION_EXCHANGE);
         channel.queueDelete(RAP_QUEUE_NAME);
-        channel.exchangeDelete(PLUGIN_EXCHANGE);
+//        channel.exchangeDelete(PLUGIN_EXCHANGE);
     }
 
     @Test @DirtiesContext
@@ -259,7 +266,8 @@ public class RapPluginAccessTest extends EmbeddedRabbitFixture {
         Object returnedJson = rabbitTemplate.convertSendAndReceive(PLUGIN_EXCHANGE, routingKey, json);          
     
         //then
-        assertNull(returnedJson);
+        assertEquals(null, returnedJson);
+        //assertNull(returnedJson);
     }
 
     @Test @DirtiesContext
