@@ -11,9 +11,14 @@ import java.util.List;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.springframework.amqp.core.Binding;
+import org.springframework.amqp.core.Binding.DestinationType;
+import org.springframework.amqp.core.ExchangeBuilder;
 import org.springframework.amqp.core.Message;
+import org.springframework.amqp.core.QueueBuilder;
 import org.springframework.amqp.rabbit.connection.Connection;
 import org.springframework.amqp.rabbit.connection.ConnectionFactory;
+import org.springframework.amqp.rabbit.core.RabbitAdmin;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
@@ -22,7 +27,6 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.junit4.SpringRunner;
-
 import com.jayway.jsonpath.DocumentContext;
 import com.jayway.jsonpath.JsonPath;
 import com.rabbitmq.client.Channel;
@@ -70,6 +74,9 @@ public class RapPluginRegistrationTest extends EmbeddedRabbitFixture {
     @Autowired
     private ConnectionFactory factory;
     
+    @Autowired
+    private RabbitAdmin rabbitAdmin;
+    
     private Connection connection;
     private Channel channel;
 
@@ -83,14 +90,16 @@ public class RapPluginRegistrationTest extends EmbeddedRabbitFixture {
     }
 
     private void createRabbitResources() throws IOException {
-        channel.exchangeDeclare(PLUGIN_REGISTRATION_EXCHANGE, "topic", true, true, false, null);
-        channel.queueDeclare(PLUGIN_REGISTRATION_QUEUE_NAME, true, false, false, null);
-        channel.queueBind(PLUGIN_REGISTRATION_QUEUE_NAME, PLUGIN_REGISTRATION_EXCHANGE, PLUGIN_REGISTRATION_KEY);
+        rabbitAdmin.declareExchange(ExchangeBuilder.topicExchange(PLUGIN_REGISTRATION_EXCHANGE).build());
+        rabbitAdmin.declareQueue(QueueBuilder.durable(PLUGIN_REGISTRATION_QUEUE_NAME).build());
+        rabbitAdmin.purgeQueue(PLUGIN_REGISTRATION_QUEUE_NAME, true);
+        rabbitAdmin.declareBinding(new Binding(PLUGIN_REGISTRATION_QUEUE_NAME, DestinationType.QUEUE, 
+                PLUGIN_REGISTRATION_EXCHANGE, PLUGIN_REGISTRATION_KEY, null));
     }
 
     private void cleanRabbitResources() throws IOException {
-        channel.queueDelete(PLUGIN_REGISTRATION_QUEUE_NAME);
-        channel.exchangeDelete(PLUGIN_REGISTRATION_EXCHANGE);
+        rabbitAdmin.deleteQueue(PLUGIN_REGISTRATION_QUEUE_NAME);
+        rabbitAdmin.deleteExchange(PLUGIN_REGISTRATION_EXCHANGE);
     }
 
 
