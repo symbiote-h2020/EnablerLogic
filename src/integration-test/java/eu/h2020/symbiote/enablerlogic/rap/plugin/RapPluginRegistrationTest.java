@@ -6,7 +6,6 @@ import static org.junit.Assert.assertNotNull;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
-import java.util.List;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -31,7 +30,6 @@ import com.jayway.jsonpath.DocumentContext;
 import com.jayway.jsonpath.JsonPath;
 import com.rabbitmq.client.Channel;
 
-import eu.h2020.symbiote.cloud.model.data.observation.Observation;
 import eu.h2020.symbiote.enablerlogic.messaging.RabbitManager;
 import eu.h2020.symbiote.enablerlogic.messaging.consumers.EmbeddedRabbitFixture;
 import eu.h2020.symbiote.enablerlogic.messaging.consumers.TestingRabbitConfig;
@@ -104,7 +102,7 @@ public class RapPluginRegistrationTest extends EmbeddedRabbitFixture {
 
 
     @Test
-    public void platformRegistration_shouldSendMessageToRatStartup() throws Exception {
+    public void platformRegistration_shouldSendMessageToRapAtStartup() throws Exception {
         //given
     
         // when
@@ -120,5 +118,22 @@ public class RapPluginRegistrationTest extends EmbeddedRabbitFixture {
         assertThat(ctx).jsonPathAsString("platformId").isEqualTo("platId");
         assertThat(ctx).jsonPathAsBoolean("hasFilters").isFalse();
         assertThat(ctx).jsonPathAsBoolean("hasNotifications").isTrue();
+    }
+
+    @Test
+    public void platformUnregistration_shouldSendMessageToRapAtShoutdown() throws Exception {
+        //given
+    
+        // when
+        rapPlugin.stop();
+    
+        //then
+        Message message = rabbitTemplate.receive(PLUGIN_REGISTRATION_QUEUE_NAME, RECEIVE_TIMEOUT);
+        assertNotNull(message);
+        
+        String jsonBody = new String(message.getBody(), StandardCharsets.UTF_8);
+        DocumentContext ctx = JsonPath.parse(jsonBody);
+        assertThat(ctx).jsonPathAsString("type").isEqualTo("UNREGISTER_PLUGIN");
+        assertThat(ctx).jsonPathAsString("platformId").isEqualTo("platId");
     }
 }

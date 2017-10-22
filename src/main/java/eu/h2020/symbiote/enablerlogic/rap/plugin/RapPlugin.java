@@ -39,6 +39,7 @@ import eu.h2020.symbiote.enabler.messaging.model.rap.access.ResourceAccessSubscr
 import eu.h2020.symbiote.enabler.messaging.model.rap.access.ResourceAccessUnSubscribeMessage;
 import eu.h2020.symbiote.enabler.messaging.model.rap.db.ResourceInfo;
 import eu.h2020.symbiote.enabler.messaging.model.rap.registration.RegisterPluginMessage;
+import eu.h2020.symbiote.enabler.messaging.model.rap.registration.UnregisterPluginMessage;
 import eu.h2020.symbiote.enablerlogic.messaging.RabbitManager;
 import eu.h2020.symbiote.enablerlogic.messaging.properties.EnablerLogicProperties;
 import eu.h2020.symbiote.enablerlogic.rap.resources.RapDefinitions;
@@ -251,6 +252,17 @@ public class RapPlugin implements SmartLifecycle {
         }
     }
     
+    private void unregisterPlugin(String platformId) {
+        try {
+            UnregisterPluginMessage msg = new UnregisterPluginMessage(platformId);
+
+            rabbitManager.sendMessage(RapDefinitions.PLUGIN_REGISTRATION_EXCHANGE_OUT, 
+                    RapDefinitions.PLUGIN_REGISTRATION_KEY, msg);
+        } catch (Exception e ) {
+            LOG.error("Error while unregistering plugin for platform " + platformId + "\n" + e);
+        }
+    }
+    
     public void registerReadingResourceListener(ReadingResourceListener listener) {
         this.readingResourceListener = listener;
     }
@@ -329,7 +341,7 @@ public class RapPlugin implements SmartLifecycle {
 
     @Override
     public void stop() {
-        // TODO unregisterPlugin()
+        unregisterPlugin(enablerName);
     }
 
     @Override
