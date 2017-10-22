@@ -200,7 +200,7 @@ public class RapPlugin implements SmartLifecycle {
     }
 
     
-    // klasa koja šalje je ResourceAccessRestController
+    // class which sends this is ResourceAccessRestController
     public String receiveMessage(String message) {
         String json = null;
         try {            
@@ -310,7 +310,7 @@ public class RapPlugin implements SmartLifecycle {
         notificationResourceListener.unsubscribeResource(resourceId);
     }
     
-    // SmartLifecycle methods
+    // Spring SmartLifecycle methods
     @Override
     public boolean isAutoStartup() {
         return true;

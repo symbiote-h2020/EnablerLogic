@@ -64,5 +64,4 @@ public class RegistrationHandlerClientService {
             throw new RuntimeException(e);
         }
     }
-
 }
