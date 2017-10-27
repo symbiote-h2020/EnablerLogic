@@ -13,7 +13,7 @@ import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 
 import eu.h2020.symbiote.cloud.model.data.Result;
-import eu.h2020.symbiote.cloud.model.data.observation.Observation;
+import eu.h2020.symbiote.model.cim.Observation;
 
 @RunWith(MockitoJUnitRunner.class)
 public class RapPluginTest {

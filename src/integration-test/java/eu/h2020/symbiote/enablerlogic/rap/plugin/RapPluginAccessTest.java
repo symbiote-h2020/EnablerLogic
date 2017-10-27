@@ -44,8 +44,7 @@ import com.fasterxml.jackson.databind.SerializationFeature;
 import com.rabbitmq.client.Channel;
 
 import eu.h2020.symbiote.cloud.model.data.Result;
-import eu.h2020.symbiote.cloud.model.data.observation.Observation;
-import eu.h2020.symbiote.cloud.model.data.parameter.InputParameter;
+import eu.h2020.symbiote.cloud.model.data.InputParameter;
 import eu.h2020.symbiote.enabler.messaging.model.rap.access.ResourceAccessGetMessage;
 import eu.h2020.symbiote.enabler.messaging.model.rap.access.ResourceAccessHistoryMessage;
 import eu.h2020.symbiote.enabler.messaging.model.rap.access.ResourceAccessSetMessage;
@@ -59,6 +58,8 @@ import eu.h2020.symbiote.enablerlogic.messaging.properties.PluginProperties;
 import eu.h2020.symbiote.enablerlogic.messaging.properties.RabbitConnectionProperties;
 import eu.h2020.symbiote.enablerlogic.messaging.properties.RoutingKeysProperties;
 import eu.h2020.symbiote.enablerlogic.rap.resources.RapDefinitions;
+import eu.h2020.symbiote.model.cim.Observation;
+import eu.h2020.symbiote.model.cim.ObservationValue;
 
 @RunWith(SpringRunner.class)
 @Import({RabbitManager.class,

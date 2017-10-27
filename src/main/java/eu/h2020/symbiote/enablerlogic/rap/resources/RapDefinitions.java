@@ -15,6 +15,6 @@ public class RapDefinitions {
 
     public static final String      PLUGIN_EXCHANGE_IN = "plugin-exchange";
     
-//    public static final String      PLUGIN_NOTIFICATION_EXCHANGE_OUT = "symbIoTe.rapPluginExchange-notification";
-//    public static final String      PLUGIN_NOTIFICATION_KEY = "symbIoTe.rapPluginExchange.plugin-notification";
+    public static final String      PLUGIN_NOTIFICATION_EXCHANGE_OUT = "symbIoTe.rapPluginExchange-notification";
+    public static final String      PLUGIN_NOTIFICATION_KEY = "symbIoTe.rapPluginExchange.plugin-notification";
 }

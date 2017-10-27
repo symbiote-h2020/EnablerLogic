@@ -2,8 +2,8 @@ package eu.h2020.symbiote.enablerlogic.rap.plugin;
 
 import java.util.List;
 
+import eu.h2020.symbiote.cloud.model.data.InputParameter;
 import eu.h2020.symbiote.cloud.model.data.Result;
-import eu.h2020.symbiote.cloud.model.data.parameter.InputParameter;
 
 public interface WritingToResourceListener {
     /**  

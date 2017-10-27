@@ -2,7 +2,7 @@ package eu.h2020.symbiote.enablerlogic.rap.plugin;
 
 import java.util.List;
 
-import eu.h2020.symbiote.cloud.model.data.observation.Observation;
+import eu.h2020.symbiote.model.cim.Observation;
 
 public interface ReadingResourceListener {
     /**  

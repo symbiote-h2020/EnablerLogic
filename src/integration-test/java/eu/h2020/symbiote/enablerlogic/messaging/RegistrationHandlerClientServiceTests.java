@@ -29,9 +29,9 @@ import com.github.tomakehurst.wiremock.matching.StringValuePattern;
 
 import eu.h2020.symbiote.cloud.model.CloudResourceParams;
 import eu.h2020.symbiote.cloud.model.internal.CloudResource;
-import eu.h2020.symbiote.core.model.WGS84Location;
-import eu.h2020.symbiote.core.model.resources.FeatureOfInterest;
-import eu.h2020.symbiote.core.model.resources.StationarySensor;
+import eu.h2020.symbiote.model.cim.WGS84Location;
+import eu.h2020.symbiote.model.cim.FeatureOfInterest;
+import eu.h2020.symbiote.model.cim.StationarySensor;
 import eu.h2020.symbiote.enablerlogic.messaging.consumers.EmbeddedRabbitFixture;
 import eu.h2020.symbiote.enablerlogic.messaging.consumers.TestingRabbitConfig;
 
@@ -338,16 +338,16 @@ public class RegistrationHandlerClientServiceTests extends EmbeddedRabbitFixture
         resource.setCloudMonitoringHost("cloudMonitoringHostIP");
         StationarySensor sensor = new StationarySensor();
         resource.setResource(sensor);
-        sensor.setLabels(Arrays.asList("lamp"));
-        sensor.setComments(Arrays.asList("A comment"));
+        sensor.setName("lamp");
+        sensor.setDescription(Arrays.asList("A comment"));
         sensor.setInterworkingServiceURL("https://symbiote-h2020.eu/example/interworkingService/");
         sensor.setLocatedAt(new WGS84Location(2.349014, 48.864716, 15, 
-                Arrays.asList("Paris"), 
+                "Paris", 
                 Arrays.asList("This is Paris")));
         FeatureOfInterest featureOfInterest = new FeatureOfInterest();
         sensor.setFeatureOfInterest(featureOfInterest);
-        featureOfInterest.setLabels(Arrays.asList("Room1"));
-        featureOfInterest.setComments(Arrays.asList("This is room 1"));
+        featureOfInterest.setName("Room1");
+        featureOfInterest.setDescription(Arrays.asList("This is room 1"));
         featureOfInterest.setHasProperty(Arrays.asList("temperature"));
         sensor.setObservesProperty(Arrays.asList("temperature,humidity".split(",")));
         CloudResourceParams cloudResourceParams = new CloudResourceParams();

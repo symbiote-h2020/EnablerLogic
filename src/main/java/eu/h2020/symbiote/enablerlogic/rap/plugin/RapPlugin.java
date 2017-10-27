@@ -29,8 +29,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 
 import eu.h2020.symbiote.cloud.model.data.Result;
-import eu.h2020.symbiote.cloud.model.data.observation.Observation;
-import eu.h2020.symbiote.cloud.model.data.parameter.InputParameter;
+import eu.h2020.symbiote.cloud.model.data.InputParameter;
 import eu.h2020.symbiote.enabler.messaging.model.rap.access.ResourceAccessGetMessage;
 import eu.h2020.symbiote.enabler.messaging.model.rap.access.ResourceAccessHistoryMessage;
 import eu.h2020.symbiote.enabler.messaging.model.rap.access.ResourceAccessMessage;
@@ -43,6 +42,7 @@ import eu.h2020.symbiote.enabler.messaging.model.rap.registration.UnregisterPlug
 import eu.h2020.symbiote.enablerlogic.messaging.RabbitManager;
 import eu.h2020.symbiote.enablerlogic.messaging.properties.EnablerLogicProperties;
 import eu.h2020.symbiote.enablerlogic.rap.resources.RapDefinitions;
+import eu.h2020.symbiote.model.cim.Observation;
 import lombok.Getter;
 
 /**
