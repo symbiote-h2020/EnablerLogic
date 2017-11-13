@@ -45,7 +45,8 @@ public class SyncMessageFromEnablerLogicConsumer {
         key = "#{enablerLogicProperties.key.enablerLogic.syncMessageToEnablerLogic}.#{enablerLogicProperties.enablerName}"
     ))
     public Object receivedSyncMessage(Message msg) throws IOException {
-        LOG.info("Consumer receivedSyncMessage: " + msg);
+        LOG.info("Consumer receivedSyncMessage with properties: " + msg.getMessageProperties());
+//        LOG.info("Consumer receivedSyncMessage: " + msg); // gdb: Commented this one out as it causes OOM exceptions for me with large messages
 
         Object request = messageConverter.fromMessage(msg);
         String className = request.getClass().getName();
