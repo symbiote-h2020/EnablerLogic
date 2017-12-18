@@ -92,6 +92,7 @@ public class EnablerLogicConfiguration implements ApplicationContextAware, Smart
                 }
             }
             
+            LOG.debug("RegistrationHandler at {}", si.get(0).getUri());           
             processingLogic.forEach((pl) -> pl.initialization(enablerLogic));
             running = true;
         }).start();
