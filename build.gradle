@@ -83,7 +83,7 @@ dependencies {
     compile('org.springframework.boot:spring-boot-starter-data-rest')
 
     //compile('eu.h2020.symbiote:SymbIoTeLibraries:1.0.1-SNAPSHOT') { changing = true }
-    compile('com.github.symbiote-h2020:SymbIoTeLibraries:3.+') { changing = true }
+    compile('com.github.symbiote-h2020:SymbIoTeLibraries:4.+') { changing = true }
     
     compileOnly('org.projectlombok:lombok')
 
