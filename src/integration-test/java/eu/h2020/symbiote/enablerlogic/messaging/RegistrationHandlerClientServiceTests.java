@@ -32,7 +32,7 @@ import eu.h2020.symbiote.cloud.model.internal.CloudResource;
 import eu.h2020.symbiote.model.cim.WGS84Location;
 import eu.h2020.symbiote.model.cim.FeatureOfInterest;
 import eu.h2020.symbiote.model.cim.StationarySensor;
-import eu.h2020.symbiote.enablerlogic.messaging.consumers.EmbeddedRabbitFixture;
+import eu.h2020.symbiote.enablerlogic.EmbeddedRabbitFixture;
 import eu.h2020.symbiote.enablerlogic.messaging.consumers.TestingRabbitConfig;
 
 @RunWith(SpringRunner.class)

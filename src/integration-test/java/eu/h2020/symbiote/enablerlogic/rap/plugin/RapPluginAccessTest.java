@@ -49,8 +49,8 @@ import eu.h2020.symbiote.enabler.messaging.model.rap.access.ResourceAccessGetMes
 import eu.h2020.symbiote.enabler.messaging.model.rap.access.ResourceAccessHistoryMessage;
 import eu.h2020.symbiote.enabler.messaging.model.rap.access.ResourceAccessSetMessage;
 import eu.h2020.symbiote.enabler.messaging.model.rap.db.ResourceInfo;
+import eu.h2020.symbiote.enablerlogic.EmbeddedRabbitFixture;
 import eu.h2020.symbiote.enablerlogic.messaging.RabbitManager;
-import eu.h2020.symbiote.enablerlogic.messaging.consumers.EmbeddedRabbitFixture;
 import eu.h2020.symbiote.enablerlogic.messaging.consumers.TestingRabbitConfig;
 import eu.h2020.symbiote.enablerlogic.messaging.properties.EnablerLogicProperties;
 import eu.h2020.symbiote.enablerlogic.messaging.properties.ExchangeProperties;
