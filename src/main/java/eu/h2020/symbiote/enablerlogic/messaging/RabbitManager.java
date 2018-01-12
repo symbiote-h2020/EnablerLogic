@@ -97,6 +97,30 @@ public class RabbitManager {
      * @return response from the consumer or null if timeout occurs
      */
     public String sendRpcMessage(String exchange, String routingKey, String stringMessage) {
+        return sendRpcMessage(exchange, routingKey, stringMessage, REPLY_TIMEOUT);
+    }
+
+    /**
+     * Method used to send message via RPC (Remote Procedure Call) pattern. In this
+     * implementation it covers asynchronous Rabbit communication with synchronous
+     * one, as it is used by conventional REST facade. Before sending a message, a
+     * temporary response queue is declared and its name is passed along with the
+     * message. When a consumer handles the message, it returns the result via the
+     * response queue. Since this is a synchronous pattern, it uses specified timeout
+     * in milliseconds. If the response doesn't come in that time, the method returns with
+     * null result.
+     *
+     * @param exchange
+     *            name of the exchange to send message to
+     * @param routingKey
+     *            routing key to send message to
+     * @param stringMessage
+     *            message to be sent
+     * @param timeout
+     *            timeout in milliseconds
+     * @return response from the consumer or null if timeout occurs
+     */
+    public String sendRpcMessage(String exchange, String routingKey, String stringMessage, int timeout) {
         LOG.info("Sending RPC message: {}", stringMessage);
 
         String correlationId = UUID.randomUUID().toString();
@@ -107,7 +131,7 @@ public class RabbitManager {
                 .setCorrelationIdString(correlationId)
                 .build()
             );
-        rabbitTemplate.setReplyTimeout(REPLY_TIMEOUT);
+        rabbitTemplate.setReplyTimeout(timeout);
         Message receivedMessage = rabbitTemplate.sendAndReceive(exchange, routingKey, sendMessage);
         if(receivedMessage == null) {
             LOG.info("Timeout in RPC receiving. Send: {}", sendMessage);
@@ -120,6 +144,7 @@ public class RabbitManager {
         LOG.info("client received: {}", body);
         return new String(body, StandardCharsets.UTF_8);
     }
+
 
     /**
      * Method used to send message via RPC (Remote Procedure Call) pattern. In this
@@ -141,10 +166,35 @@ public class RabbitManager {
      * @return response from the consumer or null if timeout occurs
      */
     public Object sendRpcMessage(String exchange, String routingKey, Object obj) {
+        return sendRpcMessage(exchange, routingKey, obj, REPLY_TIMEOUT);
+    }
+    
+    /**
+     * Method used to send message via RPC (Remote Procedure Call) pattern. In this
+     * implementation it covers asynchronous Rabbit communication with synchronous
+     * one, as it is used by conventional REST facade. Before sending a message, a
+     * temporary response queue is declared and its name is passed along with the
+     * message. When a consumer handles the message, it returns the result via the
+     * response queue. Since this is a synchronous pattern, it uses specified timeout
+     * in milliseconds. If the response doesn't come in that time, the method returns with
+     * null result.
+     *
+     * @param exchange
+     *            name of the exchange to send message to
+     * @param routingKey
+     *            routing key to send message to
+     * @param obj
+     *            object content is mapped to JSON String by using Jackson2 and send
+     *            as payload
+     * @param timeout
+     *            timeout in milis
+     * @return response from the consumer or null if timeout occurs
+     */
+    public Object sendRpcMessage(String exchange, String routingKey, Object obj, int timeout) {
         LOG.info("Sending RPC obj: {}", obj);
 
         String correlationId = UUID.randomUUID().toString();
-        rabbitTemplate.setReplyTimeout(REPLY_TIMEOUT);
+        rabbitTemplate.setReplyTimeout(timeout);
         Object receivedObj = rabbitTemplate.convertSendAndReceive(exchange, routingKey, obj, new CorrelationData(correlationId));
         if(receivedObj == null) {
             LOG.info("Timeout in RPC receiving obj. Send: {}", obj);
@@ -155,4 +205,5 @@ public class RabbitManager {
 
         return receivedObj;
     }
+
 }
