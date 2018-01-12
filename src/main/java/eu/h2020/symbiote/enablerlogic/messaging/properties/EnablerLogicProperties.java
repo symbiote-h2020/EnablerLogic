@@ -50,4 +50,8 @@ public class EnablerLogicProperties {
     public PluginProperties getPlugin() {
         return pluginProperties;
     }
+    
+    public String getEnablerName() {
+        return enablerName;
+    }
 }
