@@ -2,14 +2,21 @@ package eu.h2020.symbiote.enablerlogic.messaging;
 
 import java.nio.charset.StandardCharsets;
 import java.util.UUID;
+import java.util.concurrent.ExecutionException;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.amqp.core.Message;
 import org.springframework.amqp.core.MessagePropertiesBuilder;
+import org.springframework.amqp.core.Queue;
+import org.springframework.amqp.rabbit.AsyncRabbitTemplate;
+import org.springframework.amqp.rabbit.AsyncRabbitTemplate.RabbitConverterFuture;
+import org.springframework.amqp.rabbit.AsyncRabbitTemplate.RabbitMessageFuture;
+import org.springframework.amqp.rabbit.core.RabbitAdmin;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
-import org.springframework.amqp.rabbit.support.CorrelationData;
+import org.springframework.amqp.rabbit.listener.SimpleMessageListenerContainer;
 import org.springframework.amqp.support.converter.Jackson2JsonMessageConverter;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -29,7 +36,9 @@ public class RabbitManager {
     private static final int REPLY_TIMEOUT = 20_000;
 
     private RabbitTemplate rabbitTemplate;
+    private AsyncRabbitTemplate asyncRabbitTemplate;
 
+    @Autowired
     public RabbitManager(RabbitTemplate rabbitTemplate) {
         this.rabbitTemplate = rabbitTemplate;
         ObjectMapper mapper = new ObjectMapper();
@@ -37,6 +46,21 @@ public class RabbitManager {
         mapper.setSerializationInclusion(JsonInclude.Include.NON_EMPTY);
         Jackson2JsonMessageConverter messageConverter = new Jackson2JsonMessageConverter(mapper);
         rabbitTemplate.setMessageConverter(messageConverter);
+
+        SimpleMessageListenerContainer container = new SimpleMessageListenerContainer(rabbitTemplate.getConnectionFactory());
+        String replyQueueName = "EnablerLogoc-replayTo-" + UUID.randomUUID().toString();
+        RabbitAdmin admin = new RabbitAdmin(rabbitTemplate.getConnectionFactory());
+        Queue queue = new Queue(replyQueueName);
+        admin.declareQueue(queue);
+        container.setQueueNames(replyQueueName);
+        
+        asyncRabbitTemplate = new AsyncRabbitTemplate(rabbitTemplate, container);
+        asyncRabbitTemplate.start();
+    }
+    
+    public RabbitManager(RabbitTemplate rabbitTemplate, AsyncRabbitTemplate asyncRabbitTemplate) {
+        this.rabbitTemplate = rabbitTemplate;
+        this.asyncRabbitTemplate = asyncRabbitTemplate;
     }
 
     /**
@@ -131,20 +155,25 @@ public class RabbitManager {
                 .setCorrelationIdString(correlationId)
                 .build()
             );
-        rabbitTemplate.setReplyTimeout(timeout);
-        Message receivedMessage = rabbitTemplate.sendAndReceive(exchange, routingKey, sendMessage);
-        if(receivedMessage == null) {
-            LOG.info("Timeout in RPC receiving. Send: {}", sendMessage);
+        
+        RabbitMessageFuture rabbitMessageFuture;
+        synchronized (this) {
+            asyncRabbitTemplate.setReceiveTimeout(timeout);
+            rabbitMessageFuture = asyncRabbitTemplate.sendAndReceive(exchange, routingKey, sendMessage);
+        }
+        Message receivedMessage = null;
+        try {
+            receivedMessage = rabbitMessageFuture.get();
+            LOG.info("RPC Response received: " + receivedMessage);
+            
+            byte[] body = receivedMessage.getBody();
+            LOG.info("client received: {}", body);
+            return new String(body, StandardCharsets.UTF_8);
+        } catch (InterruptedException | ExecutionException e) {
+            LOG.error("Exception in RPC receiving. Send: " + sendMessage, e);
             return null;
         }
-
-        LOG.info("RPC Response received: " + receivedMessage);
-
-        byte[] body = receivedMessage.getBody();
-        LOG.info("client received: {}", body);
-        return new String(body, StandardCharsets.UTF_8);
     }
-
 
     /**
      * Method used to send message via RPC (Remote Procedure Call) pattern. In this
@@ -193,17 +222,20 @@ public class RabbitManager {
     public Object sendRpcMessage(String exchange, String routingKey, Object obj, int timeout) {
         LOG.info("Sending RPC obj: {}", obj);
 
-        String correlationId = UUID.randomUUID().toString();
-        rabbitTemplate.setReplyTimeout(timeout);
-        Object receivedObj = rabbitTemplate.convertSendAndReceive(exchange, routingKey, obj, new CorrelationData(correlationId));
-        if(receivedObj == null) {
-            LOG.info("Timeout in RPC receiving obj. Send: {}", obj);
+        RabbitConverterFuture<Object> rabbitConverterFuture;
+        synchronized (this) {
+            asyncRabbitTemplate.setReceiveTimeout(timeout);
+            rabbitConverterFuture = asyncRabbitTemplate.convertSendAndReceive(exchange, routingKey, obj);
+        }
+        
+        Object receivedObj;
+        try {
+            receivedObj = rabbitConverterFuture.get();
+            LOG.info("RPC Response received obj: " + receivedObj);
+            return receivedObj;
+        } catch (InterruptedException | ExecutionException e) {
+            LOG.error("Exception in RPC receiving obj. Send: " + obj, e);
             return null;
         }
-
-        LOG.info("RPC Response received obj: " + receivedObj);
-
-        return receivedObj;
     }
-
 }
