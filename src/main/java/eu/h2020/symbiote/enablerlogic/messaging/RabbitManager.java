@@ -48,9 +48,9 @@ public class RabbitManager {
         rabbitTemplate.setMessageConverter(messageConverter);
 
         SimpleMessageListenerContainer container = new SimpleMessageListenerContainer(rabbitTemplate.getConnectionFactory());
-        String replyQueueName = "EnablerLogoc-replayTo-" + UUID.randomUUID().toString();
+        String replyQueueName = "EnablerLogic-replayTo-" + UUID.randomUUID().toString();
         RabbitAdmin admin = new RabbitAdmin(rabbitTemplate.getConnectionFactory());
-        Queue queue = new Queue(replyQueueName);
+        Queue queue = new Queue(replyQueueName, false, true, true);
         admin.declareQueue(queue);
         container.setQueueNames(replyQueueName);
         

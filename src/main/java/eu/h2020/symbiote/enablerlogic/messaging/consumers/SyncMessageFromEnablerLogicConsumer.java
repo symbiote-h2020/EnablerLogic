@@ -16,6 +16,7 @@ import org.springframework.amqp.support.converter.Jackson2JsonMessageConverter;
 import org.springframework.amqp.support.converter.MessageConverter;
 import org.springframework.stereotype.Component;
 
+import eu.h2020.symbiote.enablerlogic.messaging.LoggingMessagesHelper;
 import eu.h2020.symbiote.enablerlogic.messaging.WrongRequestException;
 
 @Component
@@ -45,8 +46,7 @@ public class SyncMessageFromEnablerLogicConsumer {
         key = "#{enablerLogicProperties.key.enablerLogic.syncMessageToEnablerLogic}.#{enablerLogicProperties.enablerName}"
     ))
     public Object receivedSyncMessage(Message msg) throws IOException {
-        LOG.info("Consumer receivedSyncMessage with properties: " + msg.getMessageProperties());
-//        LOG.info("Consumer receivedSyncMessage: " + msg); // gdb: Commented this one out as it causes OOM exceptions for me with large messages
+        LOG.info("Consumer receivedSyncMessage: " + LoggingMessagesHelper.logMsg(msg));
 
         Object request = messageConverter.fromMessage(msg);
         String className = request.getClass().getName();

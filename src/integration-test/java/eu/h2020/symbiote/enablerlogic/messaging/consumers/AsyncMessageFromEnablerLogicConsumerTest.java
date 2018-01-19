@@ -60,5 +60,5 @@ public class AsyncMessageFromEnablerLogicConsumerTest extends EmbeddedRabbitFixt
         // then
         await().until(() -> receivedMessage != null);
         assertThat(receivedMessage.getMessage()).isEqualTo(message.getMessage());
-    }
+    }   
 }
