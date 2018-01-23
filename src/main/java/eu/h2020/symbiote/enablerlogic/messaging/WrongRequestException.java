@@ -5,6 +5,7 @@ import java.io.StringWriter;
 
 import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.JsonGenerator;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import lombok.Getter;
 
@@ -65,7 +66,8 @@ public class WrongRequestException extends RuntimeException {
     }
 
     private static String generateMessage(String message, Object request, String requestClassName) {
-        JsonFactory jsonFactory = new JsonFactory(); // or, for data binding, org.codehaus.jackson.mapper.MappingJsonFactory
+        ObjectMapper jsonMapper = new ObjectMapper();
+        JsonFactory jsonFactory = jsonMapper.getFactory();
         StringWriter sw = new StringWriter();
         sw.write(message);
         sw.write(" ");
@@ -74,7 +76,15 @@ public class WrongRequestException extends RuntimeException {
             JsonGenerator generator = jsonFactory.createGenerator(sw);
             generator.writeStartObject();
             generator.writeStringField("requestClassName", requestClassName);
-            generator.writeObjectField("request", request);
+            try {
+                String requestString = jsonMapper.writeValueAsString(request);
+                if(requestString.length() > 1024) {
+                    requestString = "trimmed: " + requestString.substring(0, 1024) + "...";
+                }
+                generator.writeObjectField("request", requestString);
+            } catch (Exception e) {
+                generator.writeStringField("requestToString", request.toString());
+            }
             generator.writeEndObject();
             generator.close();
         } catch (IOException e) {
