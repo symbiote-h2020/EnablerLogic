@@ -145,7 +145,7 @@ public class RabbitManager {
      * @return response from the consumer or null if timeout occurs
      */
     public String sendRpcMessage(String exchange, String routingKey, String stringMessage, int timeout) {
-        LOG.info("Sending RPC message: {}", stringMessage);
+        LOG.info("Sending RPC message: {}", LoggingTrimHelper.logToString(stringMessage));
 
         String correlationId = UUID.randomUUID().toString();
         Message sendMessage = new Message(stringMessage.getBytes(StandardCharsets.UTF_8),
@@ -164,13 +164,13 @@ public class RabbitManager {
         Message receivedMessage = null;
         try {
             receivedMessage = rabbitMessageFuture.get();
-            LOG.info("RPC Response received: " + receivedMessage);
+            LOG.info("RPC Response received: " + LoggingTrimHelper.logToString(receivedMessage));
             
             byte[] body = receivedMessage.getBody();
-            LOG.info("client received: {}", body);
+            LOG.info("client received: {}", LoggingTrimHelper.logToString(body));
             return new String(body, StandardCharsets.UTF_8);
         } catch (InterruptedException | ExecutionException e) {
-            LOG.error("Exception in RPC receiving. Send: " + sendMessage, e);
+            LOG.error("Exception in RPC receiving. Send: " + LoggingTrimHelper.logToString(sendMessage), e);
             return null;
         }
     }
@@ -220,7 +220,7 @@ public class RabbitManager {
      * @return response from the consumer or null if timeout occurs
      */
     public Object sendRpcMessage(String exchange, String routingKey, Object obj, int timeout) {
-        LOG.info("Sending RPC obj: {}", obj);
+        LOG.info("Sending RPC obj: {}", LoggingTrimHelper.logToJson(obj));
 
         RabbitConverterFuture<Object> rabbitConverterFuture;
         synchronized (this) {
@@ -231,14 +231,10 @@ public class RabbitManager {
         Object receivedObj;
         try {
             receivedObj = rabbitConverterFuture.get();
-            LOG.info("RPC Response received obj: " + receivedObj);
+            LOG.info("RPC Response received obj: " + LoggingTrimHelper.logToString(receivedObj));
             return receivedObj;
         } catch (InterruptedException | ExecutionException e) {
-            String objString = obj.toString();
-            if(objString.length() > 1024)
-                objString = "trimmed: " + objString.substring(0, 1024) + "...";
-                   
-            LOG.error("Exception in RPC receiving obj. Send: " + objString, e);
+            LOG.error("Exception in RPC receiving obj. Send: " + LoggingTrimHelper.logToString(obj), e);
             return null;
         }
     }
