@@ -76,15 +76,7 @@ public class WrongRequestException extends RuntimeException {
             JsonGenerator generator = jsonFactory.createGenerator(sw);
             generator.writeStartObject();
             generator.writeStringField("requestClassName", requestClassName);
-            try {
-                String requestString = jsonMapper.writeValueAsString(request);
-                if(requestString.length() > 1024) {
-                    requestString = "trimmed: " + requestString.substring(0, 1024) + "...";
-                }
-                generator.writeObjectField("request", requestString);
-            } catch (Exception e) {
-                generator.writeStringField("requestToString", request.toString());
-            }
+            generator.writeObjectField("request", LoggingTrimHelper.logToJson(request));
             generator.writeEndObject();
             generator.close();
         } catch (IOException e) {

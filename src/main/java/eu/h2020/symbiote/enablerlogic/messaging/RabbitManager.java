@@ -234,7 +234,8 @@ public class RabbitManager {
             LOG.info("RPC Response received obj: " + LoggingTrimHelper.logToString(receivedObj));
             return receivedObj;
         } catch (InterruptedException | ExecutionException e) {
-            LOG.error("Exception in RPC receiving obj. Send: " + LoggingTrimHelper.logToString(obj), e);
+            LOG.error("Exception in RPC receiving obj. Send: " + LoggingTrimHelper.logToString(obj) +
+                    "\n\n" + LoggingTrimHelper.logToString(e));
             return null;
         }
     }
