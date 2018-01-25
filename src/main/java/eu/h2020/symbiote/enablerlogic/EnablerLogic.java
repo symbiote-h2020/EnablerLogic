@@ -19,6 +19,7 @@ import eu.h2020.symbiote.enabler.messaging.model.ResourceManagerAcquisitionStart
 import eu.h2020.symbiote.enabler.messaging.model.ResourceManagerTaskInfoRequest;
 import eu.h2020.symbiote.enabler.messaging.model.ResourceManagerUpdateRequest;
 import eu.h2020.symbiote.enabler.messaging.model.ResourceManagerUpdateResponse;
+import eu.h2020.symbiote.enablerlogic.messaging.LoggingTrimHelper;
 import eu.h2020.symbiote.enablerlogic.messaging.RabbitManager;
 import eu.h2020.symbiote.enablerlogic.messaging.WrongResponseException;
 import eu.h2020.symbiote.enablerlogic.messaging.consumers.AsyncMessageFromEnablerLogicConsumer;
@@ -121,7 +122,7 @@ public class EnablerLogic {
 			throw new IllegalStateException("Props may not be null");
     	
         for(ResourceManagerTaskInfoRequest request: requests) {
-            LOG.info("sending message to ResourceManager: {}", request);
+            LOG.info("sending message to ResourceManager: {}", LoggingTrimHelper.logToString(request));
         }
 
         ResourceManagerAcquisitionStartRequest request = new ResourceManagerAcquisitionStartRequest();
@@ -152,7 +153,7 @@ public class EnablerLogic {
             throw new IllegalStateException("Props may not be null");
         
         for(ResourceManagerTaskInfoRequest request: requests) {
-            LOG.info("sending message to ResourceManager: {}", request);
+            LOG.info("sending message to ResourceManager: {}", LoggingTrimHelper.logToString(request));
         }
 
         ResourceManagerAcquisitionStartRequest request = new ResourceManagerAcquisitionStartRequest();

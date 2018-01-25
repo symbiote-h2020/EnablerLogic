@@ -2,6 +2,7 @@ package eu.h2020.symbiote.enablerlogic.messaging.consumers;
 
 import eu.h2020.symbiote.enabler.messaging.model.EnablerLogicDataAppearedMessage;
 import eu.h2020.symbiote.enablerlogic.ProcessingLogic;
+import eu.h2020.symbiote.enablerlogic.messaging.LoggingTrimHelper;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -36,7 +37,7 @@ public class DataAppearedConsumer {
         key = "#{enablerLogicProperties.key.enablerLogic.dataAppeared}"
     ))
     public void dataAppeared(EnablerLogicDataAppearedMessage dataAppearedMessage) throws IOException {
-        LOG.info("Consumer DataAppeared message: " + dataAppearedMessage);
+        LOG.info("Consumer DataAppeared message: " + LoggingTrimHelper.logToString(dataAppearedMessage));
         processingLogic.measurementReceived(dataAppearedMessage);
     }
 }
