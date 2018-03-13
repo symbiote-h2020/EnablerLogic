@@ -30,7 +30,7 @@ import com.fasterxml.jackson.databind.SerializationFeature;
  *
  * @author mateuszl, Petar Krivic, Mario Kusek
  */
-@Component
+@Component("enablerRabbitManager")
 public class RabbitManager {
     private static final Logger LOG = LoggerFactory.getLogger(RabbitManager.class);
     private static final int REPLY_TIMEOUT = 20_000;
