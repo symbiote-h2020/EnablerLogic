@@ -7,7 +7,7 @@ package eu.h2020.symbiote.enablerlogic.rap.resources;
 
 /**
  *
- * @author Matteo Pardi <m.pardi@nextworks.it>
+ * @author Matteo Pardi
  */
 public class RapDefinitions {
     public static final String      PLUGIN_REGISTRATION_EXCHANGE_OUT = "symbIoTe.rapPluginExchange";

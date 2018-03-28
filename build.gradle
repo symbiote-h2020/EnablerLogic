@@ -7,6 +7,7 @@ buildscript {
     }
     dependencies {
         classpath("org.springframework.boot:spring-boot-gradle-plugin:${springBootVersion}")
+        classpath group: 'com.cinnober.gradle', name: 'semver-git', version: '2.3.1'
     }
 }
 
@@ -27,16 +28,12 @@ plugins {
     id "maven-publish"
 }
 
+apply plugin: 'com.cinnober.gradle.semver-git'
+
 group = 'eu.h2020.symbiote'
-version = '0.0.1-SNAPSHOT'
 
 // this is needed for starter to not create fat jar
 bootRepackage.enabled = false
-
-jar {
-    baseName = 'enabler-logic-starter'
-    version =  project.version
-}
 
 eclipse {
     classpath {
@@ -91,7 +88,7 @@ dependencies {
 
     //compile('eu.h2020.symbiote:SymbIoTeLibraries:4.+') { changing = true }
     //compile('com.github.symbiote-h2020:SymbIoTeLibraries:5.+') { changing = true }
-    	compile('com.github.symbiote-h2020:ResourceAccessProxyPlugin:0.3.1')
+	compile('com.github.symbiote-h2020:ResourceAccessProxyPlugin:0.3.1')
     
     compileOnly('org.projectlombok:lombok')
 
@@ -111,26 +108,43 @@ dependencyManagement {
     }
 }
 
+jar {
+    //baseName = rootProject.name
+    version =  project.version
+}
+
 // creating source jar
 task sourceJar(type: Jar) {
     from sourceSets.main.allJava
-    baseName = 'enabler-logic-starter'
-    version =  project.version
+    //baseName = rootProject.name
+    //version =  project.version
     
+}
+
+task generateJavaDocs(type: Javadoc) {
+    source = sourceSets.main.allJava
+    classpath = project.sourceSets.main.compileClasspath 
+    destinationDir = reporting.file("javadocs")
+}
+
+task javadocJar(type: Jar, dependsOn: generateJavaDocs) {
+    classifier = 'javadoc'
+    from javadoc.destinationDir
 }
 
 publishing {
     publications {
         mavenJava(MavenPublication) {
+            groupId = project.group
+            version = project.version
             from components.java
             
             artifact sourceJar {
                 classifier "sources"
             }
+
+            artifact javadocJar
         }
-    }
-    repositories {
-        mavenLocal()
     }
 }
 

@@ -333,7 +333,7 @@ public class EnablerLogic {
      * Send request to Platform Proxy to read resource and return result.
      * 
      * @param info requested resource info
-     * @param timount in milliseconds
+     * @param timeout in milliseconds
      * @return reading result
      */
     public EnablerLogicDataAppearedMessage readResource(PlatformProxyTaskInfo info, int timeout) {
