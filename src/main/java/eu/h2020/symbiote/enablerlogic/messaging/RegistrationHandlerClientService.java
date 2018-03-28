@@ -1,21 +1,17 @@
 package eu.h2020.symbiote.enablerlogic.messaging;
 
-import java.io.IOException;
-import java.util.ArrayList;
 import java.util.List;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cloud.client.ServiceInstance;
 import org.springframework.cloud.client.discovery.DiscoveryClient;
 import org.springframework.stereotype.Service;
-import org.springframework.web.bind.annotation.RequestBody;
 
-import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import eu.h2020.symbiote.client.RegistrationHandlerClient;
 import eu.h2020.symbiote.cloud.model.internal.CloudResource;
 
 @Service
@@ -66,51 +62,37 @@ public class RegistrationHandlerClientService {
         LOG.debug("Found RegistrationHandler in Eureka at {}", si.get(0).getUri());           
     }
     
-    public List<CloudResource> registerResource(CloudResource resource) {
+    public CloudResource registerResource(CloudResource resource) {
         chackAndWaitRegistrationHandler();
-        return convertPayload(client.registerResource(resource).getBody());
+        return client.addResource(resource);
     }
 
     public List<CloudResource> registerResources(List<CloudResource> resources) {
         chackAndWaitRegistrationHandler();
-        return convertPayload(client.registerResources(resources).getBody());
+        return client.addResources(resources);
     }
     
 // TODO test & implementation RDF registration
 //    @RequestMapping(method = RequestMethod.POST, path = "/rdf-resources")
 //    public ResponseEntity<?> registerRdfResources(@RequestBody RdfCloudResorceList resources);
 
-    public List<CloudResource> updateResource(@RequestBody CloudResource resource) {
+    public CloudResource updateResource(CloudResource resource) {
         chackAndWaitRegistrationHandler();
-        return convertPayload(client.updateResource(resource).getBody());
+        return client.updateResource(resource);
     }
     
     public List<CloudResource> updateResources(List<CloudResource> resources) {
         chackAndWaitRegistrationHandler();
-        return convertPayload(client.updateResources(resources).getBody());
+        return client.updateResources(resources);
     }
     
-    public List<CloudResource> unregisterResource(String resourceInternalId) {
+    public CloudResource unregisterResource(String resourceInternalId) {
         chackAndWaitRegistrationHandler();
-        return convertPayload(client.unregisterResource(resourceInternalId).getBody());
+        return client.deleteResource(resourceInternalId);
     }
     
     public List<CloudResource> unregisterResources(List<String> resourceInternalIds) {
         chackAndWaitRegistrationHandler();
-        return convertPayload(client.unregisterResources(resourceInternalIds).getBody());
-    }
-    
-    private List<CloudResource> convertPayload(String responsePayload) {
-        try {
-            if(responsePayload.startsWith("[")) {
-                return mapper.readValue(responsePayload, new TypeReference<List<CloudResource>>() { });
-            } else {
-                List<CloudResource> l = new ArrayList<>(1);
-                l.add(mapper.readValue(responsePayload, CloudResource.class));
-                return l;
-            }
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
+        return client.deleteResources(resourceInternalIds);
     }
 }

@@ -1,7 +1,8 @@
 package eu.h2020.symbiote.enablerlogic.messaging;
 
 
-import static org.assertj.core.api.Assertions.*;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.tuple;
 
 import java.util.Arrays;
 import java.util.List;
@@ -18,13 +19,13 @@ import org.springframework.context.annotation.Import;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit4.SpringRunner;
 
-import eu.h2020.symbiote.cloud.model.CloudResourceParams;
+import eu.h2020.symbiote.client.RegistrationHandlerClient;
 import eu.h2020.symbiote.cloud.model.internal.CloudResource;
-import eu.h2020.symbiote.model.cim.WGS84Location;
 import eu.h2020.symbiote.model.cim.FeatureOfInterest;
 import eu.h2020.symbiote.model.cim.StationarySensor;
+import eu.h2020.symbiote.model.cim.WGS84Location;
 
-@Ignore // this is exploratory test not intended for running as integration test
+@Ignore
 @RunWith(SpringRunner.class)
 @Import({RegistrationHandlerClient.class, RegistrationHandlerClientService.class})
 @EnableFeignClients
@@ -40,7 +41,7 @@ public class RegistrationHandlerClientServiceExploratoryTest { // this tests rea
     
     @Before
     public void setup() throws Exception {
-        List<CloudResource> registeredResources = client.getAllResources();
+        List<CloudResource> registeredResources = client.getResources();
         List<String> internalIds = registeredResources.stream()
             .map((cr) -> cr.getInternalId())
             .collect(Collectors.toList());
@@ -54,12 +55,11 @@ public class RegistrationHandlerClientServiceExploratoryTest { // this tests rea
         CloudResource cloudResource1 = createCloudResource1();
 
         // when
-        List<CloudResource> registeredResources = service.registerResource(cloudResource1);
+        CloudResource registeredResource = service.registerResource(cloudResource1);
 
         //then
-        assertThat(registeredResources).hasSize(1);
-        assertThat(registeredResources.get(0)).isEqualToComparingOnlyGivenFields(cloudResource1, "internalId");
-        assertThat(registeredResources.get(0).getResource().getId()).isNotNull();
+        assertThat(registeredResource).isEqualToComparingOnlyGivenFields(cloudResource1, "internalId");
+        assertThat(registeredResource.getResource().getId()).isNotNull();
     }
 
     @Test
@@ -69,49 +69,48 @@ public class RegistrationHandlerClientServiceExploratoryTest { // this tests rea
         service.registerResource(cloudResource1);
         
         // when
-        List<CloudResource> registeredResources = service.registerResource(cloudResource1);
+        CloudResource registeredResource = service.registerResource(cloudResource1);
         
         //then
-        assertThat(registeredResources).hasSize(1);
+        assertThat(registeredResource).isNotNull();
     }
     
     @Test
-    public void registeringWrongResourceObject_shouldReturnEmptyList() throws Exception {
+    public void registeringWrongResourceObject_shouldReturnNull() throws Exception {
         //given
         CloudResource cloudResource1 = createCloudResource1();
         cloudResource1.setInternalId(null);
         
         // when
-        List<CloudResource> registeredResources = service.registerResource(cloudResource1);
+        CloudResource registeredResources = service.registerResource(cloudResource1);
 
         //then
-        assertThat(registeredResources).isEmpty();
+        assertThat(registeredResources).isNull();
     }
     
     @Test
-    public void unregisteringResource_shouldReturnListOfunregisteredResources() throws Exception {
+    public void unregisteringResource_shouldReturnUnregisteredResource() throws Exception {
         //given
         CloudResource cloudResource1 = createCloudResource1();
         service.registerResource(cloudResource1);
         
         // when
-        List<CloudResource> unregisteredResources = service.unregisterResource("testId1");
+        CloudResource unregisteredResource = service.unregisterResource("testId1");
         
         //then
-        assertThat(unregisteredResources).hasSize(1);
-        assertThat(unregisteredResources.get(0).getInternalId()).isEqualTo("testId1");
+        assertThat(unregisteredResource.getInternalId()).isEqualTo("testId1");
     }
     
     @Test
-    public void unregisteringNotRegisteredResource_shouldReturnEmptyList() throws Exception {
+    public void unregisteringNotRegisteredResource_shouldReturnNull() throws Exception {
         //given
         CloudResource cloudResource1 = createCloudResource1();
         
         // when
-        List<CloudResource> unregisteredResources = service.unregisterResource("testId1");
+        CloudResource unregisteredResource = service.unregisterResource("testId1");
         
         //then
-        assertThat(unregisteredResources).isEmpty();
+        assertThat(unregisteredResource).isNull();
     }
     
     @Test
@@ -192,18 +191,17 @@ public class RegistrationHandlerClientServiceExploratoryTest { // this tests rea
     }
     
     @Test
-    public void updateResource_shouldReturnListOfUpdatedResources() throws Exception {
+    public void updateResource_shouldReturnUpdatedResource() throws Exception {
         //given
         List<CloudResource> cloudResources = createResources();
         service.registerResources(cloudResources);
         cloudResources.get(0).setPluginId("new plugin id");
         
         // when
-        List<CloudResource> registeredResources = service.updateResource(cloudResources.get(0));
+        CloudResource registeredResource = service.updateResource(cloudResources.get(0));
         
         //then
-        assertThat(registeredResources)
-            .hasSize(1)
+        assertThat(registeredResource)
             .extracting("internalId", "pluginId").contains(tuple("testId1", "new plugin id"));
     }
     
@@ -241,7 +239,6 @@ public class RegistrationHandlerClientServiceExploratoryTest { // this tests rea
         CloudResource resource = new CloudResource();
         resource.setInternalId("testId1");
         resource.setPluginId("testPlugin");
-        resource.setCloudMonitoringHost("cloudMonitoringHostIP");
         StationarySensor sensor = new StationarySensor();
         resource.setResource(sensor);
         sensor.setName("lamp");
@@ -256,10 +253,6 @@ public class RegistrationHandlerClientServiceExploratoryTest { // this tests rea
         featureOfInterest.setDescription(Arrays.asList("This is room 1"));
         featureOfInterest.setHasProperty(Arrays.asList("temperature"));
         sensor.setObservesProperty(Arrays.asList("temperature,humidity".split(",")));
-        CloudResourceParams cloudResourceParams = new CloudResourceParams();
-        resource.setParams(cloudResourceParams);
-        cloudResourceParams.setType("Type of device, used in monitoring");
         return resource;
     }
-
 }

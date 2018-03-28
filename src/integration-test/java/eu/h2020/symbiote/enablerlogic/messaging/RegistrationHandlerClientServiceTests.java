@@ -1,8 +1,16 @@
 package eu.h2020.symbiote.enablerlogic.messaging;
 
 
-import static org.assertj.core.api.Assertions.*;
-import static com.github.tomakehurst.wiremock.client.WireMock.*;
+import static com.github.tomakehurst.wiremock.client.WireMock.aResponse;
+import static com.github.tomakehurst.wiremock.client.WireMock.delete;
+import static com.github.tomakehurst.wiremock.client.WireMock.equalTo;
+import static com.github.tomakehurst.wiremock.client.WireMock.post;
+import static com.github.tomakehurst.wiremock.client.WireMock.put;
+import static com.github.tomakehurst.wiremock.client.WireMock.stubFor;
+import static com.github.tomakehurst.wiremock.client.WireMock.urlEqualTo;
+import static com.github.tomakehurst.wiremock.client.WireMock.urlPathMatching;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.tuple;
 
 import java.io.IOException;
 import java.io.StringWriter;
@@ -11,129 +19,167 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.cloud.client.ServiceInstance;
+import org.springframework.cloud.client.discovery.DiscoveryClient;
 import org.springframework.cloud.contract.wiremock.AutoConfigureWireMock;
-import org.springframework.cloud.netflix.feign.EnableFeignClients;
-import org.springframework.context.annotation.ComponentScan;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
 import org.springframework.test.annotation.DirtiesContext;
-import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit4.SpringRunner;
 
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.core.JsonGenerationException;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.github.tomakehurst.wiremock.matching.StringValuePattern;
+import com.github.tomakehurst.wiremock.matching.EqualToJsonPattern;
 
-import eu.h2020.symbiote.cloud.model.CloudResourceParams;
+import eu.h2020.symbiote.client.ClientConstants;
 import eu.h2020.symbiote.cloud.model.internal.CloudResource;
-import eu.h2020.symbiote.model.cim.WGS84Location;
 import eu.h2020.symbiote.model.cim.FeatureOfInterest;
 import eu.h2020.symbiote.model.cim.StationarySensor;
-import eu.h2020.symbiote.enablerlogic.EmbeddedRabbitFixture;
-import eu.h2020.symbiote.enablerlogic.messaging.consumers.TestingRabbitConfig;
+import eu.h2020.symbiote.model.cim.WGS84Location;
+import feign.Feign;
+import feign.jackson.JacksonDecoder;
+import feign.jackson.JacksonEncoder;
 
-// TODO put back those tests
-@Ignore
 @RunWith(SpringRunner.class)
-@EnableAutoConfiguration
-@ContextConfiguration(classes = {eu.h2020.symbiote.rapplugin.RapPluginConfiguration.class})
-@ComponentScan(basePackages= {"eu.h2020.symbiote.rapplugin"})
-@Import({RegistrationHandlerClient.class, RegistrationHandlerClientService.class, TestingRabbitConfig.class, 
-    RabbitManager.class})
-@EnableFeignClients
-@TestPropertySource(locations = "classpath:integration.properties", properties = {
+
+@Import({RegistrationHandlerClientService.class, RegistrationHandlerClientServiceTests.TestConfiguration.class})
+@TestPropertySource(locations = "classpath:integration.properties")
+@SpringBootTest(properties = {
         "RegistrationHandler.ribbon.listOfServers=http://localhost:9001", 
-        "ribbon.eureka.enabled=false"})
+        "RegistrationHandler.ribbon.eureka.enabled=false"
+    })
 @AutoConfigureWireMock(port = 9001)
 @DirtiesContext
-public class RegistrationHandlerClientServiceTests extends EmbeddedRabbitFixture {
+public class RegistrationHandlerClientServiceTests {
     
     @Autowired
     private RegistrationHandlerClientService service;
     
-    @Test
-    public void registerOneResource_shouldReturnListOfRegisteredResources() throws Exception {
-        //given
-        CloudResource sendResource = createCloudResource1();
-
-        CloudResource expetedResource = createCloudResource1();
-        expetedResource.getResource().setId(expetedResource.getInternalId());
-        
-        wiremockStubPost("/resource", sendResource, expetedResource);
-
-        // when
-        List<CloudResource> registeredResources = service.registerResource(sendResource);
-
-        //then
-        assertThat(registeredResources).hasSize(1);
-        assertThat(registeredResources.get(0)).isEqualToComparingOnlyGivenFields(sendResource, "internalId");
-        assertThat(registeredResources.get(0).getResource().getId()).isNotNull();
-    }
-
-    @Test
-    public void registerAlreadyRegisteredResource_shouldReturnListOfRegisteredResources() throws Exception {
-        //given
-        CloudResource sendResource = createCloudResource1();
-        
-        CloudResource expetedResource = createCloudResource1();
-        expetedResource.getResource().setId(expetedResource.getInternalId());
-        
-        wiremockStubPost("/resource", sendResource, expetedResource);
-        
-        // when
-        List<CloudResource> registeredResources = service.registerResource(sendResource);
-        
-        //then
-        assertThat(registeredResources).hasSize(1);
+    @Configuration
+    public static class TestConfiguration {
+    	@Bean
+    	eu.h2020.symbiote.client.RegistrationHandlerClient registrationHandlerClient() {
+    		return Feign.builder()
+            		.encoder(new JacksonEncoder())
+            		.decoder(new JacksonDecoder())
+                .target(eu.h2020.symbiote.client.RegistrationHandlerClient.class, "http://localhost:9001");
+    	}
+    	
+        @Bean
+        public DiscoveryClient discoveryClient() {
+            return new DiscoveryClient() {
+                
+                @Override
+                public List<String> getServices() {
+                    
+                    // TODO Auto-generated method stub
+                    return null;
+                }
+                
+                @Override
+                public ServiceInstance getLocalServiceInstance() {
+                    // TODO Auto-generated method stub
+                    return null;
+                }
+                
+                @Override
+                public List<ServiceInstance> getInstances(String serviceId) {
+                    // TODO Auto-generated method stub
+                    return null;
+                }
+                
+                @Override
+                public String description() {
+                    // TODO Auto-generated method stub
+                    return null;
+                }
+            };
+        }
     }
     
     @Test
-    public void registeringWrongResourceObject_shouldReturnEmptyList() throws Exception {
+    public void registerOneResource_shouldReturnRegisteredResource() throws Exception {
+        //given
+        CloudResource sendResource = createCloudResource1();
+
+        CloudResource expetedResource = createCloudResource1();
+        expetedResource.getResource().setId(expetedResource.getInternalId());
+        
+        wiremockStubPost(ClientConstants.RH_RESOURCE_PATH, sendResource, expetedResource);
+
+        // when
+        CloudResource registeredResource = service.registerResource(sendResource);
+
+        //then
+        assertThat(registeredResource).isEqualToComparingOnlyGivenFields(sendResource, "internalId");
+        assertThat(registeredResource.getResource().getId()).isNotNull();
+    }
+
+    @Test
+    public void registerAlreadyRegisteredResource_shouldReturnRegisteredResource() throws Exception {
+        //given
+        CloudResource sendResource = createCloudResource1();
+        
+        CloudResource expetedResource = createCloudResource1();
+        expetedResource.getResource().setId(expetedResource.getInternalId());
+        
+        wiremockStubPost(ClientConstants.RH_RESOURCE_PATH, sendResource, expetedResource);
+        
+        // when
+        CloudResource registeredResource = service.registerResource(sendResource);
+        
+        //then
+        assertThat(registeredResource).isNotNull();
+    }
+    
+    @Test
+    public void registeringWrongResourceObject_shouldReturnNull() throws Exception {
         //given
         CloudResource sendResource = createCloudResource1();
         sendResource.setInternalId(null);
         
-        wiremockStubPost("/resource", sendResource, new LinkedList<>());
+        wiremockStubPost(ClientConstants.RH_RESOURCE_PATH, sendResource, null);
 
         // when
-        List<CloudResource> registeredResources = service.registerResource(sendResource);
+        CloudResource registeredResource = service.registerResource(sendResource);
 
         //then
-        assertThat(registeredResources).isEmpty();
+        assertThat(registeredResource).isNull();
     }
     
     @Test
-    public void unregisteringResource_shouldReturnListOfunregisteredResources() throws Exception {
+    public void unregisteringResource_shouldReturnRegisteredResource() throws Exception {
         //given
         CloudResource expetedResource = createCloudResource1();
         expetedResource.getResource().setId(expetedResource.getInternalId());
         
-        wiremockStubDelete("/resource", "testId1", Arrays.asList(expetedResource));
+        wiremockStubDelete(ClientConstants.RH_RESOURCE_PATH, "testId1", expetedResource);
         
         // when
-        List<CloudResource> unregisteredResources = service.unregisterResource("testId1");
+        CloudResource unregisteredResource = service.unregisterResource("testId1");
         
         //then
-        assertThat(unregisteredResources).hasSize(1);
-        assertThat(unregisteredResources.get(0).getInternalId()).isEqualTo("testId1");
+        assertThat(unregisteredResource.getInternalId()).isEqualTo("testId1");
     }
     
     @Test
-    public void unregisteringNotRegisteredResource_shouldReturnEmptyList() throws Exception {
+    public void unregisteringNotRegisteredResource_shouldReturnNull() throws Exception {
         //given
-        wiremockStubDelete("/resource", "testId1", new LinkedList<>());
+        wiremockStubDelete(ClientConstants.RH_RESOURCE_PATH, "testId1", null);
         
         // when
-        List<CloudResource> unregisteredResources = service.unregisterResource("testId1");
+        CloudResource unregisteredResource = service.unregisterResource("testId1");
         
         //then
-        assertThat(unregisteredResources).isEmpty();
+        assertThat(unregisteredResource).isNull();
     }
     
     @Test
@@ -145,7 +191,7 @@ public class RegistrationHandlerClientServiceTests extends EmbeddedRabbitFixture
         expetedResources.get(0).getResource().setId(expetedResources.get(0).getInternalId());
         expetedResources.get(1).getResource().setId(expetedResources.get(1).getInternalId());
         
-        wiremockStubPost("/resources", sendResources, expetedResources);
+        wiremockStubPost(ClientConstants.RH_RESOURCES_PATH, sendResources, expetedResources);
 
         // when
         List<CloudResource> registeredResources = service.registerResources(sendResources);
@@ -168,7 +214,7 @@ public class RegistrationHandlerClientServiceTests extends EmbeddedRabbitFixture
         expetedResources.get(0).getResource().setId(expetedResources.get(0).getInternalId());
         expetedResources.get(1).getResource().setId(expetedResources.get(1).getInternalId());
         
-        wiremockStubPost("/resources", sendResources, expetedResources);
+        wiremockStubPost(ClientConstants.RH_RESOURCES_PATH, sendResources, expetedResources);
         
         // when
         List<CloudResource> registeredResources = service.registerResources(sendResources);
@@ -191,7 +237,7 @@ public class RegistrationHandlerClientServiceTests extends EmbeddedRabbitFixture
         List<CloudResource> expetedResources = Arrays.asList(createCloudResource2());
         expetedResources.get(0).getResource().setId(expetedResources.get(0).getInternalId());
         
-        wiremockStubPost("/resources", sendResources, expetedResources);
+        wiremockStubPost(ClientConstants.RH_RESOURCES_PATH, sendResources, expetedResources);
         
         
         // when
@@ -214,7 +260,7 @@ public class RegistrationHandlerClientServiceTests extends EmbeddedRabbitFixture
                 .map(r -> r.getInternalId())
                 .collect(Collectors.toList());
         
-        wiremockStubDelete("/resources", resourceIds, expectedResources);
+        wiremockStubDelete(ClientConstants.RH_RESOURCES_PATH, resourceIds, expectedResources);
 
         // when
         List<CloudResource> registeredResources = service.unregisterResources(resourceIds);
@@ -233,7 +279,7 @@ public class RegistrationHandlerClientServiceTests extends EmbeddedRabbitFixture
                 .map(r -> r.getInternalId())
                 .collect(Collectors.toList());
         
-        wiremockStubDelete("/resources", resourceIds, new LinkedList<>());
+        wiremockStubDelete(ClientConstants.RH_RESOURCES_PATH, resourceIds, new LinkedList<>());
 
         // when
         List<CloudResource> registeredResources = service.unregisterResources(resourceIds);
@@ -243,20 +289,19 @@ public class RegistrationHandlerClientServiceTests extends EmbeddedRabbitFixture
     }
     
     @Test
-    public void updateResource_shouldReturnListOfUpdatedResources() throws Exception {
+    public void updateResource_shouldReturnUpdatedResource() throws Exception {
         //given
         CloudResource cloudResource = createCloudResource1();
         cloudResource.setPluginId("new plugin id");
         
-        wiremockStubPut("/resource", cloudResource, Arrays.asList(cloudResource));
+        wiremockStubPut(ClientConstants.RH_RESOURCE_PATH, cloudResource, cloudResource);
         
         // when
-        List<CloudResource> registeredResources = service.updateResource(cloudResource);
+        CloudResource registeredResource = service.updateResource(cloudResource);
         
         //then
-        assertThat(registeredResources)
-            .hasSize(1)
-            .extracting("internalId", "pluginId").contains(tuple("testId1", "new plugin id"));
+        assertThat(registeredResource.getInternalId()).isEqualTo("testId1");
+        assertThat(registeredResource.getPluginId()).isEqualTo("new plugin id");
     }
     
     @Test
@@ -265,7 +310,7 @@ public class RegistrationHandlerClientServiceTests extends EmbeddedRabbitFixture
         List<CloudResource> cloudResources = createResources();
         cloudResources.get(0).setPluginId("new plugin id");
 
-        wiremockStubPut("/resources", cloudResources, cloudResources);
+        wiremockStubPut(ClientConstants.RH_RESOURCES_PATH, cloudResources, cloudResources);
         
         // when
         List<CloudResource> registeredResources = service.updateResources(cloudResources);
@@ -315,14 +360,15 @@ public class RegistrationHandlerClientServiceTests extends EmbeddedRabbitFixture
                         .withBody(convertToJson(expetedResource))));
     }
     
-    private StringValuePattern resourceEqualToJson(Object resource)
+    private EqualToJsonPattern resourceEqualToJson(Object resource)
             throws IOException, JsonGenerationException, JsonMappingException {
-        return equalToJson(convertToJson(resource));
+        return new EqualToJsonPattern(convertToJson(resource), true, true);
     }
 
     private String convertToJson(Object resource)
             throws IOException, JsonGenerationException, JsonMappingException {
         ObjectMapper mapper = new ObjectMapper();
+        mapper.setSerializationInclusion(Include.NON_NULL);
         StringWriter writer = new StringWriter();
         mapper.writeValue(writer, resource);
         String body = writer.toString();
@@ -343,7 +389,6 @@ public class RegistrationHandlerClientServiceTests extends EmbeddedRabbitFixture
         CloudResource resource = new CloudResource();
         resource.setInternalId("testId1");
         resource.setPluginId("testPlugin");
-        resource.setCloudMonitoringHost("cloudMonitoringHostIP");
         StationarySensor sensor = new StationarySensor();
         resource.setResource(sensor);
         sensor.setName("lamp");
@@ -358,10 +403,6 @@ public class RegistrationHandlerClientServiceTests extends EmbeddedRabbitFixture
         featureOfInterest.setDescription(Arrays.asList("This is room 1"));
         featureOfInterest.setHasProperty(Arrays.asList("temperature"));
         sensor.setObservesProperty(Arrays.asList("temperature,humidity".split(",")));
-        CloudResourceParams cloudResourceParams = new CloudResourceParams();
-        resource.setParams(cloudResourceParams);
-        cloudResourceParams.setType("Type of device, used in monitoring");
         return resource;
     }
-
 }
