@@ -12,6 +12,8 @@ import org.springframework.amqp.rabbit.config.SimpleRabbitListenerContainerFacto
 import org.springframework.amqp.support.converter.Jackson2JsonMessageConverter;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.autoconfigure.AutoConfigureAfter;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.cloud.client.ServiceInstance;
 import org.springframework.cloud.client.discovery.DiscoveryClient;
@@ -20,13 +22,16 @@ import org.springframework.cloud.netflix.feign.EnableFeignClients;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
 import org.springframework.context.SmartLifecycle;
+import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
 
+import eu.h2020.symbiote.client.RegistrationHandlerClient;
 import eu.h2020.symbiote.enablerlogic.messaging.properties.ExchangeProperties;
 import eu.h2020.symbiote.enablerlogic.messaging.properties.PluginProperties;
 import eu.h2020.symbiote.enablerlogic.messaging.properties.RabbitConnectionProperties;
 import eu.h2020.symbiote.enablerlogic.messaging.properties.RoutingKeysProperties;
+import eu.h2020.symbiote.rapplugin.RapPluginConfiguration;
 
 
 @Configuration
@@ -38,6 +43,7 @@ import eu.h2020.symbiote.enablerlogic.messaging.properties.RoutingKeysProperties
     PluginProperties.class})
 @EnableDiscoveryClient
 @EnableFeignClients
+@AutoConfigureAfter(RapPluginConfiguration.class)
 public class EnablerLogicConfiguration implements ApplicationContextAware, SmartLifecycle {
     private static final Logger LOG = LoggerFactory.getLogger(EnablerLogicConfiguration.class);
     
@@ -54,7 +60,7 @@ public class EnablerLogicConfiguration implements ApplicationContextAware, Smart
     private DiscoveryClient discoveryClient;
         
     private volatile boolean running = false;
-
+    
     @PostConstruct
     public void initialize() {
         simpleRabbitListenerContainerFactory.setMessageConverter(new Jackson2JsonMessageConverter());
@@ -77,6 +83,7 @@ public class EnablerLogicConfiguration implements ApplicationContextAware, Smart
         new Thread(() -> {
             // wait for discovery client
             discoveryClient.getServices();
+           // TODO remove
 //            List<ServiceInstance> si = discoveryClient.getInstances("RegistrationHandler");
 //            int counter = 0;
 //            while(si.isEmpty()) {

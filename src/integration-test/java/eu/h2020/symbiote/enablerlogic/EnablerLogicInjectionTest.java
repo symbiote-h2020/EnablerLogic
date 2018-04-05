@@ -18,9 +18,11 @@ import org.springframework.test.context.junit4.SpringRunner;
 
 import eu.h2020.symbiote.enablerlogic.EnablerLogic;
 import eu.h2020.symbiote.enablerlogic.messaging.RabbitManager;
+import eu.h2020.symbiote.enablerlogic.messaging.RegistrationHandlerClientService;
 import eu.h2020.symbiote.enablerlogic.messaging.consumers.AsyncMessageFromEnablerLogicConsumer;
 import eu.h2020.symbiote.enablerlogic.messaging.consumers.SyncMessageFromEnablerLogicConsumer;
 import eu.h2020.symbiote.enablerlogic.messaging.properties.EnablerLogicProperties;
+import eu.h2020.symbiote.rapplugin.messaging.rap.RapPlugin;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
@@ -55,7 +57,7 @@ public class EnablerLogicInjectionTest {
 
     @Autowired
     private AsyncMessageFromEnablerLogicConsumer consumer;
-
+    
     @AllArgsConstructor
     public static class CustomMessage {
         @Getter
