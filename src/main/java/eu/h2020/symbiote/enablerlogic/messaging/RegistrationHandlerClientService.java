@@ -13,6 +13,11 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import eu.h2020.symbiote.client.RegistrationHandlerClient;
 import eu.h2020.symbiote.cloud.model.internal.CloudResource;
+import feign.Feign;
+import feign.Logger.Level;
+import feign.jackson.JacksonDecoder;
+import feign.jackson.JacksonEncoder;
+import feign.slf4j.Slf4jLogger;
 
 @Service
 public class RegistrationHandlerClientService {
@@ -22,13 +27,16 @@ public class RegistrationHandlerClientService {
     private ObjectMapper mapper;
     private boolean checkForRegistrationHandlerInEureka;
     private boolean registrationHandlerChecked = false;
+    private String registrationHandlerUrl;
     private DiscoveryClient discoveryClient;
+
     
-    public RegistrationHandlerClientService(RegistrationHandlerClient client, 
-            @Value("${enablerLogic.checkForRegistrationHandlerInEureka:false}") boolean checkForRegistrationHandlerInEureka, 
+    public RegistrationHandlerClientService(
+    		@Value("${enablerLogic.checkForRegistrationHandlerInEureka:false}") boolean checkForRegistrationHandlerInEureka,
+    		@Value("${enablerLogic.registrationHandlerUrl:http://localhost:8001}") String registrationHandlerUrl,
             DiscoveryClient discoveryClient) {
-        this.client = client;
         this.checkForRegistrationHandlerInEureka = checkForRegistrationHandlerInEureka;
+		this.registrationHandlerUrl = registrationHandlerUrl;
         this.discoveryClient = discoveryClient;
         mapper = new ObjectMapper();
     }
@@ -40,6 +48,8 @@ public class RegistrationHandlerClientService {
         if(!checkForRegistrationHandlerInEureka) {
             LOG.info("Don't need to wait for RegistrationHandler in Eureka");
             registrationHandlerChecked = true;
+            LOG.debug("Using RegistrationHandler in URL: {}", registrationHandlerUrl);  
+			createFeignClient();
             return;
         }
         
@@ -59,8 +69,19 @@ public class RegistrationHandlerClientService {
             }
         }
         
-        LOG.debug("Found RegistrationHandler in Eureka at {}", si.get(0).getUri());           
+        registrationHandlerUrl = si.get(0).getUri().toString();
+        LOG.debug("Found RegistrationHandler in Eureka at {}", registrationHandlerUrl);  
+		createFeignClient();
     }
+
+	private void createFeignClient() {
+		client = Feign.builder()
+        		.encoder(new JacksonEncoder())
+        		.decoder(new JacksonDecoder())
+        		.logger(new Slf4jLogger(RegistrationHandlerClientService.class))
+        		.logLevel(Level.FULL)
+            .target(RegistrationHandlerClient.class, registrationHandlerUrl);
+	}
     
     public CloudResource registerResource(CloudResource resource) {
         chackAndWaitRegistrationHandler();

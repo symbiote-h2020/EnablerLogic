@@ -40,6 +40,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.tomakehurst.wiremock.matching.EqualToJsonPattern;
 
 import eu.h2020.symbiote.client.ClientConstants;
+import eu.h2020.symbiote.client.RegistrationHandlerClient;
 import eu.h2020.symbiote.cloud.model.internal.CloudResource;
 import eu.h2020.symbiote.model.cim.FeatureOfInterest;
 import eu.h2020.symbiote.model.cim.StationarySensor;
@@ -53,8 +54,9 @@ import feign.jackson.JacksonEncoder;
 @Import({RegistrationHandlerClientService.class, RegistrationHandlerClientServiceTests.TestConfiguration.class})
 @TestPropertySource(locations = "classpath:integration.properties")
 @SpringBootTest(properties = {
-        "RegistrationHandler.ribbon.listOfServers=http://localhost:9001", 
-        "RegistrationHandler.ribbon.eureka.enabled=false"
+        "RegistrationHandler.ribbon.eureka.enabled=false",
+        "enablerLogic.registrationHandlerUrl=http://localhost:9001"
+        
     })
 @AutoConfigureWireMock(port = 9001)
 @DirtiesContext
@@ -65,14 +67,6 @@ public class RegistrationHandlerClientServiceTests {
     
     @Configuration
     public static class TestConfiguration {
-    	@Bean
-    	eu.h2020.symbiote.client.RegistrationHandlerClient registrationHandlerClient() {
-    		return Feign.builder()
-            		.encoder(new JacksonEncoder())
-            		.decoder(new JacksonDecoder())
-                .target(eu.h2020.symbiote.client.RegistrationHandlerClient.class, "http://localhost:9001");
-    	}
-    	
         @Bean
         public DiscoveryClient discoveryClient() {
             return new DiscoveryClient() {
