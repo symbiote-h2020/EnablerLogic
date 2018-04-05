@@ -61,6 +61,11 @@ public class EnablerLogicPropertiesTests {
     }
 
     @Test
+    public void shouldHaveIterworkingInterfaceUrl() throws Exception {
+        assertThat(props.getInterworkingInterfaceUrl()).isEqualTo("https://someurl.com/ii");
+    }
+
+    @Test
     public void shouldHaveLoadedPluginProperties() throws Exception {
         assertThat(props.getPlugin().isFiltersSupported()).isTrue();
         assertThat(props.getPlugin().isNotificationsSupported()).isTrue();

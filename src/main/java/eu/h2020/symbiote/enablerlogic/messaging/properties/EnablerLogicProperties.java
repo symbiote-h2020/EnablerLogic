@@ -12,6 +12,10 @@ public class EnablerLogicProperties {
     @Getter
     @Value("${spring.application.name:DefaultEnablerName}")
     private String enablerName = "DefaultEnablerName";
+    
+    @Getter
+    @Value("${symbIoTe.interworking.interface.url}")
+    private String interworkingInterfaceUrl;
 
     @Getter
     private RabbitConnectionProperties rabbitConnection;
