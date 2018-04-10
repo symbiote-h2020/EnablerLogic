@@ -22,7 +22,7 @@ before_script:
 - chmod a+x merge_script.sh
 - "./merge_script.sh"
 script:
-- ./gradlew test --tests eu.h2020.symbiote.enablerlogic.EnablerLogicApplicationTest --stacktrace --info
+- ./gradlew check
 after_success:
 - chmod a+x pushing_script.sh
 - "./pushing_script.sh"
