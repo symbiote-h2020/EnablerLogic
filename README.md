@@ -9,7 +9,8 @@
 The idea of Generic EnablerLogic is to use it as dependency in specific EnablerLogic. 
 Generic parts like RabbitMQ communication with other components in enabler (e.g. ResourceManager, 
 PlatformProxy, ...) are implemented in Generic EnablerLogic. That way a developer of specific enabler 
-doesn't have to implement complex communication between those components. 
+doesn't have to implement complex communication between those components. The example from this tutorial is in the following repository
+[https://github.com/symbiote-h2020/EnablerLogicExample](https://github.com/symbiote-h2020/EnablerLogicExample).
 
 ## Creating specific EnablerLogic
 
@@ -19,13 +20,18 @@ It needs following dependencies: Config Client, Eureka Discovery, Zipkin Client
 
 ### 2. Adding symbIoTe dependencies to `build.gradle`
 
-Add following dependencies:
+Add following dependencies for on the edge version:
 
 `compile('com.github.symbiote-h2020:EnablerLogic:develop-SNAPSHOT') { changing = true }`
 
 This is dependency to development version of EnablerLogic from jitpack. It will use the newest version of 
-EnablerLogic published in jitpack. This is only for development. In the future this will be 
-published in some official repository. In order to use jitpack you need to put in `build.gradle` 
+EnablerLogic published in jitpack. This is only for development. 
+
+If you want to use stable version please use releases. Current release is 0.3.2 and you can include it with this line:
+
+`compile('com.github.symbiote-h2020:EnablerLogic:0.3.2')` 
+
+In order to use jitpack you need to put in `build.gradle` 
 following lines as well:
 
 ```
@@ -51,6 +57,7 @@ are loaded from config server.
 
 The second line is location of config server. This is the case when config server is run in 
 local machine which is suitable for development.
+If you are running it in some other machine change this line accordingly.
 
 ### 4. Creating ProcessingLogic component
 
@@ -66,8 +73,8 @@ Here is an example of one component:
 
 ```java
 @Component
-public class InterpolatorLogic implements ProcessingLogic {
-	private static final Logger log = LoggerFactory.getLogger(InterpolatorLogic.class);
+public class ExampleLogic implements ProcessingLogic {
+	private static final Logger log = LoggerFactory.getLogger(ExampleLogic.class);
 
 	private EnablerLogic enablerLogic;
 
@@ -75,29 +82,7 @@ public class InterpolatorLogic implements ProcessingLogic {
 	public void initialization(EnablerLogic enablerLogic) {
 		this.enablerLogic = enablerLogic;
 
-		sendQuery();
-	}
-
-	private void sendQuery() {
-		ResourceManagerTaskInfoRequest request = new ResourceManagerTaskInfoRequest();
-		request.setTaskId("someId");
-		request.setEnablerLogicName("exampleEnabler");
-		request.setMinNoResources(1);
-		request.setCachingInterval_ms(3600L);
-
-		CoreQueryRequest coreQueryRequest = new CoreQueryRequest();
-		coreQueryRequest.setLocation_lat(48.208174);
-		coreQueryRequest.setLocation_long(16.373819);
-		coreQueryRequest.setMax_distance(10_000); // radius 10km
-		coreQueryRequest.setObserved_property(Arrays.asList("NOx"));
-		request.setCoreQueryRequest(coreQueryRequest);
-		ResourceManagerAcquisitionStartResponse response = enablerLogic.queryResourceManager(request);
-
-		try {
-			log.info("querying fixed resources: {}", new ObjectMapper().writeValueAsString(response));
-		} catch (JsonProcessingException e) {
-			log.error("Problem with deserializing ResourceManagerAcquisitionStartResponse", e);
-		}
+		// put all initialization here
 	}
 	...
 }
@@ -116,10 +101,6 @@ resources for specified acquisition taskId.
 - `void resourcesUpdated(ResourcesUpdated resourcesUpdatedMessage)` -
 this method is called when Resource Manager component has updated resources 
 for specified acquisition taskId.
-
-- `public EnablerLogicDataAppearedMessage readResource(PlatformProxyTaskInfo info)` -
-this method sends request to Platform Proxy to read resource and return 
-result.
 
 #### Enabler Logic communicating with Resource Manager or Platform Proxy components
 
@@ -253,11 +234,11 @@ need to be enabled by putting `@EnableDiscoveryClient` in configuration:
 ```java
 @SpringBootApplication
 @EnableDiscoveryClient
-public class EnablerLogicInterpolator {
+public class EnablerLogicExample {
 
     public static void main(String[] args) {
-        SpringApplication.run(EnablerLogicInterpolator.class, args);
-    }
+		SpringApplication.run(EnablerLogicExample.class, args);
+	}
 }
 ``` 
 
@@ -272,7 +253,7 @@ private RegistrationHandlerClientService rhClientService;
 
 There are different methods for registering, unregistering and updating
 resources. Each of this methods return list of `CloudResource` objects 
-that are changed by this method.
+that are changed by this method (based on registration).
 
 In the `CloudResoure` class should be put plugin id. The plugin id
 can be obtained from  `EnablerLogicProperties` object that can be
@@ -280,7 +261,7 @@ injected. The method `getEnablerName()` returns plugin id.
 
 Here is example of registration:
 ```java
-public class InterpolatorLogic implements ProcessingLogic {
+public class ExampleLogic implements ProcessingLogic {
 ...
     
     @Autowired
@@ -299,9 +280,9 @@ public class InterpolatorLogic implements ProcessingLogic {
 
     private void registerResources() {
         List<CloudResource> cloudResources = new LinkedList<>();
-        cloudResources.add(createSensorResource("1000"));
-        cloudResources.add(createActuatorResource("2000"));
-        cloudResources.add(createServiceResource("3000"));
+        cloudResources.add(createSensorResource("el_isen1"));
+        cloudResources.add(createActuatorResource("el_iaid1"));
+        cloudResources.add(createServiceResource("el_isrid1"));
 
         // waiting for registrationHandler to create exchange
         int i = 1;
@@ -325,58 +306,72 @@ public class InterpolatorLogic implements ProcessingLogic {
         CloudResource cloudResource = new CloudResource();
         cloudResource.setInternalId(internalId);
         cloudResource.setPluginId(props.getEnablerName());
-        cloudResource.setCloudMonitoringHost("cloudMonitoringHostIP");
 
+        try {
+			cloudResource.setAccessPolicy(new SingleTokenAccessPolicySpecifier(AccessPolicyType.PUBLIC, null));
+			cloudResource.setFilteringPolicy(new SingleTokenAccessPolicySpecifier(AccessPolicyType.PUBLIC, null));
+		} catch (InvalidArgumentsException e) {
+			e.printStackTrace();
+		}
+        
         StationarySensor sensor = new StationarySensor();
         cloudResource.setResource(sensor);
-        sensor.setLabels(Arrays.asList("termometer"));
-        sensor.setComments(Arrays.asList("A comment"));
-        sensor.setInterworkingServiceURL("https://symbiote-h2020.eu/example/interworkingService/");
-        sensor.setLocatedAt(new WGS84Location(2.349014, 48.864716, 15, 
-                Arrays.asList("Paris"), 
-                Arrays.asList("This is Paris")));
+        sensor.setName("DefaultEnablerLogicSensor" + internalId);
+        sensor.setDescription(Arrays.asList("Default sensor for testing EL"));
+
         FeatureOfInterest featureOfInterest = new FeatureOfInterest();
         sensor.setFeatureOfInterest(featureOfInterest);
-        featureOfInterest.setLabels(Arrays.asList("Room1"));
-        featureOfInterest.setComments(Arrays.asList("This is room 1"));
-        featureOfInterest.setHasProperty(Arrays.asList("temperature"));
-        sensor.setObservesProperty(Arrays.asList("temperature,humidity".split(",")));
+        featureOfInterest.setName("outside air");
+        featureOfInterest.setDescription(Arrays.asList("outside air quality"));
+        featureOfInterest.setHasProperty(Arrays.asList("temperature,humidity".split(",")));
         
-        CloudResourceParams cloudResourceParams = new CloudResourceParams();
-        cloudResource.setParams(cloudResourceParams);
-        cloudResourceParams.setType("Type of device, used in monitoring");
-
-        return cloudResource;
+        sensor.setObservesProperty(Arrays.asList("temperature,humidity".split(",")));
+        sensor.setLocatedAt(createLocation());
+        sensor.setInterworkingServiceURL(props.getInterworkingInterfaceUrl());
+        return cloudResource;        
     }
+
+	private WGS84Location createLocation() {
+		WGS84Location location = new WGS84Location(2.349014, 48.864716, 15, 
+                "Paris", 
+                Arrays.asList("This is Paris"));
+		return location;
+	}
 
     private CloudResource createActuatorResource(String internalId) {
         CloudResource cloudResource = new CloudResource();
         cloudResource.setInternalId(internalId);
         cloudResource.setPluginId(props.getEnablerName());
-        cloudResource.setCloudMonitoringHost("cloudMonitoringHostIP");
+        
+        try {
+			cloudResource.setAccessPolicy(new SingleTokenAccessPolicySpecifier(AccessPolicyType.PUBLIC, null));
+			cloudResource.setFilteringPolicy(new SingleTokenAccessPolicySpecifier(AccessPolicyType.PUBLIC, null));
+		} catch (InvalidArgumentsException e) {
+			e.printStackTrace();
+		}
         
         Actuator actuator = new Actuator();
         cloudResource.setResource(actuator);
-        actuator.setLabels(Arrays.asList("lamp"));
-        actuator.setComments(Arrays.asList("A comment"));
-        actuator.setInterworkingServiceURL("https://symbiote-h2020.eu/example/interworkingService/");
-        actuator.setLocatedAt(new WGS84Location(2.349014, 48.864716, 15, 
-                Arrays.asList("Paris"), 
-                Arrays.asList("This is Paris")));
         
-        Capability capability = new Capability();
+        actuator.setLocatedAt(createLocation());
+        actuator.setName("Enabler Logic Example Light 1");
+        actuator.setDescription(Arrays.asList("This is light 1"));
+        
+        eu.h2020.symbiote.model.cim.Capability capability = new eu.h2020.symbiote.model.cim.Capability();
         actuator.setCapabilities(Arrays.asList(capability));
-        Effect effect = new Effect();
-        capability.setEffects(Arrays.asList(effect));
-        FeatureOfInterest featureOfInterest = new FeatureOfInterest();
-        effect.setActsOn(featureOfInterest);
-        Parameter parameter = new Parameter();
+        
+        capability.setName("OnOffCapabililty");
+
+        // parameters
+        eu.h2020.symbiote.model.cim.Parameter parameter = new eu.h2020.symbiote.model.cim.Parameter();
         capability.setParameters(Arrays.asList(parameter));
+        parameter.setName("on");
         parameter.setMandatory(true);
-        parameter.setName("light");
-        EnumRestriction enumRestriction = new EnumRestriction();
-        enumRestriction.setValues(Arrays.asList("on", "off"));
-        parameter.setRestrictions(Arrays.asList(enumRestriction));
+        PrimitiveDatatype datatype = new PrimitiveDatatype();
+		parameter.setDatatype(datatype);
+		datatype.setBaseDatatype("boolean");
+        
+        actuator.setInterworkingServiceURL(props.getInterworkingInterfaceUrl());
 
         return cloudResource;
     }
@@ -385,19 +380,37 @@ public class InterpolatorLogic implements ProcessingLogic {
         CloudResource cloudResource = new CloudResource();
         cloudResource.setInternalId(internalId);
         cloudResource.setPluginId(props.getEnablerName());
-        cloudResource.setCloudMonitoringHost("cloudMonitoringHostIP");
         
+        try {
+			cloudResource.setAccessPolicy(new SingleTokenAccessPolicySpecifier(AccessPolicyType.PUBLIC, null));
+			cloudResource.setFilteringPolicy(new SingleTokenAccessPolicySpecifier(AccessPolicyType.PUBLIC, null));
+		} catch (InvalidArgumentsException e) {
+			e.printStackTrace();
+		}
+
         Service service = new Service();
         cloudResource.setResource(service);
-        service.setLabels(Arrays.asList("lamp"));
-        service.setComments(Arrays.asList("A comment"));
-        service.setInterworkingServiceURL("https://symbiote-h2020.eu/example/interworkingService/");
         
-        service.setName("Heat alarm");
-        Parameter parameter = new Parameter();
-        parameter.setMandatory(true);
-        parameter.setName("trasholdTemperature");
+        service.setName("Enabler Logic Example Light service 1");
+        service.setDescription(Arrays.asList("This is light service 1 in Enabler Logic Example"));
+        
+        eu.h2020.symbiote.model.cim.Parameter parameter = new eu.h2020.symbiote.model.cim.Parameter();
         service.setParameters(Arrays.asList(parameter));
+
+        parameter.setName("inputParam1");
+        parameter.setMandatory(true);
+        // restriction
+        LengthRestriction restriction = new LengthRestriction();
+        restriction.setMin(2);
+        restriction.setMax(10);
+		parameter.setRestrictions(Arrays.asList(restriction));
+		
+		PrimitiveDatatype datatype = new PrimitiveDatatype();
+		datatype.setArray(false);
+		datatype.setBaseDatatype("http://www.w3.org/2001/XMLSchema#string");
+		parameter.setDatatype(datatype);
+
+        service.setInterworkingServiceURL(props.getInterworkingInterfaceUrl());
 
         return cloudResource;
     }
@@ -407,7 +420,8 @@ public class InterpolatorLogic implements ProcessingLogic {
 
 There are following RAP plugin consumers:
 - for reading resources there is `ReadingResourceListener`
-- for activating actuator and calling service there is `WritingToResourceListener`
+- for triggering actuator there is `ActuatingResourceListener`
+- for invoking service there is `InvokingServiceListener`
 - for beginning and ending subscription there is `NotificationResourceListener`
 
 Registering and unregistering resources is done by calling `register...` or `unregister...` methods
@@ -422,12 +436,13 @@ private RapPlugin rapPlugin;
 #### Reading resources
 `ReadingResourceListener` class has following methods:
 
-- `List<Observation> readResource(String resourceId)` for reading one resource.
-The argument is internal resource ID. It returns list of observed values.
+- `Observation readResource(String resourceId)` for reading one resource.
+The argument is internal resource ID. It returns one observations.
 - `List<Observation> readResourceHistory(String resourceId)` for reading
 historical observed values which are returned.
 
-In the case that reading is not possible listener should return `null`.
+In the case that reading is not possible to read listener should either return `null` or
+throw `RapPluginException`.
 
 Here is example of registering and handling faked values:
 
@@ -436,66 +451,150 @@ rapPlugin.registerReadingResourceListener(new ReadingResourceListener() {
     
     @Override
     public List<Observation> readResourceHistory(String resourceId) {
-        if("1000".equals(resourceId))
+        if("el_isen1".equals(resourceId))
             return new ArrayList<>(Arrays.asList(createObservation(resourceId), createObservation(resourceId)));
 
         return null;
     }
     
     @Override
-    public List<Observation> readResource(String resourceId) {
-        if("1000".equals(resourceId)) {
-            Observation o = createObservation(resourceId);
-            return new ArrayList<>(Arrays.asList(o));
+    public Observation readResource(String resourceId) {
+        if("el_isen1".equals(resourceId)) {
+           return createObservation(resourceId);
         }
             
         return null;
     }
 });
 ```
- 
-#### Triggering actuator and calling service
-For both actions is used the same listener `WritingToResourceListener`. There 
-is only one method in interface: 
-`Result<Object> writeResource(String resourceId, List<InputParameter> parameters)`.
-Arguments are: internal resource id and service/actuation parameters.
-Parameters are implemented in `InputParameter` class. Return value is different
-for actuation and service call:
-- actuation - `null` is usual value, but it can be `Result` with message.
-- service call - must have return value that is put in `Result` object.
 
-Here is example of both implementations of listener:
+Here is example of creating observation:
 ```java
-rapPlugin.registerWritingToResourceListener(new WritingToResourceListener() {
+public Observation createObservation(String sensorId) {        
+    Location loc = createLocation();
     
-    @Override
-    public Result<Object> writeResource(String resourceId, List<InputParameter> parameters) {
-        LOG.debug("writing to resource {} body:{}", resourceId, parameters);
-        if("2000".equals(resourceId)) { // actuation
-            Optional<InputParameter> lightParameter = parameters.stream().filter(p -> p.getName().equals("light")).findFirst();
-            if(lightParameter.isPresent()) {
-                String value = lightParameter.get().getValue();
-                if("on".equals(value)) {
-                    LOG.debug("Turning on light {}", resourceId);
-                    return new Result<>(false, null, "Turning on light " + resourceId);
-                } else if("off".equals(value)) {
-                    LOG.debug("Turning off light {}", resourceId);
-                    return new Result<>(false, null, "Turning off light " + resourceId);
-                }
-            }
-        } else if("3000".equals(resourceId)) { // service call
-            Optional<InputParameter> lightParameter = parameters.stream().filter(p -> p.getName().equals("trasholdTemperature")).findFirst();
-            if(lightParameter.isPresent()) {
-                String value = lightParameter.get().getValue();
-                LOG.debug("Setting trashold on resource {} to {}", resourceId, value);
-                return new Result<>(false, null, "Setting trashold on resource " + resourceId + " to " + value);
-                }
-            }
-            return null;
-        }
-    });
+    TimeZone zoneUTC = TimeZone.getTimeZone("UTC");
+    DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss");
+    dateFormat.setTimeZone(zoneUTC);
+    Date date = new Date();
+    String timestamp = dateFormat.format(date);
+    
+    long ms = date.getTime() - 1000;
+    date.setTime(ms);
+    String samplet = dateFormat.format(date);
+    
+    ArrayList<ObservationValue> obsList = new ArrayList<>();
+    ObservationValue obsval = 
+            new ObservationValue(
+                    Integer.toString(new Random().nextInt(50) - 10), // random temp. 
+                    new Property("Temperature", "temp_iri", Arrays.asList("Air temperature")), 
+                    new UnitOfMeasurement("C", "degree Celsius", "celsius_iri", Arrays.asList("")));
+    obsList.add(obsval);
+    
+    obsval = new ObservationValue(
+    		Integer.toString(new Random().nextInt(50) - 10), // random temp. 
+            new Property("Humidity", "humidity_iri", Arrays.asList("Air humidity")), 
+            new UnitOfMeasurement("C", "degree Celsius", "celsius_iri", Arrays.asList("")));
+    obsList.add(obsval);
+    
+    Observation obs = new Observation(sensorId, loc, timestamp, samplet , obsList);
+    
+    try {
+        LOG.debug("Observation: \n{}", new ObjectMapper().writeValueAsString(obs));
+    } catch (JsonProcessingException e) {
+        LOG.error("Can not convert observation to JSON", e);
+    }
+    
+    return obs;
 }
 ```
+ 
+#### Triggering actuator
+For triggering actuator is used `ActuatingResourceListener`. There 
+is only one method in interface: 
+`void actuateResource(String resourceId, Map<String,Capability> capabilities)`.
+Arguments are: internal resource id and actuation parameters.
+Capabilities are map with name of capability as key and 
+value of capability implemented in `Capability` class as value.
+Each capability has map of parameters (key is parameter name and value is implemented
+in `Parameter` class). Each parameter has value.
+
+Here is example of listener implementation:
+```java
+rapPlugin.registerActuatingResourceListener(new ActuatingResourceListener() {
+	
+	@Override
+	public void actuateResource(String resourceId, Map<String,Capability> parameters) {
+        LOG.debug("writing to resource {} body:{}", resourceId, parameters);
+        try {
+            if("el_iaid1".equals(resourceId)) {
+                Capability lightCapability = parameters.get("OnOffCapability");
+                Assert.notNull(lightCapability, "Capability 'on' is required.");
+                Parameter parameter = lightCapability.getParameters().get("on");
+                Assert.notNull(parameter, "Parameter 'on' in capability 'OnOffCapability' is required.");
+                Object objectValue = parameter.getValue();
+                Assert.isInstanceOf(Boolean.class, objectValue, "Parameter 'on' of capability 'OnOffCapability' should be boolean.");
+                if((Boolean) objectValue) {
+                    LOG.debug("Turning on light {}", resourceId);
+                } else {
+                    LOG.debug("Turning off light {}", resourceId);
+                }
+            } else {
+            	throw new RapPluginException(HttpStatus.NOT_FOUND.value(), "Actuator not found");
+            }
+        } catch (IllegalArgumentException e) {
+        	throw new RapPluginException(HttpStatus.BAD_REQUEST.value(), e.getMessage());
+        }
+    }
+});
+```
+
+If there are problems in triggering actuation or in getting values from capabilities or
+parameters, implementation can throw `RapPluginException` with description and response 
+code that will be returned to client.
+
+#### Invoking service
+For invoking service is used `InvokingServiceListener`. There 
+is only one method in interface: 
+`Object invokeService(String resourceId, Map<String,Parameter> parameters)`.
+Arguments are: internal resource id and map of invocation parameters.
+Parameters are similar to parameters in capabilities from actuation.
+A map of invocation parameters has parameter name  as key and `Parameter` class
+instance as value. Each parameter has concrete value.
+
+Return value is result of invoking service. It is important that return value 
+can be serialized to JSON. Internally is used Jackson for serialization. 
+
+Here is example of listener implementation:
+```java
+rapPlugin.registerInvokingServiceListener(new InvokingServiceListener() {
+	
+	@Override
+	public Object invokeService(String resourceId, Map<String,Parameter> parameters) {
+        LOG.debug("invoking service {} parameters:{}", resourceId, parameters);
+        
+        try {
+            if("el_isrid1".equals(resourceId)) {
+            	Parameter parameter = parameters.get("inputParam1");
+                Assert.notNull(parameter, "Capability 'inputParam1' is required.");
+                Object objectValue = parameter.getValue();
+                Assert.isInstanceOf(String.class, objectValue, "Parameter 'inputParam1' should be string of length form 2-10.");
+                String value = (String) objectValue;
+                LOG.debug("Invoking service {} with param {}.", resourceId, value);
+                return "ok";
+            } else {
+            	throw new RapPluginException(HttpStatus.NOT_FOUND.value(), "Service not found");
+            }
+        } catch (IllegalArgumentException e) {
+        	throw new RapPluginException(HttpStatus.BAD_REQUEST.value(), e.getMessage());
+        }
+	}
+});
+```
+
+The same as for actuators, if there are problems in invoking service or in getting values 
+from parameters, implementation can throw `RapPluginException` with description and 
+response code that will be returned to client.
 
 ## Running
 
