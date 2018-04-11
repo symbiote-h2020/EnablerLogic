@@ -1,5 +1,10 @@
 package eu.h2020.symbiote.enablerlogic.messaging;
 
+import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
+import java.util.stream.IntStream;
+
 import org.springframework.amqp.core.Message;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -18,12 +23,14 @@ public class LoggingTrimHelper {
             return null;
         
         StringBuffer buffer = new StringBuffer();
-        String original = msg.toString();
         
-        if(msg.getBody().length > MAX_MESSAGE_BODY_LENGTH) {
-            buffer.append(original.substring(0, MAX_MESSAGE_BODY_LENGTH));
+        byte bodyArray[] = msg.getBody();
+		if(bodyArray.length > MAX_MESSAGE_BODY_LENGTH) {
+			byte trimmedBodyArray[] = Arrays.copyOf(bodyArray, MAX_MESSAGE_BODY_LENGTH);
+			String body = new String(trimmedBodyArray, StandardCharsets.UTF_8);
+			buffer.append(body);
             buffer.append("...' trimmed, originalBodySize=");
-            buffer.append(msg.getBody().length);
+            buffer.append(bodyArray.length);
             if (msg.getMessageProperties() != null) {
                 buffer.append(" ").append(msg.getMessageProperties().toString());
             }
@@ -31,7 +38,7 @@ public class LoggingTrimHelper {
             return buffer.toString();
         }
         
-        return original;
+        return msg.toString();
     }
 
     /**
