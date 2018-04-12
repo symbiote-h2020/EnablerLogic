@@ -33,8 +33,6 @@ public class RoutingKeysProperties {
         private String notEnoughResources = "symbIoTe.enablerLogic.notEnoughResources";
         private String asyncMessageToEnablerLogic = "symbIoTe.enablerLogic.asyncMessageToEnablerLogic";
         private String syncMessageToEnablerLogic = "symbIoTe.enablerLogic.syncMessageToEnablerLogic";
-
-
     }
 
     @Getter
@@ -56,6 +54,7 @@ public class RoutingKeysProperties {
         private String acquisitionStartRequested = "symbIoTe.enablerPlatformProxy.acquisitionStartRequested";
         private String acquisitionStopRequested = "symbIoTe.enablerPlatformProxy.acquisitionStopRequested";
         private String singleReadRequested = "symbIoTe.enablerPlatformProxy.singleReadRequested";
-
+        private String executeServiceRequested = "symbIoTe.enablerPlatformProxy.executeServiceRequested";
+        private String executeActuatorRequested = "symbIoTe.enablerPlatformProxy.executeActuatorRequested";
     }
 }

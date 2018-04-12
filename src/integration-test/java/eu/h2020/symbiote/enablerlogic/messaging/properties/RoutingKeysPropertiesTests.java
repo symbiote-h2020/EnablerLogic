@@ -51,6 +51,10 @@ public class RoutingKeysPropertiesTests {
             .isEqualTo("c_asr2");
         assertThat(props.getEnablerPlatformProxy().getSingleReadRequested())
             .isEqualTo("c_srr");
+        assertThat(props.getEnablerPlatformProxy().getExecuteActuatorRequested())
+        	.isEqualTo("c_ear");
+        assertThat(props.getEnablerPlatformProxy().getExecuteServiceRequested())
+        	.isEqualTo("c_esr");
     }
 
 }
