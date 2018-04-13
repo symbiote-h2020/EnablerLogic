@@ -16,7 +16,9 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.runners.MockitoJUnitRunner;
+import org.springframework.http.HttpStatus;
 
+import eu.h2020.symbiote.enabler.messaging.model.ActuatorExecutionTaskInfo;
 import eu.h2020.symbiote.enabler.messaging.model.CancelTaskRequest;
 import eu.h2020.symbiote.enabler.messaging.model.CancelTaskResponse;
 import eu.h2020.symbiote.enabler.messaging.model.EnablerLogicDataAppearedMessage;
@@ -27,6 +29,8 @@ import eu.h2020.symbiote.enabler.messaging.model.ResourceManagerAcquisitionStart
 import eu.h2020.symbiote.enabler.messaging.model.ResourceManagerTaskInfoRequest;
 import eu.h2020.symbiote.enabler.messaging.model.ResourceManagerUpdateRequest;
 import eu.h2020.symbiote.enabler.messaging.model.ResourceManagerUpdateResponse;
+import eu.h2020.symbiote.enabler.messaging.model.ServiceExecutionTaskInfo;
+import eu.h2020.symbiote.enabler.messaging.model.ServiceExecutionTaskResponse;
 import eu.h2020.symbiote.enablerlogic.EnablerLogic;
 import eu.h2020.symbiote.enablerlogic.messaging.RabbitManager;
 import eu.h2020.symbiote.enablerlogic.messaging.VoidResponse;
@@ -161,7 +165,57 @@ public class EnablerLogicTest {
         assertThat(readResponse).isSameAs(response);
     }
 
-
+    @Test
+    public void triggeringActuator_shouldReturnResponse() throws Exception {
+    	// given
+    	ArgumentCaptor<ActuatorExecutionTaskInfo> captor =
+    			ArgumentCaptor.forClass(ActuatorExecutionTaskInfo.class);
+    	ActuatorExecutionTaskInfo expectedRequest = new ActuatorExecutionTaskInfo(
+    			"taskId", null, props.getExchange().getEnablerPlatformProxy().getName(), 
+    			"OnFooCapability", null);
+    	ServiceExecutionTaskResponse response = new ServiceExecutionTaskResponse(HttpStatus.OK, "");
+    	when(rabbitManager.sendRpcMessage(
+    			eq(props.getExchange().getEnablerPlatformProxy().getName()),
+    			eq(props.getKey().getEnablerPlatformProxy().getExecuteActuatorRequested()),
+    			any(PlatformProxyTaskInfo.class))).thenReturn(response);
+    	
+    	// when
+    	ServiceExecutionTaskResponse actuationResponse = enablerLogic.triggerActuator(expectedRequest);
+    	
+    	// then
+    	verify(rabbitManager).sendRpcMessage(eq(props.getExchange().getEnablerPlatformProxy().getName()),
+    			eq(props.getKey().getEnablerPlatformProxy().getExecuteActuatorRequested()),
+    			captor.capture());
+    	ActuatorExecutionTaskInfo request = captor.getValue();
+    	assertThat(request).isSameAs(expectedRequest);
+    	assertThat(actuationResponse).isSameAs(response);
+    }
+    
+    @Test
+    public void invokingService_shouldReturnResponse() throws Exception {
+    	// given
+    	ArgumentCaptor<ServiceExecutionTaskInfo> captor =
+    			ArgumentCaptor.forClass(ServiceExecutionTaskInfo.class);
+    	ServiceExecutionTaskInfo expectedRequest = new ServiceExecutionTaskInfo(
+    			"taskId", null, props.getExchange().getEnablerPlatformProxy().getName(), 
+    			null);
+    	ServiceExecutionTaskResponse response = new ServiceExecutionTaskResponse(HttpStatus.OK, "result");
+    	when(rabbitManager.sendRpcMessage(
+    			eq(props.getExchange().getEnablerPlatformProxy().getName()),
+    			eq(props.getKey().getEnablerPlatformProxy().getExecuteServiceRequested()),
+    			any(PlatformProxyTaskInfo.class))).thenReturn(response);
+    	
+    	// when
+    	ServiceExecutionTaskResponse actuationResponse = enablerLogic.invokeService(expectedRequest);
+    	
+    	// then
+    	verify(rabbitManager).sendRpcMessage(eq(props.getExchange().getEnablerPlatformProxy().getName()),
+    			eq(props.getKey().getEnablerPlatformProxy().getExecuteServiceRequested()),
+    			captor.capture());
+    	ServiceExecutionTaskInfo request = captor.getValue();
+    	assertThat(request).isSameAs(expectedRequest);
+    	assertThat(actuationResponse).isSameAs(response);
+    }
     
     @Test
     public void registerAsyncMessageFromEnablerLogicConsumer_shouldDelegateItToConsumer() throws Exception {
