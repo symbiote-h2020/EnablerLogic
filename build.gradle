@@ -157,7 +157,7 @@ configurations.all {
 
 // jacoco configuration section
 jacoco {
-    toolVersion = "0.7.9"
+    toolVersion = "0.8.1"
 }
 
 jacocoTestReport {
@@ -174,8 +174,7 @@ check.dependsOn(jacocoTestReport)
 task integrationTest(type: Test) {
     jacoco {
       destinationFile = file("$buildDir/jacoco/integrationTest.exec")
-      classDumpDir = file("$buildDir/build/classes/integrationTest")
-      includes = ["eu.*"]
+      classDumpDir = file("$buildDir/build/classes/main")
    }
 
     testClassesDir = sourceSets.integrationTest.output.classesDir
@@ -193,7 +192,7 @@ task allTestReport(type: TestReport) {
 test {
     jacoco {
         destinationFile = file("$buildDir/jacoco/test.exec")
-        classDumpDir = file("$buildDir/build/classes/test")
+        classDumpDir = file("$buildDir/build/classes/main")
     }
 }
 
@@ -209,9 +208,8 @@ task jacocoIntegrationTestReport(type: JacocoReport) {
         html.destination = file("${buildDir}/reports/jacoco/integrationTest/html")
     }
  
-    executionData = files(["${buildDir}/jacoco/integrationTest.exec"])
-    classDirectories = files("$buildDir/classes/integrationTest", "$buildDir/classes/main")
-    sourceDirectories = sourceSets.main.allJava
+ 	executionData integrationTest
+ 	sourceSets sourceSets.main
 }
 
 jacocoIntegrationTestReport.dependsOn integrationTest
@@ -229,11 +227,8 @@ task jacocoAllTestReport(type: JacocoReport) {
         html.destination = file("${buildDir}/reports/jacoco/allTest/html")
     }
  
-    executionData = files([
-            "${buildDir}/jacoco/integrationTest.exec", 
-            "${buildDir}/jacoco/test.exec"])
-    classDirectories = files("$buildDir/classes/main", "$buildDir/classes/integrationTest", "$buildDir/classes/test", )
-    sourceDirectories = sourceSets.main.allJava
+ 	executionData test, integrationTest
+ 	sourceSets sourceSets.main
 }
 jacocoAllTestReport.dependsOn test, integrationTest
 check.dependsOn jacocoAllTestReport
