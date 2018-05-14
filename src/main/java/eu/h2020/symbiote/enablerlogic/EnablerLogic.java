@@ -62,6 +62,8 @@ public class EnablerLogic {
     public EnablerLogic(RabbitManager rabbitManager, EnablerLogicProperties props) {
         this.rabbitManager = rabbitManager;
         this.props = props;
+		if (props==null)
+			throw new IllegalStateException("Props may not be null");
     }
 
     /**
@@ -120,10 +122,6 @@ public class EnablerLogic {
      * @return response form Resource Manager component or null in case of timeout
      */
     public ResourceManagerAcquisitionStartResponse queryResourceManager(ResourceManagerTaskInfoRequest...requests) {
-    	
-		if (props==null)
-			throw new IllegalStateException("Props may not be null");
-    	
         for(ResourceManagerTaskInfoRequest request: requests) {
             LOG.info("sending message to ResourceManager: {}", LoggingTrimHelper.logToString(request));
         }

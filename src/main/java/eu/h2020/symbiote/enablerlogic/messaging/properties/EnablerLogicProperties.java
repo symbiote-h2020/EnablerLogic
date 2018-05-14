@@ -17,7 +17,6 @@ public class EnablerLogicProperties {
     @Value("${symbIoTe.interworking.interface.url}")
     private String interworkingInterfaceUrl;
 
-    @Getter
     private RabbitConnectionProperties rabbitConnection;
     private ExchangeProperties exchangeProperties;
     private RoutingKeysProperties routingKeyProperties;

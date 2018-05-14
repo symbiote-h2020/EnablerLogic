@@ -4,9 +4,11 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
 
-@Data
+@Getter
 @NoArgsConstructor
 @ConfigurationProperties(prefix = "rabbit.exchange", ignoreInvalidFields = true)
 public class ExchangeProperties {
@@ -16,9 +18,9 @@ public class ExchangeProperties {
     private EcxhangeNameProperty resourceManager = new EcxhangeNameProperty("symbIoTe.resourceManager");
     private EcxhangeNameProperty enablerPlatformProxy = new EcxhangeNameProperty("symbIoTe.enablerPlatformProxy");
 
-    @Data
+    @Getter
+    @Setter
     @AllArgsConstructor
-    @NoArgsConstructor
     public static class EcxhangeNameProperty {
         private String name;
     }

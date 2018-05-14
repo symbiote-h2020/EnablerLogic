@@ -1,9 +1,7 @@
 package eu.h2020.symbiote.enablerlogic.messaging;
 
-import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
-import java.util.stream.IntStream;
 
 import org.springframework.amqp.core.Message;
 

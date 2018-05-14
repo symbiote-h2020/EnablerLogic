@@ -8,7 +8,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-@Data
+@Getter
 @ConfigurationProperties(prefix = "rabbit.routingKey", ignoreInvalidFields = true)
 public class RoutingKeysProperties {
 
@@ -24,7 +24,6 @@ public class RoutingKeysProperties {
 
     @Getter
     @Setter
-    @AllArgsConstructor
     @NoArgsConstructor
     public static class EnablerLogicKeys {
         private String acquireMeasurements = "symbIoTe.enablerLogic.acquireMeasurements";
@@ -37,7 +36,6 @@ public class RoutingKeysProperties {
 
     @Getter
     @Setter
-    @AllArgsConstructor
     @NoArgsConstructor
     public static class ResourceManagerKeys {
         private String startDataAcquisition = "symbIoTe.resourceManager.startDataAcquisition";
@@ -48,7 +46,6 @@ public class RoutingKeysProperties {
 
     @Getter
     @Setter
-    @AllArgsConstructor
     @NoArgsConstructor
     public static class PlatformProxyKeys {
         private String acquisitionStartRequested = "symbIoTe.enablerPlatformProxy.acquisitionStartRequested";
