@@ -18,6 +18,7 @@ import org.mockito.Mockito;
 import org.mockito.runners.MockitoJUnitRunner;
 import org.springframework.http.HttpStatus;
 
+import eu.h2020.symbiote.core.internal.CoreQueryRequest;
 import eu.h2020.symbiote.enabler.messaging.model.ActuatorExecutionTaskInfo;
 import eu.h2020.symbiote.enabler.messaging.model.CancelTaskRequest;
 import eu.h2020.symbiote.enabler.messaging.model.CancelTaskResponse;
@@ -61,7 +62,7 @@ public class EnablerLogicTest {
         // given
         ArgumentCaptor<ResourceManagerAcquisitionStartRequest> captor =
             ArgumentCaptor.forClass(ResourceManagerAcquisitionStartRequest.class);
-        ResourceManagerTaskInfoRequest request = new ResourceManagerTaskInfoRequest();
+        ResourceManagerTaskInfoRequest request = new ResourceManagerTaskInfoRequest("id", 1, 1, new CoreQueryRequest(), "P0-0-0T0:0:0.06", false, "P0-0-0T0:0:1", false, "elName", null);
         ResourceManagerAcquisitionStartResponse response = new ResourceManagerAcquisitionStartResponse();
         when(rabbitManager.sendRpcMessage(
             eq(props.getExchange().getResourceManager().getName()),
