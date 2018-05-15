@@ -149,10 +149,6 @@ public class EnablerLogic {
      * @return response form Resource Manager component or null in case of timeout
      */
     public ResourceManagerAcquisitionStartResponse queryResourceManager(int timeout, ResourceManagerTaskInfoRequest...requests) {
-        
-        if (props==null)
-            throw new IllegalStateException("Props may not be null");
-        
         for(ResourceManagerTaskInfoRequest request: requests) {
             LOG.info("sending message to ResourceManager: {}", LoggingTrimHelper.logToString(request));
         }
