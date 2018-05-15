@@ -96,7 +96,8 @@ dependencies {
     compileOnly('org.projectlombok:lombok')
 
     testCompile('org.springframework.boot:spring-boot-starter-test')
-    testCompile('org.awaitility:awaitility:3.0.0')
+	testCompile('org.assertj:assertj-core:3.10.0')
+    testCompile('org.awaitility:awaitility:3.1.0')
     testCompile('com.revinate:assertj-json:1.0.1')
     testCompile('io.arivera.oss:embedded-rabbitmq:1.1.2')
     testCompile('org.springframework.cloud:spring-cloud-contract-wiremock')
