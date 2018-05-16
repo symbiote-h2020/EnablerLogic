@@ -12,6 +12,7 @@ import org.springframework.amqp.rabbit.config.SimpleRabbitListenerContainerFacto
 import org.springframework.amqp.support.converter.Jackson2JsonMessageConverter;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.AutoConfigureAfter;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
@@ -21,6 +22,7 @@ import org.springframework.cloud.client.discovery.EnableDiscoveryClient;
 import org.springframework.cloud.netflix.feign.EnableFeignClients;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
+import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.context.SmartLifecycle;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
@@ -46,6 +48,9 @@ import eu.h2020.symbiote.rapplugin.RapPluginConfiguration;
 @AutoConfigureAfter(RapPluginConfiguration.class)
 public class EnablerLogicConfiguration implements ApplicationContextAware, SmartLifecycle {
     private static final Logger LOG = LoggerFactory.getLogger(EnablerLogicConfiguration.class);
+    
+    @Autowired
+    private ConfigurableApplicationContext ctx;
     
     @Autowired
     private Collection<ProcessingLogic> processingLogic;
@@ -108,7 +113,19 @@ public class EnablerLogicConfiguration implements ApplicationContextAware, Smart
             } catch (InterruptedException e) {
             }            
             
-            processingLogic.forEach((pl) -> pl.initialization(enablerLogic));
+            processingLogic.forEach((pl) -> {
+            	try {
+            		pl.initialization(enablerLogic);
+            	} catch (Throwable t) {
+            		LOG.error("Turning down enabler because of error in initialization", t);
+            		
+            		SpringApplication.exit(ctx, () -> {
+            			// here put some other things that need to be closed befor shutdown
+            			return 1;
+            		});
+            		// or System.exit(1)
+            	}
+            });
             running = true;
         }).start();
     }
