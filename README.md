@@ -18,6 +18,8 @@ doesn't have to implement complex communication between those components. The ex
 
 It needs following dependencies: Config Client, Eureka Discovery, Zipkin Client
 
+Current version of SpringBoot that is used is: **1.5.10**.
+
 ### 2. Adding symbIoTe dependencies to `build.gradle`
 
 Add following dependencies for on the edge version:
@@ -27,9 +29,9 @@ Add following dependencies for on the edge version:
 This is dependency to development version of EnablerLogic from jitpack. It will use the newest version of 
 EnablerLogic published in jitpack. This is only for development. 
 
-If you want to use stable version please use releases. Current release is 0.3.2 and you can include it with this line:
+If you want to use stable version please use releases. Current release is 0.4.0 and you can include it with this line:
 
-`compile('com.github.symbiote-h2020:EnablerLogic:0.3.2')` 
+`compile('com.github.symbiote-h2020:EnablerLogic:0.4.0')` 
 
 In order to use jitpack you need to put in `build.gradle` 
 following lines as well:
@@ -107,16 +109,21 @@ for specified acquisition taskId.
 - `public ResourceManagerAcquisitionStartResponse queryResourceManager(ResourceManagerTaskInfoRequest...requests)` - 
 this method sends to Registration Manager to start data acquisition. The argument
 is request for resources and the result contains list of resources and taskId.
+This method has variant with timeout.
 
 - `public CancelTaskResponse cancelTask(CancelTaskRequest request)` -
 this method sends to Resource Manager to cancel acquisition task request.
+This method has variant with timeout.
 
 - `public ResourceManagerUpdateResponse updateTask(ResourceManagerUpdateRequest request)` -
 this method sends to Resource Manager to request for update acquisition task.
+This method has variant with timeout.
 
 - `public void reportBrokenResource(ProblematicResourcesMessage message)` -
 this method sends message to Resource Manager that specified broken resource 
 is producing wrong data.
+
+Default timeout is 20 seconds.
 
 ### 5. Communication with other Enabler Logic components in the enabler
 
@@ -211,12 +218,17 @@ Enabler Logic component.
 
 * `Class<O> clazz` - the class of expected response object 
 
+* `int timeout` - this is optional parameter. It sets timeout for receiving 
+response. The value is in milliseconds. If you don't specify timeout default
+value is 20000 (20 seconds).
+
+
 If the type of the response message can not be casted to clazz then 
 `WrongResponseException` is thrown. The exception will contain the object that is returned.
 
 In the case of timeout `null` will be returned.
 
-Example:
+Example without explicit timeout:
 ```java
 MessageResponse response = enablerLogic.sendSyncMessageToEnablerLogic(
     "EnablerLogicInterpolator",
@@ -224,6 +236,14 @@ MessageResponse response = enablerLogic.sendSyncMessageToEnablerLogic(
     MessageResponse.class);
 ```
 
+Example with explicit timeout:
+```java
+MessageResponse response = enablerLogic.sendSyncMessageToEnablerLogic(
+    "EnablerLogicInterpolator",
+    new MessageRequest("request"),
+    MessageResponse.class,
+    60_000);
+```
 ### 6. Registering resources
 
 Registration of resources is going by communicating with Registration Handler
@@ -288,7 +308,7 @@ public class ExampleLogic implements ProcessingLogic {
         int i = 1;
         while(i < 10) {
             try {
-                LOG.debug("Atempting to register resources count {}.", i);
+                LOG.debug("Attempting to register resources count {}.", i);
                 rhClientService.registerResources(cloudResources);
                 LOG.debug("Resources registered");
                 break;
@@ -302,6 +322,30 @@ public class ExampleLogic implements ProcessingLogic {
         }
     }
     
+    private void registerResources() {
+        List<CloudResource> cloudResources = new LinkedList<>();
+        cloudResources.add(createSensorResource("el_isen1"));
+        cloudResources.add(createActuatorResource("el_iaid1"));
+        cloudResources.add(createServiceResource("el_isrid1"));
+
+        // waiting for registrationHandler to create exchange
+        int i = 1;
+        while(i < 10) {
+            try {
+                LOG.debug("Atempting to register resources count {}.", i);
+                rhClientService.registerResources(cloudResources);
+                LOG.debug("Resources registered");
+                break;
+            } catch (Exception e) {
+                i++;
+                try {
+                    Thread.sleep(1000);
+                } catch (InterruptedException e1) {
+                }
+            }
+        }
+    }
+
     private CloudResource createSensorResource(String internalId) {
         CloudResource cloudResource = new CloudResource();
         cloudResource.setInternalId(internalId);
@@ -354,8 +398,8 @@ public class ExampleLogic implements ProcessingLogic {
         cloudResource.setResource(actuator);
         
         actuator.setLocatedAt(createLocation());
-        actuator.setName("Enabler Logic Example Light 1");
-        actuator.setDescription(Arrays.asList("This is light 1"));
+        actuator.setName("Enabler_Logic_Example_Aircondition_1");
+        actuator.setDescription(Arrays.asList("This is aircondition 1"));
         
         eu.h2020.symbiote.model.cim.Capability capability = new eu.h2020.symbiote.model.cim.Capability();
         actuator.setCapabilities(Arrays.asList(capability));
@@ -391,13 +435,13 @@ public class ExampleLogic implements ProcessingLogic {
         Service service = new Service();
         cloudResource.setResource(service);
         
-        service.setName("Enabler Logic Example Light service 1");
-        service.setDescription(Arrays.asList("This is light service 1 in Enabler Logic Example"));
+        service.setName("Enabler_Logic_Example_Humidity_service_1");
+        service.setDescription(Arrays.asList("This is humidity service 1 in Enabler Logic Example"));
         
         eu.h2020.symbiote.model.cim.Parameter parameter = new eu.h2020.symbiote.model.cim.Parameter();
         service.setParameters(Arrays.asList(parameter));
 
-        parameter.setName("inputParam1");
+        parameter.setName("humidityTaget");
         parameter.setMandatory(true);
         // restriction
         LengthRestriction restriction = new LengthRestriction();
@@ -417,9 +461,10 @@ public class ExampleLogic implements ProcessingLogic {
 ```
 
 ### 7. Registering RAP plugin consumers
-
-There are following RAP plugin consumers:
-- for reading resources there is `ReadingResourceListener`
+RAP plugin consumers are called when symbIoTe Application access resources 
+that enabler provides (registered resources). Since enabler can register
+sensors, actuators and services there are corresponding RAP plugin consumers:
+- for reading resources (sensors) there is `ReadingResourceListener`
 - for triggering actuator there is `ActuatingResourceListener`
 - for invoking service there is `InvokingServiceListener`
 - for beginning and ending subscription there is `NotificationResourceListener`
@@ -508,7 +553,7 @@ public Observation createObservation(String sensorId) {
     return obs;
 }
 ```
- 
+
 #### Triggering actuator
 For triggering actuator is used `ActuatingResourceListener`. There 
 is only one method in interface: 
@@ -535,9 +580,9 @@ rapPlugin.registerActuatingResourceListener(new ActuatingResourceListener() {
                 Object objectValue = parameter.getValue();
                 Assert.isInstanceOf(Boolean.class, objectValue, "Parameter 'on' of capability 'OnOffCapability' should be boolean.");
                 if((Boolean) objectValue) {
-                    LOG.debug("Turning on light {}", resourceId);
+                    LOG.debug("*** Turning on AC {}", resourceId);
                 } else {
-                    LOG.debug("Turning off light {}", resourceId);
+                    LOG.debug("*** Turning off AC {}", resourceId);
                 }
             } else {
             	throw new RapPluginException(HttpStatus.NOT_FOUND.value(), "Actuator not found");
@@ -549,8 +594,8 @@ rapPlugin.registerActuatingResourceListener(new ActuatingResourceListener() {
 });
 ```
 
-If there are problems in triggering actuation or in getting values from capabilities or
-parameters, implementation can throw `RapPluginException` with description and response 
+If there are problems in triggering actuation or in getting values from capabilities, 
+implementation can throw `RapPluginException` with description and response 
 code that will be returned to client.
 
 #### Invoking service
@@ -575,12 +620,13 @@ rapPlugin.registerInvokingServiceListener(new InvokingServiceListener() {
         
         try {
             if("el_isrid1".equals(resourceId)) {
-            	Parameter parameter = parameters.get("inputParam1");
-                Assert.notNull(parameter, "Capability 'inputParam1' is required.");
+            	Parameter parameter = parameters.get("humidityTaget");
+                Assert.notNull(parameter, "Capability 'humidityTaget' is required.");
                 Object objectValue = parameter.getValue();
-                Assert.isInstanceOf(String.class, objectValue, "Parameter 'inputParam1' should be string of length form 2-10.");
+                Assert.isInstanceOf(String.class, objectValue, "Parameter 'humidityTaget' should be string of length form 2-10.");
                 String value = (String) objectValue;
                 LOG.debug("Invoking service {} with param {}.", resourceId, value);
+                LOG.info("*** Humidity service target is {}", value);
                 return "ok";
             } else {
             	throw new RapPluginException(HttpStatus.NOT_FOUND.value(), "Service not found");
@@ -595,6 +641,237 @@ rapPlugin.registerInvokingServiceListener(new InvokingServiceListener() {
 The same as for actuators, if there are problems in invoking service or in getting values 
 from parameters, implementation can throw `RapPluginException` with description and 
 response code that will be returned to client.
+
+### 8. One time access to resources
+Sometimes there is need to access resources of other platforms just once.
+The steps are following:
+* Search for resource
+* Send access request
+
+The example that will show how to once access resource is: when data for
+reading temperature and humidity appears then the temperature and humidity
+logic is executed. Temperature logic is as following if the temperature is
+grater then 25C it will actuate resource and by that turn on air condition (AC).
+Similar is for humidity. If humidity is in acceptable range (30-60%) humidity
+service target will be OFF and otherwise it will be set to 40%.  
+
+Here is implementation of starting logic:
+```java
+@Override
+public void measurementReceived(EnablerLogicDataAppearedMessage dataAppeared) {
+    try {
+        LOG.info("Received new Observations: {}", new ObjectMapper().writeValueAsString(dataAppeared));
+    } catch (JsonProcessingException e) {
+        LOG.error("Problem with deserializing EnablerLogicDataAppearedMessage", e);
+    }
+    
+    temperatureLogic(dataAppeared);
+    humidityLogic(dataAppeared);
+}
+
+private void temperatureLogic(EnablerLogicDataAppearedMessage dataAppeared) {
+	try {
+		LOG.info("Logic for Paris temp");
+		dataAppeared.getObservations().get(0).getObsValues().stream()
+			.filter(obsValue -> obsValue.getObsProperty().getName().equalsIgnoreCase("temperature"))
+			.map(obsValue -> obsValue.getValue())
+			.forEach(tempValue -> {
+				if(Integer.parseInt(tempValue) > 25)
+					actuateAirCondition(true);
+				else
+					actuateAirCondition(false);
+			});
+    } catch (Exception e) {
+    	LOG.error("Error in logic for Paris temp", e);
+    }
+}
+
+private void humidityLogic(EnablerLogicDataAppearedMessage dataAppeared) {
+	try {
+		LOG.info("Logic for Paris humidity");
+		dataAppeared.getObservations().get(0).getObsValues().stream()
+			.filter(obsValue -> obsValue.getObsProperty().getName().equalsIgnoreCase("humidity"))
+			.map(obsValue -> obsValue.getValue())
+			.forEach(tempValue -> {
+				int humidity = Integer.parseInt(tempValue);
+				if(humidity > 60 || humidity < 30)
+					turnOnHumidityService(40);
+				else
+					turnOffHumidityService();
+			});
+    } catch (Exception e) {
+    	LOG.error("Error in logic for Paris temp", e);
+    }
+}
+
+private void turnOffHumidityService() {
+	LOG.info("Turning OFF service");
+	setHumidityServiceTarget("OFF");
+}
+
+private void turnOnHumidityService(int targetHumidity) {
+	LOG.info("Setting humidiy service to target {}.", targetHumidity);
+	setHumidityServiceTarget(String.valueOf(targetHumidity));
+}
+```
+#### Search for resource
+
+For searching resources we need to send request to Resource Manager. 
+That is done by using `queryResourceManager` method. This method has 
+`ResourceManagerTaskInfoRequest` parameter. In the `ResourceManagerTaskInfoRequest`
+we need to set:
+* taskId - the id of the requested task (specified name)
+* minNoResources - the minimum number of required resources (we set that to `1`)
+* coreQueryRequest - the request which is propagated to the core. We need to set search criteria here (only the name of resource).
+* queryInterval - the query interval in ISO-8601 alternateExtended format 
+that is propagated to the Platform Proxy (`null` since this is not going to 
+be propagated to Platfrom Proxy)
+* allowCaching - if the results gotten from search are allowed to be cached 
+for faster responses in case of failing resources (`false` this is on time search)
+* cachingInterval - the caching interval of tasks resources in ISO-8601 
+alternateExtended format (`null` this is one time search)
+* informPlatformProxy - if Platform Proxy needs to be informed. If you want 
+to receive back data set to true. Otherwise, if you just need to query the 
+Core for getting back the resource descriptions, set to false (`false`)
+* enablerLogicName - the enabler logic component which owns this task and 
+it will receive updates for it (this is fetch from enabler properties)
+* sparqlQueryRequest - the request in SPARQL. Set to null if you use 
+CoreQueryRequest. If set overwrites the CoreQueryRequest (`null`)
+
+In parenthesis are values that we use in example.
+
+From search response we need to check if it is successful response. 
+
+After that we need to extract task and from task one `ResourceManagerTaskInfoResponse`
+and create `PlatformProxyResourceInfo` for sending to Platfrom Proxy.
+
+Here is temperature example:
+```java
+private Optional<PlatformProxyResourceInfo> findAirConditionInfo() {
+	CoreQueryRequest coreQueryRequest = new CoreQueryRequest();
+	coreQueryRequest.setName("Enabler_Logic_Example_Aircondition_1");
+
+    ResourceManagerTaskInfoRequest request = new ResourceManagerTaskInfoRequest(
+    		"airCondition", 1, 1, coreQueryRequest, 
+    		null, //"P0000-00-00T00:01:00",
+    		false, null, false, props.getEnablerName(), null);
+
+    ResourceManagerAcquisitionStartResponse response = enablerLogic.queryResourceManager(request);
+
+    try {
+        LOG.info("Response JSON: {}", new ObjectMapper().writeValueAsString(response));
+    } catch (JsonProcessingException e) {
+        LOG.info("Response: {}", response);
+    }
+    
+    if(response.getStatus() != ResourceManagerTasksStatus.SUCCESS) {
+    	LOG.warn("Did not found air condition actuator!!!");
+    	return Optional.empty();
+    }
+    	
+    ResourceManagerTaskInfoResponse resourceManagerTaskInfoResponse = response.getTasks().get(0);
+	String resourceId = resourceManagerTaskInfoResponse.getResourceDescriptions().get(0).getId();
+	String accessURL = resourceManagerTaskInfoResponse.getResourceUrls().get(resourceId);
+	
+	PlatformProxyResourceInfo info = new PlatformProxyResourceInfo();
+	info.setAccessURL(accessURL);
+	info.setResourceId(resourceId);
+	return Optional.of(info);
+}
+```
+
+And here is humidity example:
+
+```java
+private Optional<PlatformProxyResourceInfo> findHumidityService() {
+	CoreQueryRequest coreQueryRequest = new CoreQueryRequest();
+	coreQueryRequest.setName("Enabler_Logic_Example_Humidity_service_1");
+
+    ResourceManagerTaskInfoRequest request = new ResourceManagerTaskInfoRequest(
+    		"humidityService", 1, 1, coreQueryRequest, 
+    		null, //"P0000-00-00T00:01:00",
+    		false, null, false, props.getEnablerName(), null);
+
+    ResourceManagerAcquisitionStartResponse response = enablerLogic.queryResourceManager(request);
+
+    try {
+        LOG.info("Response JSON: {}", new ObjectMapper().writeValueAsString(response));
+    } catch (JsonProcessingException e) {
+        LOG.info("Response: {}", response);
+    }
+    
+    if(response.getStatus() != ResourceManagerTasksStatus.SUCCESS) {
+    	LOG.warn("Did not found humidity service!!!");
+    	return Optional.empty();
+    }
+    	
+    ResourceManagerTaskInfoResponse resourceManagerTaskInfoResponse = response.getTasks().get(0);
+	String resourceId = resourceManagerTaskInfoResponse.getResourceDescriptions().get(0).getId();
+	String accessURL = resourceManagerTaskInfoResponse.getResourceUrls().get(resourceId);
+	
+	PlatformProxyResourceInfo info = new PlatformProxyResourceInfo();
+	info.setAccessURL(accessURL);
+	info.setResourceId(resourceId);
+	return Optional.of(info);
+}
+```
+
+#### Send access request
+
+After getting `PlatformProxyResourceInfo` we need to send request to Platform
+Proxy to execute access to that resource.
+
+##### Actuating resource
+Here is temperature example:
+```java
+private void actuateAirCondition(boolean state) {
+	findAirConditionInfo().ifPresent(resource -> {
+    	LOG.info("Actuating {} with state {}", resource.getResourceId(), state);
+    	enablerLogic.triggerActuator(new ActuatorExecutionTaskInfo("triggerAirCondition", 
+    			resource, props.getEnablerName(), "OnOffCapability", 
+    			Arrays.asList(new ServiceParameter("on", state))));
+	});
+}
+```
+
+In this example we are using `triggerActuator` method. It has `ActuatorExecutionTaskInfo`
+as parameter. When creating `ActuatorExecutionTaskInfo` we need following parameters:
+* taskId - the id of the requested task (we specify that name)
+* resource - this is found `PlatformProxyResourceInfo`
+* enablerLogicName - enabler logic name from properties
+* capabilityName - capability that will be triggered (`OnOffCapability`)
+* parameters - list of parameters for that capability
+
+The result of that method is `ServiceExecutionTaskResponse` object which
+contains HTTP response and output which should be empty.
+
+##### Invoking service
+Here is humidity example:
+```java
+private void setHumidityServiceTarget(String target) {
+	findHumidityService().ifPresent(resource -> {
+    	LOG.info("Setting service {} to target {}", resource.getResourceId(), target);
+    	enablerLogic.invokeService(new ServiceExecutionTaskInfo("humidityServiceTarget", 
+    			resource, props.getEnablerName(),  
+    			Arrays.asList(new ServiceParameter("humidityTaget", target))));
+	});
+}
+```
+
+When invoking service we use `invokeService` method with parameter of type 
+`ServiceExecutionTaskInfo`. When creating `ServiceExecutionTaskInfo` we need:
+* taskId - the id of the requested task (we specify that name)
+* resource - this is found `PlatformProxyResourceInfo`
+* enablerLogicName - enabler logic name from properties
+* parameters - list of parameters for that service
+
+This method will return `ServiceExecutionTaskResponse` object which has
+HTTP status of invoking service and output (String) from service.
+
+#####  Reading resource
+For reading resource we are using `readResource` method. This method has
+parameter object of type `PlatformProxyTaskInfo` and returns `EnablerLogicDataAppearedMessage` 
+object. the resulting object contains list of observations from that sensor.
 
 ## Running
 
