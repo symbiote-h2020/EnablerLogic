@@ -1,9 +1,7 @@
 package eu.h2020.symbiote.enablerlogic.messaging;
 
-import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
-import java.util.stream.IntStream;
 
 import org.springframework.amqp.core.Message;
 
@@ -11,7 +9,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 public class LoggingTrimHelper {
-    private static final int MAX_MESSAGE_BODY_LENGTH = 1000;
+    public static final int MAX_MESSAGE_BODY_LENGTH = 1000;
 
     /**
      * This method returns string representation of message. If message body is long it is trimmed.
@@ -51,7 +49,7 @@ public class LoggingTrimHelper {
             return null;
         
         if(msg.length() > MAX_MESSAGE_BODY_LENGTH)
-            return "Trimmed: " + msg.substring(0, 1024) + "...";
+            return "Trimmed: " + msg.substring(0, MAX_MESSAGE_BODY_LENGTH) + "...";
         return msg;
     }
     
@@ -87,8 +85,8 @@ public class LoggingTrimHelper {
             stringRepresentation = "Fallback JSON to String: " + obj.toString();
         }
         
-        if(stringRepresentation.length() > 1024) {
-            stringRepresentation = "Trimmed: " + stringRepresentation.substring(0, 1024) + "...";
+        if(stringRepresentation.length() > MAX_MESSAGE_BODY_LENGTH) {
+            stringRepresentation = "Trimmed: " + stringRepresentation.substring(0, MAX_MESSAGE_BODY_LENGTH) + "...";
         }
 
         return stringRepresentation;

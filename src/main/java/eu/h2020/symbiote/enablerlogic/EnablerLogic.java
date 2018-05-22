@@ -9,6 +9,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import eu.h2020.symbiote.enabler.messaging.model.ActuatorExecutionTaskInfo;
 import eu.h2020.symbiote.enabler.messaging.model.CancelTaskRequest;
 import eu.h2020.symbiote.enabler.messaging.model.CancelTaskResponse;
 import eu.h2020.symbiote.enabler.messaging.model.EnablerLogicDataAppearedMessage;
@@ -19,6 +20,8 @@ import eu.h2020.symbiote.enabler.messaging.model.ResourceManagerAcquisitionStart
 import eu.h2020.symbiote.enabler.messaging.model.ResourceManagerTaskInfoRequest;
 import eu.h2020.symbiote.enabler.messaging.model.ResourceManagerUpdateRequest;
 import eu.h2020.symbiote.enabler.messaging.model.ResourceManagerUpdateResponse;
+import eu.h2020.symbiote.enabler.messaging.model.ServiceExecutionTaskInfo;
+import eu.h2020.symbiote.enabler.messaging.model.ServiceExecutionTaskResponse;
 import eu.h2020.symbiote.enablerlogic.messaging.LoggingTrimHelper;
 import eu.h2020.symbiote.enablerlogic.messaging.RabbitManager;
 import eu.h2020.symbiote.enablerlogic.messaging.WrongResponseException;
@@ -59,6 +62,8 @@ public class EnablerLogic {
     public EnablerLogic(RabbitManager rabbitManager, EnablerLogicProperties props) {
         this.rabbitManager = rabbitManager;
         this.props = props;
+		if (props==null)
+			throw new IllegalStateException("Props may not be null");
     }
 
     /**
@@ -117,10 +122,6 @@ public class EnablerLogic {
      * @return response form Resource Manager component or null in case of timeout
      */
     public ResourceManagerAcquisitionStartResponse queryResourceManager(ResourceManagerTaskInfoRequest...requests) {
-    	
-		if (props==null)
-			throw new IllegalStateException("Props may not be null");
-    	
         for(ResourceManagerTaskInfoRequest request: requests) {
             LOG.info("sending message to ResourceManager: {}", LoggingTrimHelper.logToString(request));
         }
@@ -148,10 +149,6 @@ public class EnablerLogic {
      * @return response form Resource Manager component or null in case of timeout
      */
     public ResourceManagerAcquisitionStartResponse queryResourceManager(int timeout, ResourceManagerTaskInfoRequest...requests) {
-        
-        if (props==null)
-            throw new IllegalStateException("Props may not be null");
-        
         for(ResourceManagerTaskInfoRequest request: requests) {
             LOG.info("sending message to ResourceManager: {}", LoggingTrimHelper.logToString(request));
         }
@@ -342,5 +339,61 @@ public class EnablerLogic {
                 props.getKey().getEnablerPlatformProxy().getSingleReadRequested(),
                 info,
                 timeout);
+    }
+    
+    /**
+     * Send request to Platform Proxy to actuate resource.
+     * 
+     * @param info requested resource info for actuation
+     * @return reading result
+     */
+    public ServiceExecutionTaskResponse triggerActuator(ActuatorExecutionTaskInfo info) {
+    	return (ServiceExecutionTaskResponse) rabbitManager.sendRpcMessage(
+    			props.getExchange().getEnablerPlatformProxy().getName(),
+    			props.getKey().getEnablerPlatformProxy().getExecuteActuatorRequested(),
+    			info);
+    }
+
+    /**
+     * Send request to Platform Proxy to actuate resource.
+     * 
+     * @param info requested resource info for actuation
+     * @param timeout in milliseconds
+     * @return reading result
+     */
+    public ServiceExecutionTaskResponse triggerActuator(ActuatorExecutionTaskInfo info, int timeout) {
+        return (ServiceExecutionTaskResponse) rabbitManager.sendRpcMessage(
+                props.getExchange().getEnablerPlatformProxy().getName(),
+                props.getKey().getEnablerPlatformProxy().getExecuteActuatorRequested(),
+                info,
+                timeout);
+    }
+
+    /**
+     * Send request to Platform Proxy to actuate resource.
+     * 
+     * @param info requested resource info for invoking service
+     * @return reading result
+     */
+    public ServiceExecutionTaskResponse invokeService(ServiceExecutionTaskInfo info) {
+    	return (ServiceExecutionTaskResponse) rabbitManager.sendRpcMessage(
+    			props.getExchange().getEnablerPlatformProxy().getName(),
+    			props.getKey().getEnablerPlatformProxy().getExecuteServiceRequested(),
+    			info);
+    }
+    
+    /**
+     * Send request to Platform Proxy to actuate resource.
+     * 
+     * @param info requested resource info for invoking service
+     * @param timeout in milliseconds
+     * @return reading result
+     */
+    public ServiceExecutionTaskResponse invokeService(ServiceExecutionTaskInfo info, int timeout) {
+    	return (ServiceExecutionTaskResponse) rabbitManager.sendRpcMessage(
+    			props.getExchange().getEnablerPlatformProxy().getName(),
+    			props.getKey().getEnablerPlatformProxy().getExecuteServiceRequested(),
+    			info,
+    			timeout);
     }
 }

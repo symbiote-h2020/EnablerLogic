@@ -22,4 +22,18 @@ public class WrongRequestExceptionTest {
         //then
         assertThat(exceptionMessage).isEqualTo("message {\"requestClassName\":\"java.lang.String\",\"request\":\"\\\"request object\\\"\"}");
     }
+
+    @Test
+    public void messageGenerationWithoutMessage_shouldContainSpecificJson() {
+        //given
+        WrongRequestException exception = new WrongRequestException(
+            "request object",
+            String.class.getName());
+
+        // when
+        String exceptionMessage = exception.getMessage();
+
+        //then
+        assertThat(exceptionMessage).isEqualTo("null {\"requestClassName\":\"java.lang.String\",\"request\":\"\\\"request object\\\"\"}");
+    }
 }

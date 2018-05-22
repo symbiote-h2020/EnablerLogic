@@ -37,6 +37,7 @@ public class RabbitManager {
 
     private RabbitTemplate rabbitTemplate;
     private AsyncRabbitTemplate asyncRabbitTemplate;
+	private SimpleMessageListenerContainer container;
 
     @Autowired
     public RabbitManager(RabbitTemplate rabbitTemplate) {
@@ -47,7 +48,7 @@ public class RabbitManager {
         Jackson2JsonMessageConverter messageConverter = new Jackson2JsonMessageConverter(mapper);
         rabbitTemplate.setMessageConverter(messageConverter);
 
-        SimpleMessageListenerContainer container = new SimpleMessageListenerContainer(rabbitTemplate.getConnectionFactory());
+        container = new SimpleMessageListenerContainer(rabbitTemplate.getConnectionFactory());
         String replyQueueName = "EnablerLogic-replayTo-" + UUID.randomUUID().toString();
         RabbitAdmin admin = new RabbitAdmin(rabbitTemplate.getConnectionFactory());
         Queue queue = new Queue(replyQueueName, false, true, true);
@@ -238,5 +239,12 @@ public class RabbitManager {
                     "\n\n" + LoggingTrimHelper.logToString(e));
             return null;
         }
+    }
+    
+    /**
+     * Stops RabbitMQ container for listening.
+     */
+    public void stop() {
+    	container.stop();
     }
 }

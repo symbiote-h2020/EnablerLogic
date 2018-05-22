@@ -8,7 +8,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-@Data
+@Getter
 @ConfigurationProperties(prefix = "rabbit.routingKey", ignoreInvalidFields = true)
 public class RoutingKeysProperties {
 
@@ -24,7 +24,6 @@ public class RoutingKeysProperties {
 
     @Getter
     @Setter
-    @AllArgsConstructor
     @NoArgsConstructor
     public static class EnablerLogicKeys {
         private String acquireMeasurements = "symbIoTe.enablerLogic.acquireMeasurements";
@@ -33,13 +32,10 @@ public class RoutingKeysProperties {
         private String notEnoughResources = "symbIoTe.enablerLogic.notEnoughResources";
         private String asyncMessageToEnablerLogic = "symbIoTe.enablerLogic.asyncMessageToEnablerLogic";
         private String syncMessageToEnablerLogic = "symbIoTe.enablerLogic.syncMessageToEnablerLogic";
-
-
     }
 
     @Getter
     @Setter
-    @AllArgsConstructor
     @NoArgsConstructor
     public static class ResourceManagerKeys {
         private String startDataAcquisition = "symbIoTe.resourceManager.startDataAcquisition";
@@ -50,12 +46,12 @@ public class RoutingKeysProperties {
 
     @Getter
     @Setter
-    @AllArgsConstructor
     @NoArgsConstructor
     public static class PlatformProxyKeys {
         private String acquisitionStartRequested = "symbIoTe.enablerPlatformProxy.acquisitionStartRequested";
         private String acquisitionStopRequested = "symbIoTe.enablerPlatformProxy.acquisitionStopRequested";
         private String singleReadRequested = "symbIoTe.enablerPlatformProxy.singleReadRequested";
-
+        private String executeServiceRequested = "symbIoTe.enablerPlatformProxy.executeServiceRequested";
+        private String executeActuatorRequested = "symbIoTe.enablerPlatformProxy.executeActuatorRequested";
     }
 }
