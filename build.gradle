@@ -86,7 +86,7 @@ dependencies {
     compile('org.springframework.boot:spring-boot-starter-amqp')
     compile('org.springframework.boot:spring-boot-starter-data-rest')
 
-	compile('com.github.symbiote-h2020:SymbIoTeLibraries:5.11.+') { changing=true }
+	compile('com.github.symbiote-h2020:SymbIoTeLibraries:5.14.+') { changing=true }
 	
 	// from jitpack
 	compile('com.github.symbiote-h2020:ResourceAccessProxyPlugin:0.3.+')
