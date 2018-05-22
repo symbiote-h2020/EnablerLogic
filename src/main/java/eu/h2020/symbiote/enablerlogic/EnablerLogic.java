@@ -373,7 +373,6 @@ public class EnablerLogic {
      * Send request to Platform Proxy to actuate resource.
      * 
      * @param info requested resource info for invoking service
-     * @param timeout in milliseconds
      * @return reading result
      */
     public ServiceExecutionTaskResponse invokeService(ServiceExecutionTaskInfo info) {
