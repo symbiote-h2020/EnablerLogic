@@ -25,7 +25,14 @@ public class ResourcesUpdatedConsumer {
 
     @RabbitListener(bindings = @QueueBinding(
         value = @Queue,
-        exchange = @Exchange(value = "#{enablerLogicProperties.enablerLogicExchange.name}", type = "topic", ignoreDeclarationExceptions = "true", durable="false"),
+        exchange = @Exchange(
+                value = "#{enablerLogicProperties.enablerLogicExchange.name}", 
+                type = "#{enablerLogicProperties.enablerLogicExchange.type}", 
+                durable="#{enablerLogicProperties.enablerLogicExchange.durable}",
+                autoDelete="#{enablerLogicProperties.enablerLogicExchange.autodelete}",
+                internal="#{enablerLogicProperties.enablerLogicExchange.internal}",
+                ignoreDeclarationExceptions = "true" 
+        ), 
         key = "#{enablerLogicProperties.key.enablerLogic.resourcesUpdated}"
     ))
     public void dataAppeared(ResourcesUpdated resourcesUpdatedMessage) throws IOException {

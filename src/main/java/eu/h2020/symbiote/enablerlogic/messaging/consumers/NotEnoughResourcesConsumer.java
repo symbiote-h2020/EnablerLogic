@@ -24,7 +24,14 @@ public class NotEnoughResourcesConsumer {
 
     @RabbitListener(bindings = @QueueBinding(
         value = @Queue,
-        exchange = @Exchange(value = "#{enablerLogicProperties.enablerLogicExchange.name}", type = "topic", ignoreDeclarationExceptions = "true", durable="false"),
+        exchange = @Exchange(
+                value = "#{enablerLogicProperties.enablerLogicExchange.name}", 
+                type = "#{enablerLogicProperties.enablerLogicExchange.type}", 
+                durable="#{enablerLogicProperties.enablerLogicExchange.durable}",
+                autoDelete="#{enablerLogicProperties.enablerLogicExchange.autodelete}",
+                internal="#{enablerLogicProperties.enablerLogicExchange.internal}",
+                ignoreDeclarationExceptions = "true" 
+        ), 
         key = "#{enablerLogicProperties.key.enablerLogic.notEnoughResources}"
     ))
     public void dataAppeared(NotEnoughResourcesAvailable notEnoughResourcesAvailableMessage) throws IOException {
