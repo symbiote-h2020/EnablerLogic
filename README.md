@@ -18,7 +18,7 @@ doesn't have to implement complex communication between those components. The ex
 
 It needs following dependencies: Config Client, Eureka Discovery, Zipkin Client
 
-Current version of SpringBoot that is used is: **1.5.10**.
+Current version of SpringBoot that is used is: **1.5.14**.
 
 ### 2. Adding symbIoTe dependencies to `build.gradle`
 
@@ -29,9 +29,9 @@ Add following dependencies for on the edge version:
 This is dependency to development version of EnablerLogic from jitpack. It will use the newest version of 
 EnablerLogic published in jitpack. This is only for development. 
 
-If you want to use stable version please use releases. Current release is 0.4.0 and you can include it with this line:
+If you want to use stable version please use releases. Current release is **0.5.0** and you can include it with this line:
 
-`compile('com.github.symbiote-h2020:EnablerLogic:0.4.0')` 
+`compile('com.github.symbiote-h2020:EnablerLogic:0.5.0')` 
 
 In order to use jitpack you need to put in `build.gradle` 
 following lines as well:
@@ -47,7 +47,7 @@ allprojects {
 
 ### 3. Setting configuration
 
-Configuration needs to be put in `bootstrap.properties` or YMl file. An example is here:
+Configuration needs to be put in `bootstrap.properties` or YML file. An example is here:
 
 ```
 spring.application.name=EnablerLogicExample
