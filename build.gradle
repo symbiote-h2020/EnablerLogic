@@ -1,6 +1,6 @@
 buildscript {
     ext {
-        springBootVersion = '1.5.14.RELEASE'
+        springBootVersion = '1.5.18.RELEASE'
         springCloudVersion = 'Dalston.SR5'
     }
     repositories {
@@ -87,10 +87,10 @@ dependencies {
     compile('org.springframework.boot:spring-boot-starter-amqp')
     compile('org.springframework.boot:spring-boot-starter-data-rest')
 
-    compile('com.github.symbiote-h2020:SymbIoTeLibraries:5.32+') { changing = true }
+    compile('com.github.symbiote-h2020:SymbIoTeLibraries:5.37+') { changing = true }
 	
 	// from jitpack
-	compile('com.github.symbiote-h2020:ResourceAccessProxyPluginStarter:0.4+')
+	compile('com.github.symbiote-h2020:ResourceAccessProxyPluginStarter:0.5+')
 	// from local maven
     //compile('eu.h2020.symbiote:ResourceAccessProxyPlugin:0.1.0-SNAPSHOT')
     
