@@ -20,7 +20,9 @@ import eu.h2020.symbiote.enablerlogic.messaging.properties.PluginProperties;
 import eu.h2020.symbiote.enablerlogic.messaging.properties.RabbitConnectionProperties;
 import eu.h2020.symbiote.enablerlogic.messaging.properties.RoutingKeysProperties;
 import lombok.AllArgsConstructor;
+import lombok.Data;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 
 @RunWith(SpringRunner.class)
 @Import({TestingRabbitConfig.class,
@@ -37,9 +39,10 @@ public class AsyncMessageFromEnablerLogicConsumerTest extends EmbeddedRabbitFixt
     @Autowired
     private AsyncMessageFromEnablerLogicConsumer consumer;
 
+    @NoArgsConstructor
     @AllArgsConstructor
+    @Data
     public static class CustomMessage {
-        @Getter
         private String message;
     }
 
