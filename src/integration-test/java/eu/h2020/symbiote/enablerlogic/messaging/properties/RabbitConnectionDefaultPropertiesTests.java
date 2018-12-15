@@ -23,5 +23,6 @@ public class RabbitConnectionDefaultPropertiesTests {
         assertThat(props.getHost()).isEqualTo("localhost");
         assertThat(props.getUsername()).isEqualTo("guest");
         assertThat(props.getPassword()).isEqualTo("guest");
+        assertThat(props.getReplyTimeout()).isEqualTo(5000);
     }
 }

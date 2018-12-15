@@ -15,6 +15,7 @@ public class RabbitConnectionProperties {
     private String host = "localhost";
     private String username = "guest";
     private String password = "guest";
+    private int replyTimeout = 5000;
 }
 
 

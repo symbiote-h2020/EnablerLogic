@@ -27,5 +27,6 @@ public class RabbitConnectionPropertiesTests {
         assertThat(props.getHost()).isEqualTo("127.0.0.1");
         assertThat(props.getUsername()).isEqualTo("u");
         assertThat(props.getPassword()).isEqualTo("p");
+        assertThat(props.getReplyTimeout()).isEqualTo(10000);
     }
 }
