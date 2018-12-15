@@ -6,6 +6,7 @@ import eu.h2020.symbiote.enablerlogic.messaging.LoggingTrimHelper;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.amqp.rabbit.annotation.Argument;
 import org.springframework.amqp.rabbit.annotation.Exchange;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.amqp.rabbit.annotation.Queue;
@@ -32,17 +33,20 @@ public class DataAppearedConsumer {
     }
 
     @RabbitListener(bindings = @QueueBinding(
-        value = @Queue,
-        exchange = @Exchange(
-                value = "#{enablerLogicProperties.enablerLogicExchange.name}", 
-                type = "#{enablerLogicProperties.enablerLogicExchange.type}", 
-                durable="#{enablerLogicProperties.enablerLogicExchange.durable}",
-                autoDelete="#{enablerLogicProperties.enablerLogicExchange.autodelete}",
-                internal="#{enablerLogicProperties.enablerLogicExchange.internal}",
-                ignoreDeclarationExceptions = "true" 
+            value = @Queue(autoDelete="true", arguments= 
+                {@Argument(name = "x-message-ttl", value="#{enablerLogicProperties.rabbitConnection.replyTimeout}", type="java.lang.Integer")}),
+            exchange = @Exchange(
+                    value = "#{enablerLogicProperties.enablerLogicExchange.name}", 
+                    type = "#{enablerLogicProperties.enablerLogicExchange.type}", 
+                    durable="#{enablerLogicProperties.enablerLogicExchange.durable}",
+                    autoDelete="#{enablerLogicProperties.enablerLogicExchange.autodelete}",
+                    internal="#{enablerLogicProperties.enablerLogicExchange.internal}",
+                    ignoreDeclarationExceptions = "true" 
+            ),
+            key = "#{enablerLogicProperties.key.enablerLogic.dataAppeared}"
         ),
-        key = "#{enablerLogicProperties.key.enablerLogic.dataAppeared}"
-    ))
+        containerFactory = "noRequeueRabbitContainerFactory"
+    )
     public void dataAppeared(EnablerLogicDataAppearedMessage dataAppearedMessage) throws IOException {
         LOG.info("Consumer DataAppeared message: " + LoggingTrimHelper.logToString(dataAppearedMessage));
         processingLogic.measurementReceived(dataAppearedMessage);

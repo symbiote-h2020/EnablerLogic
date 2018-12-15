@@ -4,6 +4,7 @@ import java.io.IOException;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.amqp.rabbit.annotation.Argument;
 import org.springframework.amqp.rabbit.annotation.Exchange;
 import org.springframework.amqp.rabbit.annotation.Queue;
 import org.springframework.amqp.rabbit.annotation.QueueBinding;
@@ -24,20 +25,22 @@ public class ResourcesUpdatedConsumer {
     }
 
     @RabbitListener(bindings = @QueueBinding(
-        value = @Queue,
-        exchange = @Exchange(
-                value = "#{enablerLogicProperties.enablerLogicExchange.name}", 
-                type = "#{enablerLogicProperties.enablerLogicExchange.type}", 
-                durable="#{enablerLogicProperties.enablerLogicExchange.durable}",
-                autoDelete="#{enablerLogicProperties.enablerLogicExchange.autodelete}",
-                internal="#{enablerLogicProperties.enablerLogicExchange.internal}",
-                ignoreDeclarationExceptions = "true" 
-        ), 
-        key = "#{enablerLogicProperties.key.enablerLogic.resourcesUpdated}"
-    ))
+            value = @Queue(autoDelete="true", arguments= 
+                {@Argument(name = "x-message-ttl", value="#{enablerLogicProperties.rabbitConnection.replyTimeout}", type="java.lang.Integer")}),
+            exchange = @Exchange(
+                    value = "#{enablerLogicProperties.enablerLogicExchange.name}", 
+                    type = "#{enablerLogicProperties.enablerLogicExchange.type}", 
+                    durable="#{enablerLogicProperties.enablerLogicExchange.durable}",
+                    autoDelete="#{enablerLogicProperties.enablerLogicExchange.autodelete}",
+                    internal="#{enablerLogicProperties.enablerLogicExchange.internal}",
+                    ignoreDeclarationExceptions = "true" 
+            ), 
+            key = "#{enablerLogicProperties.key.enablerLogic.resourcesUpdated}"
+        ),
+        containerFactory = "noRequeueRabbitContainerFactory"
+    )
     public void dataAppeared(ResourcesUpdated resourcesUpdatedMessage) throws IOException {
         LOG.info("Consumer ResourcesUpdated message: " + LoggingTrimHelper.logToString(resourcesUpdatedMessage));
         processingLogic.resourcesUpdated(resourcesUpdatedMessage);
     }
-
 }

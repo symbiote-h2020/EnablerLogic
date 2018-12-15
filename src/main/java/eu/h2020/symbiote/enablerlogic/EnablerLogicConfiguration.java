@@ -59,17 +59,9 @@ public class EnablerLogicConfiguration implements ApplicationContextAware, Smart
     private EnablerLogic enablerLogic;
     
     @Autowired
-    private SimpleRabbitListenerContainerFactory simpleRabbitListenerContainerFactory;
-    
-    @Autowired
     private DiscoveryClient discoveryClient;
         
     private volatile boolean running = false;
-    
-    @PostConstruct
-    public void initialize() {
-        simpleRabbitListenerContainerFactory.setMessageConverter(new Jackson2JsonMessageConverter());
-    }
     
     @Override
     public void setApplicationContext(ApplicationContext ctx) throws BeansException {
