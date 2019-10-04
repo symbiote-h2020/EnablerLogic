@@ -4,6 +4,38 @@
 
 # EnablerLogic
 
+<!-- TOC -->
+
+- [EnablerLogic](#enablerlogic)
+    - [Using Generic EnablerLogic](#using-generic-enablerlogic)
+    - [Creating specific EnablerLogic](#creating-specific-enablerlogic)
+        - [1. Creating new SpringBoot project](#1-creating-new-springboot-project)
+        - [2. Adding symbIoTe dependencies to `build.gradle`](#2-adding-symbiote-dependencies-to-buildgradle)
+        - [3. Setting configuration](#3-setting-configuration)
+        - [4. Creating ProcessingLogic component](#4-creating-processinglogic-component)
+            - [Enabler Logic communicating with Resource Manager or Platform Proxy components](#enabler-logic-communicating-with-resource-manager-or-platform-proxy-components)
+        - [5. Communication with other Enabler Logic components in the enabler](#5-communication-with-other-enabler-logic-components-in-the-enabler)
+            - [Asynchronous Communication](#asynchronous-communication)
+                - [Asynchronous Receiver](#asynchronous-receiver)
+                - [Asynchronous Sending](#asynchronous-sending)
+            - [Synchronous Communication](#synchronous-communication)
+                - [Synchronous Receiver](#synchronous-receiver)
+                - [Synchronous Sender](#synchronous-sender)
+        - [6. Registering resources](#6-registering-resources)
+        - [7. Registering RAP plugin consumers](#7-registering-rap-plugin-consumers)
+            - [Reading resources](#reading-resources)
+            - [Triggering actuator](#triggering-actuator)
+            - [Invoking service](#invoking-service)
+        - [8. One time access to resources](#8-one-time-access-to-resources)
+            - [Search for resource](#search-for-resource)
+            - [Send access request](#send-access-request)
+                - [Actuating resource](#actuating-resource)
+                - [Invoking service](#invoking-service-1)
+                - [Reading resource](#reading-resource)
+    - [Running](#running)
+
+<!-- /TOC -->
+
 ## Using Generic EnablerLogic
 
 The idea of Generic EnablerLogic is to use it as dependency in specific EnablerLogic. 
